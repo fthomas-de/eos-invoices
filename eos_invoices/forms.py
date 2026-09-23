@@ -83,6 +83,7 @@ class PaymentSourceForm(forms.ModelForm):
         )
 
         self.fields["pay_to"].queryset = self._pay_to_corporations()
+        self.fields["pay_to"].widget.attrs["data-eos-invoices-search"] = ""
 
         self.field_options = self._field_options()
         paid_mode = self._value("paid_mode") or PaymentSource.PaidMode.TRUE
@@ -160,6 +161,7 @@ class InvoiceConfigurationForm(forms.ModelForm):
         queryset=EveAllianceInfo.objects.order_by("alliance_name"),
         required=False,
         help_text=InvoiceConfiguration._meta.get_field("alliance").help_text,
+        widget=forms.Select(attrs={"data-eos-invoices-search": ""}),
     )
 
     class Meta:

@@ -16,6 +16,7 @@ from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.db import models
 from django.db.models import BooleanField, Case, Q, Value, When
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from allianceauth.services.hooks import get_extension_logger
@@ -54,6 +55,7 @@ def plain_isk(value):
 
 @dataclass(frozen=True)
 class Invoice:
+    pk: object
     amount: Decimal
     paid: bool
     reason: str
@@ -70,6 +72,7 @@ class SourceResult:
     source: object
     invoices: list = field(default_factory=list)
     error: str = ""
+    can_mark_paid: bool = False
 
     @property
     def open_total(self):
@@ -333,7 +336,7 @@ def get_invoices(source, corporation_id, *, include_paid=False):
         }
     )
 
-    wanted = {source.amount_field, PAID_ALIAS}
+    wanted = {"pk", source.amount_field, PAID_ALIAS}
     wanted.update(template_fields(source.reason_template))
     wanted.update(template_fields(source.label_template))
     if source.date_field:
@@ -350,6 +353,7 @@ def get_invoices(source, corporation_id, *, include_paid=False):
 
         invoices.append(
             Invoice(
+                pk=row["pk"],
                 amount=Decimal(str(row[source.amount_field] or 0)),
                 paid=row[PAID_ALIAS],
                 reason=render_template(source.reason_template, row),
@@ -359,6 +363,51 @@ def get_invoices(source, corporation_id, *, include_paid=False):
         )
 
     return invoices
+
+
+def paid_marker(source):
+    """The value that marks a row of this source as paid, or None.
+
+    Only a field of the row itself can be written: a path across a relation
+    would change a row of another model that other payments may share. For
+    "Field is not empty" only dates have an obvious value - now.
+    """
+    if check_source(source) or "__" in source.paid_field:
+        return None
+
+    model_field = resolve_field(resolve_model(source.model_label), source.paid_field)
+
+    if source.paid_mode == "true":
+        return lambda: True
+    if source.paid_mode == "equals":
+        value = model_field.to_python(source.paid_value)
+        return lambda: value
+    if isinstance(model_field, models.DateTimeField):
+        return timezone.now
+    if isinstance(model_field, models.DateField):
+        return lambda: timezone.localdate()
+    return None
+
+
+def mark_paid(source, pk):
+    """Mark one row of a source as paid, through the model's own save().
+
+    save() rather than a queryset update, so the owning app's save logic and
+    signals still run - its own idea of what paying means stays in charge.
+    """
+    marker = paid_marker(source)
+    if marker is None:
+        raise SourceError(_("Rows of this source cannot be marked as paid here."))
+
+    model = resolve_model(source.model_label)
+    try:
+        row = model._default_manager.get(pk=pk)
+    except (model.DoesNotExist, ValueError, ValidationError) as exc:
+        raise SourceError(_("The payment no longer exists.")) from exc
+
+    setattr(row, source.paid_field, marker())
+    row.save(update_fields=[source.paid_field])
+    return row
 
 
 def probe(source):

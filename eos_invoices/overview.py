@@ -8,7 +8,7 @@ from django.utils.translation import gettext as _
 from allianceauth.services.hooks import get_extension_logger
 
 from eos_invoices.models import InvoiceConfiguration, PaymentSource
-from eos_invoices.sources import SourceError, SourceResult, get_invoices
+from eos_invoices.sources import SourceError, SourceResult, get_invoices, paid_marker
 
 logger = get_extension_logger(__name__)
 
@@ -30,8 +30,11 @@ def build_overview(user, *, include_paid=False):
     """Payments of the Corporation of the user's main, across all sources.
 
     Only the main counts, not alts: a CEO permission is given to a person, and
-    the Corporation that person leads is the one their main sits in.
+    the Corporation that person leads is the one their main sits in. Admins see
+    their own Corporation too; they only get the buttons to mark rows as paid.
     """
+    is_admin = user.has_perm("eos_invoices.manage_sources")
+
     main = user.profile.main_character
     if main is None:
         return Overview(notice=_("You have no main character."))
@@ -56,8 +59,9 @@ def build_overview(user, *, include_paid=False):
         result = SourceResult(source=source)
         try:
             result.invoices = get_invoices(
-                source, main.corporation_id, include_paid=include_paid
+                source, overview.corporation_id, include_paid=include_paid
             )
+            result.can_mark_paid = is_admin and paid_marker(source) is not None
         except SourceError as exc:
             result.error = str(exc)
         except Exception as exc:  # noqa: BLE001 - one broken app must not hide the others

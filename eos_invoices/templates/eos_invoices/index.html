@@ -94,6 +94,18 @@
                                                     <span class="badge text-bg-success">{% translate "Paid" %}</span>
                                                 {% else %}
                                                     <span class="badge text-bg-danger">{% translate "Open" %}</span>
+                                                    {% if result.can_mark_paid %}
+                                                        <form method="post" action="{% url "eos_invoices:mark_paid" result.source.pk %}"
+                                                              class="d-inline eos-invoices-confirm"
+                                                              data-question="{% translate "Mark this payment as paid?" %}">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="row" value="{{ invoice.pk }}">
+                                                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                                            <button type="submit" class="btn btn-sm btn-outline-success py-0 ms-1">
+                                                                {% translate "Mark as paid" %}
+                                                            </button>
+                                                        </form>
+                                                    {% endif %}
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -113,4 +125,5 @@
 {% block extra_javascript %}
     {% include "bundles/clipboard-js.html" %}
     {% sri_static "eos_invoices/js/copy.js" %}
+    {% sri_static "eos_invoices/js/confirm.js" %}
 {% endblock %}

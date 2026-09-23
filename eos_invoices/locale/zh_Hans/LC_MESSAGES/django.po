@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 19:05+0000\n"
-"PO-Revision-Date: 2026-09-23 19:05+0000\n"
+"POT-Creation-Date: 2026-09-23 20:32+0000\n"
+"PO-Revision-Date: 2026-09-23 20:32+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: zh_Hans\n"
 "Language: zh_Hans\n"
@@ -26,7 +26,7 @@ msgstr "账单"
 msgid "Not installed"
 msgstr "未安装"
 
-#: forms.py:159 models.py:26 templates/eos_invoices/base.html:20
+#: forms.py:160 models.py:26 templates/eos_invoices/base.html:20
 #: templates/eos_invoices/settings.html:8 tests/test_translations.py:18
 msgctxt "EVE jargon"
 msgid "Alliance"
@@ -158,80 +158,88 @@ msgstr "款项来源"
 msgid "Payment sources"
 msgstr "款项来源"
 
-#: overview.py:37
+#: overview.py:40
 msgid "You have no main character."
 msgstr "你没有 Main 角色。"
 
-#: overview.py:46
+#: overview.py:49
 msgid "No Alliance has been configured for this app yet."
 msgstr "此应用尚未配置 Alliance。"
 
-#: overview.py:51
+#: overview.py:54
 #, python-format
 msgid "%(corporation)s is not a member of %(alliance)s."
 msgstr "%(corporation)s 不是 %(alliance)s 的成员。"
 
-#: sources.py:87
+#: sources.py:90
 #, python-format
 msgid "Unknown model %(label)s."
 msgstr "未知模型 %(label)s。"
 
-#: sources.py:111
+#: sources.py:114
 #, python-format
 msgid "Invalid field name %(name)s."
 msgstr "无效的字段名 %(name)s。"
 
-#: sources.py:117
+#: sources.py:120
 #, python-format
 msgid "%(model)s has no field %(field)s. Available: %(fields)s"
 msgstr "%(model)s 没有字段 %(field)s。可用字段：%(fields)s"
 
-#: sources.py:128
+#: sources.py:131
 #, python-format
 msgid "%(field)s is not a relation and cannot be followed."
 msgstr "%(field)s 不是关联字段，无法继续访问。"
 
-#: sources.py:135
+#: sources.py:138
 #, python-format
 msgid "%(field)s points at many rows; only single relations can be followed."
 msgstr "%(field)s 指向多行；只能访问单一关联。"
 
-#: sources.py:142
+#: sources.py:145
 #, python-format
 msgid ""
 "%(path)s ends at a relation. Name a field on it, e.g. %(path)s__%(example)s."
 msgstr "%(path)s 止于一个关联。请指定其字段，例如 %(path)s__%(example)s。"
 
-#: sources.py:218
+#: sources.py:221
 #, python-format
 msgid "Malformed template: %(error)s"
 msgstr "模板格式错误：%(error)s"
 
-#: sources.py:226
+#: sources.py:229
 #, python-format
 msgid ""
 "Invalid placeholder {%(name)s}. Use a field name with an optional format."
 msgstr "无效的占位符 {%(name)s}。请使用字段名，可附加格式。"
 
-#: sources.py:256
+#: sources.py:259
 msgid "The Corporation ID field must be an integer field."
 msgstr "Corporation ID 字段必须是整数字段。"
 
-#: sources.py:257
+#: sources.py:260
 msgid "The amount field must be a number field."
 msgstr "金额字段必须是数字字段。"
 
-#: sources.py:258
+#: sources.py:261
 msgid "\"Field is true\" needs a boolean field."
 msgstr "“字段为真”需要布尔字段。"
 
-#: sources.py:259
+#: sources.py:262
 msgid "The date field must be a date or datetime field."
 msgstr "日期字段必须是日期或日期时间字段。"
 
-#: sources.py:278
+#: sources.py:281
 msgid "Enter the value that means paid."
 msgstr "请输入表示已付的值。"
+
+#: sources.py:400
+msgid "Rows of this source cannot be marked as paid here."
+msgstr "此来源的行无法在此标记为已付。"
+
+#: sources.py:406
+msgid "The payment no longer exists."
+msgstr "该款项已不存在。"
 
 #: templates/eos_invoices/base.html:9 tests/test_translations.py:13
 msgid "Overview"
@@ -281,7 +289,15 @@ msgstr "已付"
 msgid "Open"
 msgstr "未付"
 
-#: templates/eos_invoices/index.html:108
+#: templates/eos_invoices/index.html:100
+msgid "Mark this payment as paid?"
+msgstr "将此款项标记为已付？"
+
+#: templates/eos_invoices/index.html:105
+msgid "Mark as paid"
+msgstr "标记为已付"
+
+#: templates/eos_invoices/index.html:120
 #: templates/eos_invoices/sources.html:76
 msgid "No payment sources are configured."
 msgstr "尚未配置款项来源。"
@@ -342,16 +358,20 @@ msgstr[0] "%(counter)s 行"
 msgid "Delete %(name)s?"
 msgstr "删除 %(name)s？"
 
-#: views.py:58
+#: views.py:71
+msgid "Marked as paid."
+msgstr "已标记为已付。"
+
+#: views.py:98
 #, python-format
 msgid "Saved %(name)s."
 msgstr "已保存 %(name)s。"
 
-#: views.py:95
+#: views.py:135
 #, python-format
 msgid "Deleted %(name)s."
 msgstr "已删除 %(name)s。"
 
-#: views.py:108
+#: views.py:148
 msgid "Settings saved."
 msgstr "设置已保存。"

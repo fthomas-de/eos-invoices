@@ -58,7 +58,12 @@
     </div>
 {% endblock %}
 
+{% block extra_css %}
+    {% include "eos_invoices/bundles/tom-select-css.html" %}
+{% endblock %}
+
 {% block extra_javascript %}
+    {% include "eos_invoices/bundles/tom-select-js.html" %}
     {{ field_options|json_script:"eos-invoices-field-options" }}
     {{ accepted_kinds|json_script:"eos-invoices-accepted-kinds" }}
     {% sri_static "eos_invoices/js/source_form.js" %}

@@ -4,7 +4,7 @@
 {% block page_title %}{% translate "Invoices" %}{% endblock %}
 
 {% block header_nav_collapse_left %}
-    {% if perms.eos_invoices.basic_access %}
+    {% if perms.eos_invoices.basic_access or perms.eos_invoices.manage_sources %}
         {% url "eos_invoices:index" as overview_url %}
         {% translate "Overview" as overview_title %}
         {% include "eos_invoices/partials/nav-item.html" with nav_url=overview_url nav_title=overview_title nav_view="eos_invoices:index" %}

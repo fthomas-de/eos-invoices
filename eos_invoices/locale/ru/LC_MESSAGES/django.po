@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 19:05+0000\n"
-"PO-Revision-Date: 2026-09-23 19:05+0000\n"
+"POT-Creation-Date: 2026-09-23 20:32+0000\n"
+"PO-Revision-Date: 2026-09-23 20:32+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: ru\n"
 "Language: ru\n"
@@ -26,7 +26,7 @@ msgstr "Счета"
 msgid "Not installed"
 msgstr "Не установлено"
 
-#: forms.py:159 models.py:26 templates/eos_invoices/base.html:20
+#: forms.py:160 models.py:26 templates/eos_invoices/base.html:20
 #: templates/eos_invoices/settings.html:8 tests/test_translations.py:18
 msgctxt "EVE jargon"
 msgid "Alliance"
@@ -173,47 +173,47 @@ msgstr "Источник платежей"
 msgid "Payment sources"
 msgstr "Источники платежей"
 
-#: overview.py:37
+#: overview.py:40
 msgid "You have no main character."
 msgstr "У вас нет Main-персонажа."
 
-#: overview.py:46
+#: overview.py:49
 msgid "No Alliance has been configured for this app yet."
 msgstr "Для этого приложения ещё не настроена Alliance."
 
-#: overview.py:51
+#: overview.py:54
 #, python-format
 msgid "%(corporation)s is not a member of %(alliance)s."
 msgstr "%(corporation)s не состоит в %(alliance)s."
 
-#: sources.py:87
+#: sources.py:90
 #, python-format
 msgid "Unknown model %(label)s."
 msgstr "Неизвестная модель %(label)s."
 
-#: sources.py:111
+#: sources.py:114
 #, python-format
 msgid "Invalid field name %(name)s."
 msgstr "Недопустимое имя поля %(name)s."
 
-#: sources.py:117
+#: sources.py:120
 #, python-format
 msgid "%(model)s has no field %(field)s. Available: %(fields)s"
 msgstr "У %(model)s нет поля %(field)s. Доступны: %(fields)s"
 
-#: sources.py:128
+#: sources.py:131
 #, python-format
 msgid "%(field)s is not a relation and cannot be followed."
 msgstr "%(field)s не является связью, по нему нельзя перейти."
 
-#: sources.py:135
+#: sources.py:138
 #, python-format
 msgid "%(field)s points at many rows; only single relations can be followed."
 msgstr ""
 "%(field)s указывает на множество строк; переходить можно только по одиночным"
 " связям."
 
-#: sources.py:142
+#: sources.py:145
 #, python-format
 msgid ""
 "%(path)s ends at a relation. Name a field on it, e.g. %(path)s__%(example)s."
@@ -221,12 +221,12 @@ msgstr ""
 "%(path)s заканчивается на связи. Укажите её поле, например "
 "%(path)s__%(example)s."
 
-#: sources.py:218
+#: sources.py:221
 #, python-format
 msgid "Malformed template: %(error)s"
 msgstr "Некорректный шаблон: %(error)s"
 
-#: sources.py:226
+#: sources.py:229
 #, python-format
 msgid ""
 "Invalid placeholder {%(name)s}. Use a field name with an optional format."
@@ -234,25 +234,33 @@ msgstr ""
 "Недопустимый заполнитель {%(name)s}. Используйте имя поля с необязательным "
 "форматом."
 
-#: sources.py:256
+#: sources.py:259
 msgid "The Corporation ID field must be an integer field."
 msgstr "Поле ID Corporation должно быть целочисленным."
 
-#: sources.py:257
+#: sources.py:260
 msgid "The amount field must be a number field."
 msgstr "Поле суммы должно быть числовым."
 
-#: sources.py:258
+#: sources.py:261
 msgid "\"Field is true\" needs a boolean field."
 msgstr "«Поле истинно» требует логического поля."
 
-#: sources.py:259
+#: sources.py:262
 msgid "The date field must be a date or datetime field."
 msgstr "Поле даты должно быть полем даты или даты-времени."
 
-#: sources.py:278
+#: sources.py:281
 msgid "Enter the value that means paid."
 msgstr "Укажите значение, означающее оплату."
+
+#: sources.py:400
+msgid "Rows of this source cannot be marked as paid here."
+msgstr "Строки этого источника нельзя отметить здесь как оплаченные."
+
+#: sources.py:406
+msgid "The payment no longer exists."
+msgstr "Этот платёж больше не существует."
 
 #: templates/eos_invoices/base.html:9 tests/test_translations.py:13
 msgid "Overview"
@@ -302,7 +310,15 @@ msgstr "Оплачено"
 msgid "Open"
 msgstr "Открыто"
 
-#: templates/eos_invoices/index.html:108
+#: templates/eos_invoices/index.html:100
+msgid "Mark this payment as paid?"
+msgstr "Отметить этот платёж как оплаченный?"
+
+#: templates/eos_invoices/index.html:105
+msgid "Mark as paid"
+msgstr "Отметить как оплаченный"
+
+#: templates/eos_invoices/index.html:120
 #: templates/eos_invoices/sources.html:76
 msgid "No payment sources are configured."
 msgstr "Источники платежей не настроены."
@@ -368,16 +384,20 @@ msgstr[2] "%(counter)s строк"
 msgid "Delete %(name)s?"
 msgstr "Удалить %(name)s?"
 
-#: views.py:58
+#: views.py:71
+msgid "Marked as paid."
+msgstr "Отмечено как оплаченное."
+
+#: views.py:98
 #, python-format
 msgid "Saved %(name)s."
 msgstr "%(name)s сохранён."
 
-#: views.py:95
+#: views.py:135
 #, python-format
 msgid "Deleted %(name)s."
 msgstr "%(name)s удалён."
 
-#: views.py:108
+#: views.py:148
 msgid "Settings saved."
 msgstr "Настройки сохранены."

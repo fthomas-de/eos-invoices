@@ -18,13 +18,11 @@ class InvoicesMenuItem(MenuItemHook):
 
     def render(self, request):
         user = request.user
-        if user.has_perm("eos_invoices.basic_access"):
-            self.url_name = "eos_invoices:index"
-        elif user.has_perm("eos_invoices.manage_sources"):
-            # somebody who only maintains the sources would otherwise be sent
-            # to an overview they are not allowed to open
-            self.url_name = "eos_invoices:sources"
-        else:
+        # admins use the overview as well, to mark payments as paid
+        if not (
+            user.has_perm("eos_invoices.basic_access")
+            or user.has_perm("eos_invoices.manage_sources")
+        ):
             return ""
 
         return MenuItemHook.render(self, request)

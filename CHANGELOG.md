@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-09-23
+
+### Added
+
+- Admins (`manage_sources`) can mark an open payment of their own
+  Corporation as paid from the overview. The row is written through the owning model's own `save()`, not a
+  queryset update, so that app's save logic and signals still run. What gets
+  written follows the source: `True` for "Field is true", the configured value
+  for "Field equals value", the current date or time for a date field under
+  "Field is not empty". Text fields under "Field is not empty" and paid fields
+  behind a relation get no button: there is no obvious value for the first,
+  and the second would change a row other payments may share. Who marked
+  which row is logged, because the owning app keeps no such record.
+- The Alliance and "Pay to" dropdowns filter while typing (Tom Select 2.6.2,
+  loaded from cdnjs with SRI like Alliance Auth's own bundles). Its Bootstrap 5
+  theme paints field and dropdown with the page background and hard-coded dark
+  text, which only fits themes whose inputs share the page colour - under
+  Darkly, whose inputs are white on a dark page, it showed a dark list under a
+  white field. The widget now takes background and text colour from the
+  theme's own `form-select` when the page loads, so it looks like the theme's
+  other fields; the highlighted option uses the primary colour like a Bootstrap
+  dropdown item. Checked against Darkly, Flatly and Bootstrap light and dark.
+
+### Changed
+
+- The overview opens with either permission, and the menu entry always leads
+  there; admins without the CEO permission were sent to the sources page
+  before.
+
 ## [0.0.2] - 2026-09-23
 
 ### Added

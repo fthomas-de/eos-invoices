@@ -18,6 +18,7 @@ app.
   in-game transfer
 - "Pay to" Corporation per source, chosen from the Alliance
 - Toggle between outstanding only and including paid
+- Admins can mark payments as paid
 - Sources are checked when they are saved; the source list shows whether each
   one can currently be read
 - Restricted to the Corporations of one Alliance
@@ -49,7 +50,7 @@ app.
 | Permission | Who | What |
 |---|---|---|
 | `eos_invoices.basic_access` | CEOs | See outstanding payments of the Corporation of their main character |
-| `eos_invoices.manage_sources` | Admins | Maintain payment sources and the Alliance |
+| `eos_invoices.manage_sources` | Admins | Maintain payment sources and the Alliance; mark payments of their own Corporation as paid |
 
 A Corporation can have several CEOs in Auth terms (directors, alt CEOs): give
 the permission to each of them, via a group or state.
@@ -103,6 +104,22 @@ refused.
 | Paid field | `paid`, *Field is true* |
 | Reason | `{corporation__corporation_id}/{month:02d}/{year}` |
 | Description | `{month:02d}/{year}` |
+
+## Marking payments as paid
+
+The *Mark as paid* button writes to the table of the other app, through that
+model's own `save()`. The value follows the source's *Paid when* setting:
+
+| Paid when | Written |
+|---|---|
+| Field is true | `True` |
+| Field equals value | the configured value |
+| Field is not empty, date or datetime field | today, or now |
+
+There is no button for a text field under *Field is not empty*, nor for a paid
+field behind a relation (`something__paid`). Only the paid field itself is
+written; a separate "paid at" column of the other app, as aa-miningtax has,
+stays as it is.
 
 ## Possible extensions
 
