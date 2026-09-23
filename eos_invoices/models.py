@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
-from allianceauth.eveonline.models import EveAllianceInfo
+from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 
 from solo.models import SingletonModel
 
@@ -119,11 +119,18 @@ class PaymentSource(models.Model):
         blank=True,
         help_text=_("Optional date or datetime field; rows are sorted by it, newest first."),
     )
-    pay_to = models.CharField(
-        _("Pay to"),
-        max_length=255,
+    pay_to = models.ForeignKey(
+        EveCorporationInfo,
+        verbose_name=_("Pay to"),
+        null=True,
         blank=True,
-        help_text=_("Whom to send the ISK to, e.g. the holding Corporation."),
+        # a closed Corporation must not delete the source that named it
+        on_delete=models.SET_NULL,
+        related_name="+",
+        help_text=_(
+            "The Corporation that receives the ISK. Lists the Corporations of the "
+            "Alliance chosen on the Alliance tab."
+        ),
     )
 
     class Meta:

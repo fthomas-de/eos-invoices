@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-23 16:47+0000\n"
-"PO-Revision-Date: 2026-09-23 16:47+0000\n"
+"POT-Creation-Date: 2026-09-23 19:05+0000\n"
+"PO-Revision-Date: 2026-09-23 19:05+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: de\n"
 "Language: de\n"
@@ -22,11 +22,11 @@ msgstr ""
 msgid "Invoices"
 msgstr "Rechnungen"
 
-#: forms.py:55
+#: forms.py:78
 msgid "Not installed"
 msgstr "Nicht installiert"
 
-#: forms.py:80 models.py:26 templates/eos_invoices/base.html:20
+#: forms.py:159 models.py:26 templates/eos_invoices/base.html:20
 #: templates/eos_invoices/settings.html:8 tests/test_translations.py:18
 msgctxt "EVE jargon"
 msgid "Alliance"
@@ -112,7 +112,7 @@ msgstr "Wert für bezahlt"
 msgid "Only for \"Field equals value\": the value that means paid."
 msgstr "Nur für „Feld entspricht Wert“: der Wert, der bezahlt bedeutet."
 
-#: models.py:98 templates/eos_invoices/index.html:61
+#: models.py:98 templates/eos_invoices/index.html:69
 #: tests/test_translations.py:19
 msgctxt "EVE jargon"
 msgid "Reason"
@@ -128,7 +128,7 @@ msgstr ""
 "geschweiften Klammern werden durch ihre Werte ersetzt, optional mit Format: "
 "{corp_id}/{month:02d}/{year}"
 
-#: models.py:108 templates/eos_invoices/index.html:59
+#: models.py:108 templates/eos_invoices/index.html:67
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -151,19 +151,23 @@ msgstr ""
 "Optionales Datums- oder Zeitstempelfeld; die Zeilen werden danach sortiert, "
 "neueste zuerst."
 
-#: models.py:123 templates/eos_invoices/index.html:40
+#: models.py:124 templates/eos_invoices/index.html:45
 msgid "Pay to"
 msgstr "Zahlen an"
 
-#: models.py:126
-msgid "Whom to send the ISK to, e.g. the holding Corporation."
-msgstr "An wen die ISK gehen, z. B. die Holding-Corporation."
+#: models.py:131
+msgid ""
+"The Corporation that receives the ISK. Lists the Corporations of the "
+"Alliance chosen on the Alliance tab."
+msgstr ""
+"Die Corporation, die die ISK erhält. Zur Auswahl stehen die Corporations der"
+" Alliance, die im Tab Alliance gewählt ist."
 
-#: models.py:132
+#: models.py:139
 msgid "Payment source"
 msgstr "Zahlungsquelle"
 
-#: models.py:133 templates/eos_invoices/sources.html:8
+#: models.py:140 templates/eos_invoices/sources.html:8
 msgid "Payment sources"
 msgstr "Zahlungsquellen"
 
@@ -180,34 +184,34 @@ msgstr "Für diese App wurde noch keine Alliance eingerichtet."
 msgid "%(corporation)s is not a member of %(alliance)s."
 msgstr "%(corporation)s ist kein Mitglied von %(alliance)s."
 
-#: sources.py:67
+#: sources.py:87
 #, python-format
 msgid "Unknown model %(label)s."
 msgstr "Unbekanntes Modell %(label)s."
 
-#: sources.py:91
+#: sources.py:111
 #, python-format
 msgid "Invalid field name %(name)s."
 msgstr "Ungültiger Feldname %(name)s."
 
-#: sources.py:97
+#: sources.py:117
 #, python-format
 msgid "%(model)s has no field %(field)s. Available: %(fields)s"
 msgstr "%(model)s hat kein Feld %(field)s. Vorhanden: %(fields)s"
 
-#: sources.py:108
+#: sources.py:128
 #, python-format
 msgid "%(field)s is not a relation and cannot be followed."
 msgstr "%(field)s ist keine Relation und kann nicht verfolgt werden."
 
-#: sources.py:115
+#: sources.py:135
 #, python-format
 msgid "%(field)s points at many rows; only single relations can be followed."
 msgstr ""
 "%(field)s verweist auf viele Zeilen; nur Einzelrelationen können verfolgt "
 "werden."
 
-#: sources.py:122
+#: sources.py:142
 #, python-format
 msgid ""
 "%(path)s ends at a relation. Name a field on it, e.g. %(path)s__%(example)s."
@@ -215,12 +219,12 @@ msgstr ""
 "%(path)s endet an einer Relation. Gib ein Feld darauf an, z. B. "
 "%(path)s__%(example)s."
 
-#: sources.py:132
+#: sources.py:218
 #, python-format
 msgid "Malformed template: %(error)s"
 msgstr "Fehlerhafte Vorlage: %(error)s"
 
-#: sources.py:140
+#: sources.py:226
 #, python-format
 msgid ""
 "Invalid placeholder {%(name)s}. Use a field name with an optional format."
@@ -228,25 +232,25 @@ msgstr ""
 "Ungültiger Platzhalter {%(name)s}. Verwende einen Feldnamen mit optionalem "
 "Format."
 
-#: sources.py:183
+#: sources.py:256
 msgid "The Corporation ID field must be an integer field."
 msgstr "Das Feld Corporation-ID muss ein Ganzzahlfeld sein."
 
-#: sources.py:188
+#: sources.py:257
 msgid "The amount field must be a number field."
 msgstr "Das Feld Betrag muss ein Zahlenfeld sein."
 
-#: sources.py:193
+#: sources.py:258
 msgid "\"Field is true\" needs a boolean field."
 msgstr "„Feld ist wahr“ braucht ein boolesches Feld."
 
-#: sources.py:197
-msgid "Enter the value that means paid."
-msgstr "Gib den Wert an, der bezahlt bedeutet."
-
-#: sources.py:208
+#: sources.py:259
 msgid "The date field must be a date or datetime field."
 msgstr "Das Feld Datum muss ein Datums- oder Zeitstempelfeld sein."
+
+#: sources.py:278
+msgid "Enter the value that means paid."
+msgstr "Gib den Wert an, der bezahlt bedeutet."
 
 #: templates/eos_invoices/base.html:9 tests/test_translations.py:13
 msgid "Overview"
@@ -268,58 +272,58 @@ msgstr "Nur offene"
 msgid "Including paid"
 msgstr "Inklusive bezahlte"
 
-#: templates/eos_invoices/index.html:46
+#: templates/eos_invoices/index.html:54
 msgid "This source cannot be read at the moment."
 msgstr "Diese Quelle kann derzeit nicht gelesen werden."
 
-#: templates/eos_invoices/index.html:52
+#: templates/eos_invoices/index.html:60
 msgid "Nothing outstanding."
 msgstr "Nichts offen."
 
-#: templates/eos_invoices/index.html:58
+#: templates/eos_invoices/index.html:66
 msgid "Date"
 msgstr "Datum"
 
-#: templates/eos_invoices/index.html:60
+#: templates/eos_invoices/index.html:68
 msgid "Amount"
 msgstr "Betrag"
 
-#: templates/eos_invoices/index.html:62 templates/eos_invoices/sources.html:30
+#: templates/eos_invoices/index.html:70 templates/eos_invoices/sources.html:30
 msgid "Status"
 msgstr "Status"
 
-#: templates/eos_invoices/index.html:77
-msgid "Copy"
-msgstr "Kopieren"
-
-#: templates/eos_invoices/index.html:86
+#: templates/eos_invoices/index.html:94
 msgid "Paid"
 msgstr "Bezahlt"
 
-#: templates/eos_invoices/index.html:88
+#: templates/eos_invoices/index.html:96
 msgid "Open"
 msgstr "Offen"
 
-#: templates/eos_invoices/index.html:100
+#: templates/eos_invoices/index.html:108
 #: templates/eos_invoices/sources.html:76
 msgid "No payment sources are configured."
 msgstr "Es sind keine Zahlungsquellen eingerichtet."
 
+#: templates/eos_invoices/partials/copy-button.html:6
+msgid "Copy"
+msgstr "Kopieren"
+
 #: templates/eos_invoices/settings.html:19
-#: templates/eos_invoices/source_form.html:47
+#: templates/eos_invoices/source_form.html:51
 msgid "Save"
 msgstr "Speichern"
 
-#: templates/eos_invoices/source_form.html:9
+#: templates/eos_invoices/source_form.html:10
 #: templates/eos_invoices/sources.html:10
 msgid "Add source"
 msgstr "Quelle hinzufügen"
 
-#: templates/eos_invoices/source_form.html:27
+#: templates/eos_invoices/source_form.html:29
 msgid "Fields"
 msgstr "Felder"
 
-#: templates/eos_invoices/source_form.html:29
+#: templates/eos_invoices/source_form.html:31
 msgid ""
 "Field names of the chosen model. Related models are reached with a double "
 "underscore, as in a Django query."
@@ -327,11 +331,11 @@ msgstr ""
 "Feldnamen des gewählten Modells. Verknüpfte Modelle erreicht man mit "
 "doppeltem Unterstrich, wie in einer Django-Abfrage."
 
-#: templates/eos_invoices/source_form.html:41
+#: templates/eos_invoices/source_form.html:43
 msgid "Display"
 msgstr "Anzeige"
 
-#: templates/eos_invoices/source_form.html:48
+#: templates/eos_invoices/source_form.html:52
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -361,16 +365,16 @@ msgstr[1] "%(counter)s Zeilen"
 msgid "Delete %(name)s?"
 msgstr "%(name)s löschen?"
 
-#: views.py:51
+#: views.py:58
 #, python-format
 msgid "Saved %(name)s."
 msgstr "%(name)s gespeichert."
 
-#: views.py:65
+#: views.py:95
 #, python-format
 msgid "Deleted %(name)s."
 msgstr "%(name)s gelöscht."
 
-#: views.py:78
+#: views.py:108
 msgid "Settings saved."
 msgstr "Einstellungen gespeichert."

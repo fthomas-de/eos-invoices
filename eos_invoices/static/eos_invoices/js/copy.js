@@ -1,4 +1,4 @@
-/* Copy the reason of a payment, so it can be pasted into the in game transfer. */
+/* Copy recipient, amount and reason of a payment, to paste into the in game transfer. */
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 

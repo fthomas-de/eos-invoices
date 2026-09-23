@@ -1,0 +1,8 @@
+{% load i18n %}
+{# Copies "text" to the clipboard; wired up by static/eos_invoices/js/copy.js. #}
+<button type="button"
+        class="btn btn-sm btn-link p-0 ms-1 align-baseline eos-invoices-copy"
+        data-clipboard-text="{{ text }}"
+        title="{% translate "Copy" %}">
+    <i class="far fa-copy"></i>
+</button>

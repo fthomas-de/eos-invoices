@@ -14,8 +14,9 @@ app.
 
 - One overview of outstanding payments across all configured apps, per source
   and in total
-- Reason per payment, ready to copy into the in-game transfer
-- "Pay to" hint per source
+- Recipient, amount and reason per payment, each ready to copy into the
+  in-game transfer
+- "Pay to" Corporation per source, chosen from the Alliance
 - Toggle between outstanding only and including paid
 - Sources are checked when they are saved; the source list shows whether each
   one can currently be read
@@ -69,7 +70,11 @@ chosen on the *Alliance* tab; without an Alliance nobody sees anything.
 | Reason | Template for the in-game reason. Field names in braces are replaced: `{corp_id}/{month:02d}/{year}` |
 | Description | Template shown next to the amount, e.g. `{month:02d}/{year}` |
 | Date field | Optional, rows are sorted by it |
-| Pay to | Free text, e.g. the Corporation that collects the ISK |
+| Pay to | The Corporation that collects the ISK, chosen from the Corporations of the configured Alliance |
+
+The field settings are dropdowns with the fields of the chosen model, one
+relation deep and filtered to the types that fit. Placeholders for the
+reason and description can be inserted with a click.
 
 Only forward relations to one row can be followed. A path across a reverse or
 many-to-many relation would repeat a payment once per related row and is

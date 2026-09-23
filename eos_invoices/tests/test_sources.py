@@ -7,7 +7,9 @@ from eos_invoices.models import PaymentSource
 from eos_invoices.sources import (
     SourceError,
     check_source,
+    field_options,
     get_invoices,
+    plain_isk,
     render_template,
     resolve_field,
     template_fields,
@@ -40,6 +42,47 @@ class TestResolveField(DueTestCase):
     def test_should_refuse_a_lookup_in_the_path(self):
         with self.assertRaises(SourceError):
             resolve_field(Due, "paid_at__isnull")
+
+
+class TestFieldOptions(DueTestCase):
+    def kinds(self, model):
+        return {option["path"]: option["kind"] for option in field_options(model)}
+
+    def test_should_offer_own_fields_with_their_kind(self):
+        kinds = self.kinds(Due)
+
+        self.assertEqual(kinds["corp_id"], "integer")
+        self.assertEqual(kinds["amount"], "number")
+        self.assertEqual(kinds["paid"], "boolean")
+        self.assertEqual(kinds["created"], "date")
+        self.assertEqual(kinds["state"], "text")
+
+    def test_should_resolve_a_relation_one_level_deep(self):
+        kinds = self.kinds(Due)
+
+        self.assertEqual(kinds["corporation__corporation_id"], "integer")
+        # the relation itself would compare against the primary key
+        self.assertNotIn("corporation", kinds)
+        # two levels are left out to keep the list short
+        self.assertNotIn("corporation__alliance__alliance_id", kinds)
+
+    def test_should_not_offer_relations_to_many_rows(self):
+        paths = self.kinds(EveAllianceInfo)
+
+        self.assertFalse(any(p.startswith("evecorporationinfo__") for p in paths))
+
+
+class TestPlainIsk(EosInvoicesTestCase):
+    def test_should_drop_grouping_and_a_zero_fraction(self):
+        self.assertEqual(plain_isk(Decimal("1234567.00")), "1234567")
+
+    def test_should_keep_a_real_fraction(self):
+        self.assertEqual(plain_isk(Decimal("1234567.5")), "1234567.50")
+
+    def test_should_accept_integers_and_floats(self):
+        # sources may hold BigIntegerField or FloatField amounts
+        self.assertEqual(plain_isk(250000000), "250000000")
+        self.assertEqual(plain_isk(Decimal(str(0.1 + 0.2))), "0.30")
 
 
 class TestTemplates(EosInvoicesTestCase):

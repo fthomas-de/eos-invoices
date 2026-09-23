@@ -52,7 +52,7 @@ def build_overview(user, *, include_paid=False):
         ) % {"corporation": main.corporation_name, "alliance": alliance.alliance_name}
         return overview
 
-    for source in PaymentSource.objects.filter(enabled=True):
+    for source in PaymentSource.objects.filter(enabled=True).select_related("pay_to"):
         result = SourceResult(source=source)
         try:
             result.invoices = get_invoices(

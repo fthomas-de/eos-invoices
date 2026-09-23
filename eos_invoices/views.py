@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
@@ -8,7 +9,13 @@ from eos_invoices import VERSION
 from eos_invoices.forms import InvoiceConfigurationForm, PaymentSourceForm
 from eos_invoices.models import InvoiceConfiguration, PaymentSource
 from eos_invoices.overview import build_overview
-from eos_invoices.sources import probe
+from eos_invoices.sources import (
+    ACCEPTED_KINDS,
+    SourceError,
+    field_options,
+    probe,
+    resolve_model,
+)
 
 
 def _render(request, template, context):
@@ -52,8 +59,31 @@ def source_edit(request, pk=None):
         return redirect("eos_invoices:sources")
 
     return _render(
-        request, "eos_invoices/source_form.html", {"form": form, "source": source}
+        request,
+        "eos_invoices/source_form.html",
+        {
+            "form": form,
+            "source": source,
+            "field_options": form.field_options,
+            # the same type rules the server applies, for filtering in the browser
+            "accepted_kinds": {
+                **{name: sorted(kinds) for name, kinds in ACCEPTED_KINDS.items()},
+                "paid_field_true": ["boolean"],
+            },
+        },
     )
+
+
+@login_required
+@permission_required("eos_invoices.manage_sources")
+def source_fields(request):
+    """Field paths of a model, to refill the dropdowns when the model changes."""
+    try:
+        model = resolve_model(request.GET.get("model", ""))
+    except SourceError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+
+    return JsonResponse({"fields": field_options(model)})
 
 
 @login_required

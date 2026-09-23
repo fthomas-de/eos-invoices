@@ -40,6 +40,18 @@ class SourceError(Exception):
     """A payment source cannot be read as configured."""
 
 
+def plain_isk(value):
+    """An amount as the in-game transfer field takes it: digits, no grouping.
+
+    Whole amounts lose the ".00" - ISK transfers are nearly always whole, and
+    a trailing fraction is one more thing to delete by hand after pasting.
+    """
+    value = Decimal(value).quantize(Decimal("0.01"))
+    if value == value.to_integral_value():
+        return str(int(value))
+    return f"{value:f}"
+
+
 @dataclass(frozen=True)
 class Invoice:
     amount: Decimal
@@ -47,6 +59,10 @@ class Invoice:
     reason: str
     label: str
     date: date | None
+
+    @property
+    def amount_plain(self):
+        return plain_isk(self.amount)
 
 
 @dataclass
@@ -58,6 +74,10 @@ class SourceResult:
     @property
     def open_total(self):
         return sum((i.amount for i in self.invoices if not i.paid), Decimal(0))
+
+    @property
+    def open_total_plain(self):
+        return plain_isk(self.open_total)
 
 
 def resolve_model(label):
@@ -124,6 +144,72 @@ def resolve_field(model, path):
     )
 
 
+def kind_of(model_field):
+    """Coarse type of a field, used to match it to what a setting needs."""
+    # BooleanField before IntegerField: the check order matters for any
+    # backend field that subclasses both
+    if isinstance(model_field, models.BooleanField):
+        return "boolean"
+    if isinstance(model_field, models.IntegerField):
+        return "integer"
+    if isinstance(model_field, (models.DecimalField, models.FloatField)):
+        return "number"
+    if isinstance(model_field, models.DateField):
+        return "date"
+    if isinstance(model_field, (models.CharField, models.TextField)):
+        return "text"
+    return "other"
+
+
+# which kinds each setting accepts; a missing entry accepts every kind
+ACCEPTED_KINDS = {
+    "corporation_field": {"integer"},
+    "amount_field": {"integer", "number"},
+    "date_field": {"date"},
+}
+
+
+def accepted_kinds(name, paid_mode=None):
+    if name == "paid_field" and paid_mode == "true":
+        return {"boolean"}
+    return ACCEPTED_KINDS.get(name)
+
+
+def field_options(model):
+    """Every field path a setting can name, one relation deep.
+
+    Deeper paths still work when typed into the admin, they are only not
+    offered: fanning out every relation of every related model would bury the
+    handful of useful entries.
+    """
+    options = []
+
+    def add(path, model_field):
+        options.append(
+            {
+                "path": path,
+                "label": f"{path} · {model_field.verbose_name}",
+                "kind": kind_of(model_field),
+            }
+        )
+
+    for model_field in model._meta.get_fields():
+        if not model_field.is_relation:
+            if model_field.concrete:
+                add(model_field.name, model_field)
+            continue
+
+        # the same rule resolve_field enforces: never across many rows
+        if model_field.many_to_many or model_field.one_to_many:
+            continue
+
+        for related in model_field.related_model._meta.get_fields():
+            if related.concrete and not related.is_relation:
+                add(f"{model_field.name}__{related.name}", related)
+
+    return sorted(options, key=lambda option: option["path"])
+
+
 def template_fields(template):
     """The field paths a reason or description template refers to."""
     try:
@@ -166,32 +252,27 @@ def check_source(source):
     except SourceError as exc:
         return {"model_label": str(exc)}
 
-    def check(name, allowed, message):
-        path = getattr(source, name)
+    messages = {
+        "corporation_field": _("The Corporation ID field must be an integer field."),
+        "amount_field": _("The amount field must be a number field."),
+        "paid_field": _("\"Field is true\" needs a boolean field."),
+        "date_field": _("The date field must be a date or datetime field."),
+    }
+
+    def check(name):
         try:
-            model_field = resolve_field(model, path)
+            model_field = resolve_field(model, getattr(source, name))
         except SourceError as exc:
             errors[name] = str(exc)
             return None
-        if allowed and not isinstance(model_field, allowed):
-            errors[name] = message
+        kinds = accepted_kinds(name, source.paid_mode)
+        if kinds and kind_of(model_field) not in kinds:
+            errors[name] = messages[name]
         return model_field
 
-    check(
-        "corporation_field",
-        (models.IntegerField,),
-        _("The Corporation ID field must be an integer field."),
-    )
-    check(
-        "amount_field",
-        (models.IntegerField, models.DecimalField, models.FloatField),
-        _("The amount field must be a number field."),
-    )
-
-    paid_allowed = (models.BooleanField,) if source.paid_mode == "true" else None
-    paid_field = check(
-        "paid_field", paid_allowed, _("\"Field is true\" needs a boolean field.")
-    )
+    check("corporation_field")
+    check("amount_field")
+    paid_field = check("paid_field")
     if paid_field is not None and source.paid_mode == "equals":
         if source.paid_value == "":
             errors["paid_value"] = _("Enter the value that means paid.")
@@ -202,11 +283,7 @@ def check_source(source):
                 errors["paid_value"] = " ".join(exc.messages)
 
     if source.date_field:
-        check(
-            "date_field",
-            (models.DateField,),
-            _("The date field must be a date or datetime field."),
-        )
+        check("date_field")
 
     for name in ("reason_template", "label_template"):
         try:

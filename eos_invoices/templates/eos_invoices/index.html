@@ -30,14 +30,22 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="card-title mb-0">{{ result.source.name }}</div>
                     {% if not result.error %}
-                        <span>{{ result.open_total|floatformat:"2g" }} ISK</span>
+                        <span class="text-nowrap">
+                            {{ result.open_total|floatformat:"2g" }} ISK
+                            {% if result.open_total %}
+                                {% include "eos_invoices/partials/copy-button.html" with text=result.open_total_plain %}
+                            {% endif %}
+                        </span>
                     {% endif %}
                 </div>
 
                 <div class="card-body">
                     {% if result.source.pay_to %}
                         <p class="small mb-2">
-                            {% translate "Pay to" %}: <strong>{{ result.source.pay_to }}</strong>
+                            {% translate "Pay to" %}:
+                            <strong>{{ result.source.pay_to.corporation_name }}</strong>
+                            [{{ result.source.pay_to.corporation_ticker }}]
+                            {% include "eos_invoices/partials/copy-button.html" with text=result.source.pay_to.corporation_name %}
                         </p>
                     {% endif %}
 
@@ -67,16 +75,16 @@
                                         <tr>
                                             <td class="text-nowrap">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
                                             <td>{{ invoice.label|default:"-" }}</td>
-                                            <td class="text-end text-nowrap">{{ invoice.amount|floatformat:"2g" }} ISK</td>
+                                            <td class="text-end text-nowrap">
+                                                {{ invoice.amount|floatformat:"2g" }} ISK
+                                                {% if not invoice.paid %}
+                                                    {% include "eos_invoices/partials/copy-button.html" with text=invoice.amount_plain %}
+                                                {% endif %}
+                                            </td>
                                             <td class="text-nowrap">
                                                 {% if invoice.reason %}
                                                     <code>{{ invoice.reason }}</code>
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-link p-0 ms-1 eos-invoices-copy"
-                                                            data-clipboard-text="{{ invoice.reason }}"
-                                                            title="{% translate "Copy" %}">
-                                                        <i class="far fa-copy"></i>
-                                                    </button>
+                                                    {% include "eos_invoices/partials/copy-button.html" with text=invoice.reason %}
                                                 {% else %}
                                                     -
                                                 {% endif %}

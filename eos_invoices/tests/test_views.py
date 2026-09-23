@@ -1,7 +1,7 @@
 from django.test import RequestFactory
 from django.urls import reverse
 
-from allianceauth.eveonline.models import EveAllianceInfo
+from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 
 from eos_invoices.auth_hooks import InvoicesMenuItem
 from eos_invoices.models import InvoiceConfiguration, PaymentSource
@@ -103,3 +103,110 @@ class TestSourceMaintenance(DueTestCase):
         self.client.post(reverse("eos_invoices:settings"), {"alliance": alliance.pk})
 
         self.assertEqual(InvoiceConfiguration.get_solo().alliance, alliance)
+
+    def test_should_list_the_fields_of_a_model(self):
+        url = reverse("eos_invoices:source_fields")
+
+        fields = self.client.get(url, {"model": "eos_invoices.Due"}).json()["fields"]
+
+        self.assertIn({"path": "corp_id", "kind": "integer"}, [
+            {"path": f["path"], "kind": f["kind"]} for f in fields
+        ])
+        self.assertEqual(self.client.get(url, {"model": "nope.Nothing"}).status_code, 400)
+
+    def test_should_offer_only_suitable_fields_in_each_dropdown(self):
+        source = make_source()
+
+        form = self.client.get(reverse("eos_invoices:source_edit", args=[source.pk])).context["form"]
+
+        corporation = [value for value, _label in form.fields["corporation_field"].choices]
+        paid = [value for value, _label in form.fields["paid_field"].choices]
+        self.assertIn("corporation__corporation_id", corporation)
+        self.assertNotIn("amount", corporation)
+        # "Field is true" is the default mode: booleans only
+        self.assertIn("paid", paid)
+        self.assertNotIn("state", paid)
+
+    def test_should_keep_a_saved_path_the_list_does_not_offer(self):
+        # valid, but two relations deep and therefore not in the dropdown
+        source = make_source(corporation_field="corporation__alliance__alliance_id")
+        url = reverse("eos_invoices:source_edit", args=[source.pk])
+
+        self.assertContains(self.client.get(url), 'value="corporation__alliance__alliance_id" selected')
+
+    def test_should_report_a_wrong_type_rather_than_an_invalid_choice(self):
+        response = self.post(amount_field="state")
+
+        self.assertContains(response, "must be a number field")
+
+
+class TestPayTo(DueTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.alliance = EveAllianceInfo.objects.create(
+            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
+        )
+        other = EveAllianceInfo.objects.create(
+            alliance_id=3002, alliance_name="B", alliance_ticker="B", executor_corp_id=2
+        )
+        cls.holding = EveCorporationInfo.objects.create(
+            corporation_id=2100, corporation_name="Holding", corporation_ticker="HOLD",
+            member_count=1, alliance=cls.alliance,
+        )
+        cls.outsider = EveCorporationInfo.objects.create(
+            corporation_id=2200, corporation_name="Outsider", corporation_ticker="OUT",
+            member_count=1, alliance=other,
+        )
+        InvoiceConfiguration.objects.create(alliance=cls.alliance)
+
+    def offered(self, source):
+        url = reverse("eos_invoices:source_edit", args=[source.pk])
+        return set(self.client.get(url).context["form"].fields["pay_to"].queryset)
+
+    def test_should_offer_only_corporations_of_the_alliance(self):
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+        self.assertEqual(self.offered(make_source()), {self.holding})
+
+    def test_should_keep_a_saved_corporation_that_left_the_alliance(self):
+        # otherwise saving any other field would clear it without a word
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+        offered = self.offered(make_source(pay_to=self.outsider))
+
+        self.assertEqual(offered, {self.holding, self.outsider})
+
+    def test_should_name_the_recipient_on_the_overview(self):
+        make_source(pay_to=self.holding)
+        Due.objects.create(corp_id=2001, amount=1)
+        self.client.force_login(make_ceo())
+
+        response = self.client.get(reverse("eos_invoices:index"))
+
+        self.assertContains(response, "Holding")
+        self.assertContains(response, "[HOLD]")
+
+    def test_should_offer_recipient_amounts_and_total_for_copying(self):
+        make_source(pay_to=self.holding)
+        Due.objects.create(corp_id=2001, amount=1500000)
+        Due.objects.create(corp_id=2001, amount=250000.5)
+        Due.objects.create(corp_id=2001, amount=999, paid=True)
+        self.client.force_login(make_ceo())
+
+        response = self.client.get(reverse("eos_invoices:index"), {"paid": "1"})
+
+        self.assertContains(response, 'data-clipboard-text="Holding"')
+        self.assertContains(response, 'data-clipboard-text="1500000"')
+        self.assertContains(response, 'data-clipboard-text="250000.50"')
+        self.assertContains(response, 'data-clipboard-text="1750000.50"')
+        # a paid row has nothing left to transfer
+        self.assertNotContains(response, 'data-clipboard-text="999"')
+
+
+class TestFieldsEndpointAccess(DueTestCase):
+    def test_should_need_the_maintenance_permission(self):
+        self.client.force_login(make_ceo())
+
+        response = self.client.get(reverse("eos_invoices:source_fields"), {"model": "eos_invoices.Due"})
+
+        self.assertEqual(response.status_code, 302)
