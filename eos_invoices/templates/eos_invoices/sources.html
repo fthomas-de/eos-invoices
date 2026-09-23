@@ -1,0 +1,84 @@
+{% extends "eos_invoices/base.html" %}
+{% load i18n %}
+{% load sri %}
+
+{% block details %}
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-title mb-0">{% translate "Payment sources" %}</div>
+            <a href="{% url "eos_invoices:source_add" %}" class="btn btn-sm btn-success">
+                <i class="fas fa-plus"></i> {% translate "Add source" %}
+            </a>
+        </div>
+
+        <div class="card-body">
+            <p class="text-body-secondary small">
+                {% blocktranslate trimmed %}
+                    Each source is a model of another app with one row per payment a
+                    Corporation owes. The overview reads every enabled source for the
+                    Corporation of the viewer's main character.
+                {% endblocktranslate %}
+            </p>
+
+            {% if rows %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>{% translate "Name" %}</th>
+                                <th>{% translate "Model" %}</th>
+                                <th>{% translate "Status" %}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                                <tr>
+                                    <td>
+                                        {{ row.source.name }}
+                                        {% if not row.source.enabled %}
+                                            <span class="badge text-bg-secondary ms-1">{% translate "Disabled" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><code>{{ row.source.model_label }}</code></td>
+                                    <td>
+                                        {% if row.error %}
+                                            <span class="text-danger small">{{ row.error }}</span>
+                                        {% else %}
+                                            <span class="text-success">
+                                                <i class="fas fa-check"></i>
+                                                {% blocktranslate count counter=row.count trimmed %}
+                                                    {{ counter }} row
+                                                {% plural %}
+                                                    {{ counter }} rows
+                                                {% endblocktranslate %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end text-nowrap">
+                                        <a href="{% url "eos_invoices:source_edit" row.source.pk %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        <form method="post" action="{% url "eos_invoices:source_delete" row.source.pk %}" class="d-inline eos-invoices-confirm"
+                                              data-question="{% blocktranslate with name=row.source.name %}Delete {{ name }}?{% endblocktranslate %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="mb-0">{% translate "No payment sources are configured." %}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_javascript %}
+    {% sri_static "eos_invoices/js/confirm.js" %}
+{% endblock %}

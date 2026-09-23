@@ -1,0 +1,31 @@
+{% extends "allianceauth/base-bs5.html" %}
+{% load i18n %}
+
+{% block page_title %}{% translate "Invoices" %}{% endblock %}
+
+{% block header_nav_collapse_left %}
+    {% if perms.eos_invoices.basic_access %}
+        {% url "eos_invoices:index" as overview_url %}
+        {% translate "Overview" as overview_title %}
+        {% include "eos_invoices/partials/nav-item.html" with nav_url=overview_url nav_title=overview_title nav_view="eos_invoices:index" %}
+    {% endif %}
+
+    {# maintenance pages - do not offer links that would only redirect #}
+    {% if perms.eos_invoices.manage_sources %}
+        {% url "eos_invoices:sources" as sources_url %}
+        {% translate "Sources" as sources_title %}
+        {% include "eos_invoices/partials/nav-item.html" with nav_url=sources_url nav_title=sources_title nav_view="eos_invoices:sources eos_invoices:source_add eos_invoices:source_edit" %}
+
+        {% url "eos_invoices:settings" as settings_url %}
+        {% translate "Alliance" context "EVE jargon" as settings_title %}
+        {% include "eos_invoices/partials/nav-item.html" with nav_url=settings_url nav_title=settings_title nav_view="eos_invoices:settings" %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <div class="eos_invoices">
+        <h1 class="text-center mb-3">{% translate "Invoices" %} ({{ version }})</h1>
+
+        {% block details %}{% endblock %}
+    </div>
+{% endblock %}

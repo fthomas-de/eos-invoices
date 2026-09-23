@@ -1,0 +1,108 @@
+{% extends "eos_invoices/base.html" %}
+{% load i18n %}
+{% load sri %}
+
+{% block details %}
+    {% if overview.notice %}
+        <div class="alert alert-info">{{ overview.notice }}</div>
+    {% else %}
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+                <span class="fs-5">{{ overview.corporation_name }}</span>
+                <span class="text-body-secondary ms-2">
+                    {% translate "Outstanding" %}:
+                    <strong>{{ overview.open_total|floatformat:"2g" }} ISK</strong>
+                </span>
+            </div>
+
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="?" class="btn {% if include_paid %}btn-outline-primary{% else %}btn-primary{% endif %}">
+                    {% translate "Outstanding only" %}
+                </a>
+                <a href="?paid=1" class="btn {% if include_paid %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    {% translate "Including paid" %}
+                </a>
+            </div>
+        </div>
+
+        {% for result in overview.results %}
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-title mb-0">{{ result.source.name }}</div>
+                    {% if not result.error %}
+                        <span>{{ result.open_total|floatformat:"2g" }} ISK</span>
+                    {% endif %}
+                </div>
+
+                <div class="card-body">
+                    {% if result.source.pay_to %}
+                        <p class="small mb-2">
+                            {% translate "Pay to" %}: <strong>{{ result.source.pay_to }}</strong>
+                        </p>
+                    {% endif %}
+
+                    {% if result.error %}
+                        <div class="alert alert-warning mb-0">
+                            {% translate "This source cannot be read at the moment." %}
+                            {% if perms.eos_invoices.manage_sources %}
+                                <div class="small mt-1">{{ result.error }}</div>
+                            {% endif %}
+                        </div>
+                    {% elif not result.invoices %}
+                        <p class="text-body-secondary mb-0">{% translate "Nothing outstanding." %}</p>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{% translate "Date" %}</th>
+                                        <th>{% translate "Description" %}</th>
+                                        <th class="text-end">{% translate "Amount" %}</th>
+                                        <th>{% translate "Reason" context "EVE jargon" %}</th>
+                                        <th>{% translate "Status" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for invoice in result.invoices %}
+                                        <tr>
+                                            <td class="text-nowrap">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
+                                            <td>{{ invoice.label|default:"-" }}</td>
+                                            <td class="text-end text-nowrap">{{ invoice.amount|floatformat:"2g" }} ISK</td>
+                                            <td class="text-nowrap">
+                                                {% if invoice.reason %}
+                                                    <code>{{ invoice.reason }}</code>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-link p-0 ms-1 eos-invoices-copy"
+                                                            data-clipboard-text="{{ invoice.reason }}"
+                                                            title="{% translate "Copy" %}">
+                                                        <i class="far fa-copy"></i>
+                                                    </button>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if invoice.paid %}
+                                                    <span class="badge text-bg-success">{% translate "Paid" %}</span>
+                                                {% else %}
+                                                    <span class="badge text-bg-danger">{% translate "Open" %}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-info">{% translate "No payment sources are configured." %}</div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_javascript %}
+    {% include "bundles/clipboard-js.html" %}
+    {% sri_static "eos_invoices/js/copy.js" %}
+{% endblock %}

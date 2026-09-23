@@ -1,0 +1,25 @@
+{% extends "eos_invoices/base.html" %}
+{% load django_bootstrap5 %}
+{% load i18n %}
+
+{% block details %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="card-title mb-0">{% translate "Alliance" context "EVE jargon" %}</div>
+        </div>
+
+        <div class="card-body">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <form method="post" action="">
+                        {% csrf_token %}
+
+                        {% bootstrap_field form.alliance %}
+
+                        <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

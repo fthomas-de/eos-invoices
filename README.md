@@ -1,0 +1,106 @@
+# EOS Invoices
+
+An [Alliance Auth](https://gitlab.com/allianceauth/allianceauth) app that shows
+the CEO of a Corporation every payment their Corporation still owes, collected
+from other apps in one list: mining tax, PvE tax, rent, whatever an app records
+per Corporation.
+
+The app does not know those apps. Each one is registered as a **payment source**
+on a settings page by naming its model and the fields that hold the Corporation
+ID, the amount and whether it has been paid. Nothing has to change in the other
+app.
+
+## Features
+
+- One overview of outstanding payments across all configured apps, per source
+  and in total
+- Reason per payment, ready to copy into the in-game transfer
+- "Pay to" hint per source
+- Toggle between outstanding only and including paid
+- Sources are checked when they are saved; the source list shows whether each
+  one can currently be read
+- Restricted to the Corporations of one Alliance
+
+## Installation
+
+1. Install the package into the virtual environment of your Alliance Auth:
+
+   ```bash
+   pip install git+https://github.com/fthomas-de/eos-invoices.git
+   ```
+
+2. Add `"eos_invoices",` to `INSTALLED_APPS` in `local.py`.
+
+3. Run migrations and collect static files:
+
+   ```bash
+   python manage.py migrate
+   ```
+
+   ```bash
+   python manage.py collectstatic --noinput
+   ```
+
+4. Restart supervisor.
+
+## Permissions
+
+| Permission | Who | What |
+|---|---|---|
+| `eos_invoices.basic_access` | CEOs | See outstanding payments of the Corporation of their main character |
+| `eos_invoices.manage_sources` | Admins | Maintain payment sources and the Alliance |
+
+A Corporation can have several CEOs in Auth terms (directors, alt CEOs): give
+the permission to each of them, via a group or state.
+
+Only the **main character** counts. Its Corporation has to be in the Alliance
+chosen on the *Alliance* tab; without an Alliance nobody sees anything.
+
+## Configuring a source
+
+*Invoices → Sources → Add source*
+
+| Field | Meaning |
+|---|---|
+| Model | The model with one row per payment, e.g. `eos_tax.MonthlyTax` |
+| Corporation ID field | Field with the EVE Corporation ID. Relations are followed with `__`, e.g. `corporation__corporation_id` |
+| Amount field | Amount owed in ISK |
+| Paid field / Paid when | When a row counts as paid: the field is true, is not empty (e.g. a paid-at date), or equals a given value |
+| Reason | Template for the in-game reason. Field names in braces are replaced: `{corp_id}/{month:02d}/{year}` |
+| Description | Template shown next to the amount, e.g. `{month:02d}/{year}` |
+| Date field | Optional, rows are sorted by it |
+| Pay to | Free text, e.g. the Corporation that collects the ISK |
+
+Only forward relations to one row can be followed. A path across a reverse or
+many-to-many relation would repeat a payment once per related row and is
+refused.
+
+### Examples
+
+**eos-tax**
+
+| | |
+|---|---|
+| Model | `eos_tax.MonthlyTax` |
+| Corporation ID field | `corp_id` |
+| Amount field | `tax_value` |
+| Paid field | `payed`, *Field is true* |
+| Reason | `{corp_id}/{month}/{year}` |
+| Description | `{month:02d}/{year}` |
+
+**aa-miningtax**
+
+| | |
+|---|---|
+| Model | `miningtax.AllianceBillingRecord` |
+| Corporation ID field | `corporation__corporation_id` |
+| Amount field | `total_due` |
+| Paid field | `paid`, *Field is true* |
+| Reason | `{corporation__corporation_id}/{month:02d}/{year}` |
+| Description | `{month:02d}/{year}` |
+
+## Possible extensions
+
+Apps that keep a running balance instead of one row per payment cannot be
+described by field names. A small provider interface, a function the other app
+exposes, would cover them; it will be added once an app needs it.

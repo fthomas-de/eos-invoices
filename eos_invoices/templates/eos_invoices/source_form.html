@@ -1,0 +1,55 @@
+{% extends "eos_invoices/base.html" %}
+{% load django_bootstrap5 %}
+{% load i18n %}
+
+{% block details %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="card-title mb-0">
+                {% if source.pk %}{{ source.name }}{% else %}{% translate "Add source" %}{% endif %}
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <form method="post" action="">
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                        {% endif %}
+
+                        {% bootstrap_field form.name %}
+                        {% bootstrap_field form.enabled %}
+                        {% bootstrap_field form.model_label %}
+
+                        <h2 class="h6 mt-4 border-bottom pb-2">{% translate "Fields" %}</h2>
+                        <p class="text-body-secondary small">
+                            {% blocktranslate trimmed %}
+                                Field names of the chosen model. Related models are reached with a
+                                double underscore, as in a Django query.
+                            {% endblocktranslate %}
+                        </p>
+                        {% bootstrap_field form.corporation_field %}
+                        {% bootstrap_field form.amount_field %}
+                        {% bootstrap_field form.paid_field %}
+                        {% bootstrap_field form.paid_mode %}
+                        {% bootstrap_field form.paid_value %}
+                        {% bootstrap_field form.date_field %}
+
+                        <h2 class="h6 mt-4 border-bottom pb-2">{% translate "Display" %}</h2>
+                        {% bootstrap_field form.reason_template %}
+                        {% bootstrap_field form.label_template %}
+                        {% bootstrap_field form.pay_to %}
+
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="submit" class="btn btn-primary">{% translate "Save" %}</button>
+                            <a href="{% url "eos_invoices:sources" %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
