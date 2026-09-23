@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _, pgettext_lazy
 
@@ -141,3 +142,39 @@ class PaymentSource(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class PaymentLog(models.Model):
+    """Who marked which payment as paid, and what it was at that moment.
+
+    The owning apps keep no record of who flipped their paid flag. Names are
+    stored as text next to the foreign keys, so an entry still reads correctly
+    after the source, the Corporation or the user is gone.
+    """
+
+    created = models.DateTimeField(_("Date"), auto_now_add=True, db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    user_name = models.CharField(_("Marked by"), max_length=254)
+    source = models.ForeignKey(
+        PaymentSource, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    source_name = models.CharField(_("Source"), max_length=100)
+    row_pk = models.CharField(_("Row"), max_length=64)
+    corporation_id = models.BigIntegerField(_("Corporation ID"))
+    corporation_name = models.CharField(
+        pgettext_lazy("EVE jargon", "Corporation"), max_length=254, blank=True
+    )
+    amount = models.DecimalField(_("Amount"), max_digits=24, decimal_places=2)
+    reason = models.CharField(pgettext_lazy("EVE jargon", "Reason"), max_length=255, blank=True)
+    label = models.CharField(_("Description"), max_length=255, blank=True)
+
+    class Meta:
+        default_permissions = ()
+        ordering = ["-created", "-pk"]
+        verbose_name = _("Payment log entry")
+        verbose_name_plural = _("Payment log")
+
+    def __str__(self):
+        return f"{self.created:%Y-%m-%d %H:%M} {self.user_name}: {self.source_name} {self.row_pk}"

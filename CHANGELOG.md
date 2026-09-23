@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-09-23
+
+### Added
+
+- "All Corporations" tab for admins: the open payments of every Corporation
+  in the configured Alliance on one page, grouped by Corporation and source,
+  with the total per Corporation and overall. Corporations with nothing open
+  are only counted. Each source is read once for all Corporations together, so
+  the page costs the same number of queries for 3 Corporations as for 30. A
+  source with more than 2000 open rows says it was cut short instead of
+  showing a short list as if it were complete.
+- "Log" tab: every payment marked as paid, with who, when, source,
+  Corporation, amount, reason and the row's key in the owning app. Names are
+  stored as text beside the keys, so an entry stays readable after the source
+  or the user is gone. The entries are read only in the Django admin as well -
+  a log that can be edited proves nothing.
+
+### Changed
+
+- Payments are marked as paid on the "All Corporations" tab only. The normal
+  overview is read only again, for admins too, and needs the CEO permission
+  again; an admin who is no CEO is taken to "All Corporations" by the menu.
+- Marking a row that is already paid is refused, so the log never records a
+  change that did not happen.
+
 ## [0.0.3] - 2026-09-23
 
 ### Added

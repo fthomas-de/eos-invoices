@@ -6,6 +6,8 @@ app_name = "eos_invoices"
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path("admin/", views.admin_overview, name="admin"),
+    path("log/", views.payment_log, name="log"),
     path("sources/", views.sources, name="sources"),
     path("sources/add/", views.source_edit, name="source_add"),
     path("sources/fields/", views.source_fields, name="source_fields"),

@@ -4,7 +4,7 @@
 {% block page_title %}{% translate "Invoices" %}{% endblock %}
 
 {% block header_nav_collapse_left %}
-    {% if perms.eos_invoices.basic_access or perms.eos_invoices.manage_sources %}
+    {% if perms.eos_invoices.basic_access %}
         {% url "eos_invoices:index" as overview_url %}
         {% translate "Overview" as overview_title %}
         {% include "eos_invoices/partials/nav-item.html" with nav_url=overview_url nav_title=overview_title nav_view="eos_invoices:index" %}
@@ -12,6 +12,14 @@
 
     {# maintenance pages - do not offer links that would only redirect #}
     {% if perms.eos_invoices.manage_sources %}
+        {% url "eos_invoices:admin" as admin_url %}
+        {% translate "All Corporations" as admin_title %}
+        {% include "eos_invoices/partials/nav-item.html" with nav_url=admin_url nav_title=admin_title nav_view="eos_invoices:admin" %}
+
+        {% url "eos_invoices:log" as log_url %}
+        {% translate "Log" as log_title %}
+        {% include "eos_invoices/partials/nav-item.html" with nav_url=log_url nav_title=log_title nav_view="eos_invoices:log" %}
+
         {% url "eos_invoices:sources" as sources_url %}
         {% translate "Sources" as sources_title %}
         {% include "eos_invoices/partials/nav-item.html" with nav_url=sources_url nav_title=sources_title nav_view="eos_invoices:sources eos_invoices:source_add eos_invoices:source_edit" %}

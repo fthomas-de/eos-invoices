@@ -18,7 +18,8 @@ app.
   in-game transfer
 - "Pay to" Corporation per source, chosen from the Alliance
 - Toggle between outstanding only and including paid
-- Admins can mark payments as paid
+- Admin overview of all Corporations of the Alliance, where payments can be
+  marked as paid, and a log of who marked what
 - Sources are checked when they are saved; the source list shows whether each
   one can currently be read
 - Restricted to the Corporations of one Alliance
@@ -50,7 +51,7 @@ app.
 | Permission | Who | What |
 |---|---|---|
 | `eos_invoices.basic_access` | CEOs | See outstanding payments of the Corporation of their main character |
-| `eos_invoices.manage_sources` | Admins | Maintain payment sources and the Alliance; mark payments of their own Corporation as paid |
+| `eos_invoices.manage_sources` | Admins | See the open payments of all Corporations of the Alliance, mark them as paid, read the log; maintain payment sources and the Alliance |
 
 A Corporation can have several CEOs in Auth terms (directors, alt CEOs): give
 the permission to each of them, via a group or state.
@@ -107,8 +108,9 @@ refused.
 
 ## Marking payments as paid
 
-The *Mark as paid* button writes to the table of the other app, through that
-model's own `save()`. The value follows the source's *Paid when* setting:
+*Invoices → All Corporations* lists the open payments of every Corporation in
+the Alliance. Its *Mark as paid* button writes to the table of the other app,
+through that model's own `save()`, and adds an entry to *Invoices → Log*. The value follows the source's *Paid when* setting:
 
 | Paid when | Written |
 |---|---|

@@ -1,0 +1,93 @@
+{% extends "eos_invoices/base.html" %}
+{% load i18n %}
+{% load sri %}
+
+{% block details %}
+    {% if overview.notice %}
+        <div class="alert alert-info">{{ overview.notice }}</div>
+    {% else %}
+        {% for source, message in overview.problems %}
+            <div class="alert alert-warning">
+                <strong>{{ source.name }}</strong>: {{ message }}
+            </div>
+        {% endfor %}
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <span class="text-body-secondary">
+                {% translate "Outstanding" %}:
+                <strong>{{ overview.open_total|floatformat:"2g" }} ISK</strong>
+            </span>
+            {% if overview.settled_count %}
+                <span class="text-body-secondary small">
+                    {% blocktranslate count counter=overview.settled_count trimmed %}
+                        {{ counter }} Corporation with nothing outstanding
+                    {% plural %}
+                        {{ counter }} Corporations with nothing outstanding
+                    {% endblocktranslate %}
+                </span>
+            {% endif %}
+        </div>
+
+        {% for block in overview.corporations %}
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-title mb-0">
+                        {{ block.corporation.corporation_name }} [{{ block.corporation.corporation_ticker }}]
+                    </div>
+                    <span class="text-nowrap">{{ block.open_total|floatformat:"2g" }} ISK</span>
+                </div>
+
+                <div class="card-body">
+                    {% for result in block.results %}
+                        <h2 class="h6 {% if not forloop.first %}mt-3{% endif %}">{{ result.source.name }}</h2>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{% translate "Date" %}</th>
+                                        <th>{% translate "Description" %}</th>
+                                        <th class="text-end">{% translate "Amount" %}</th>
+                                        <th>{% translate "Reason" context "EVE jargon" %}</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for invoice in result.invoices %}
+                                        <tr>
+                                            <td class="text-nowrap">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
+                                            <td>{{ invoice.label|default:"-" }}</td>
+                                            <td class="text-end text-nowrap">{{ invoice.amount|floatformat:"2g" }} ISK</td>
+                                            <td class="text-nowrap">
+                                                {% if invoice.reason %}<code>{{ invoice.reason }}</code>{% else %}-{% endif %}
+                                            </td>
+                                            <td class="text-end text-nowrap">
+                                                {% if result.can_mark_paid %}
+                                                    <form method="post" action="{% url "eos_invoices:mark_paid" result.source.pk %}"
+                                                          class="d-inline eos-invoices-confirm"
+                                                          data-question="{% translate "Mark this payment as paid?" %}">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="row" value="{{ invoice.pk }}">
+                                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-success py-0">
+                                                            {% translate "Mark as paid" %}
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-success">{% translate "Nothing outstanding." %}</div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_javascript %}
+    {% sri_static "eos_invoices/js/confirm.js" %}
+{% endblock %}

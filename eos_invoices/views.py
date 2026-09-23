@@ -1,9 +1,6 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import (
-    login_required,
-    permission_required,
-    user_passes_test,
-)
+from django.contrib.auth.decorators import login_required, permission_required
+from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -11,12 +8,13 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from allianceauth.eveonline.models import EveCorporationInfo
 from allianceauth.services.hooks import get_extension_logger
 
 from eos_invoices import VERSION
 from eos_invoices.forms import InvoiceConfigurationForm, PaymentSourceForm
-from eos_invoices.models import InvoiceConfiguration, PaymentSource
-from eos_invoices.overview import build_overview
+from eos_invoices.models import InvoiceConfiguration, PaymentLog, PaymentSource
+from eos_invoices.overview import build_admin_overview, build_overview
 from eos_invoices.sources import (
     ACCEPTED_KINDS,
     SourceError,
@@ -29,19 +27,12 @@ from eos_invoices.sources import (
 logger = get_extension_logger(__name__)
 
 
-def _may_view_overview(user):
-    # admins open it too: that is where they mark payments as paid
-    return user.has_perm("eos_invoices.basic_access") or user.has_perm(
-        "eos_invoices.manage_sources"
-    )
-
-
 def _render(request, template, context):
     return render(request, template, {"version": VERSION, **context})
 
 
 @login_required
-@user_passes_test(_may_view_overview)
+@permission_required("eos_invoices.basic_access")
 def index(request):
     include_paid = request.GET.get("paid") == "1"
     return _render(
@@ -56,23 +47,52 @@ def index(request):
 
 @login_required
 @permission_required("eos_invoices.manage_sources")
+def admin_overview(request):
+    return _render(
+        request, "eos_invoices/admin.html", {"overview": build_admin_overview()}
+    )
+
+
+@login_required
+@permission_required("eos_invoices.manage_sources")
+def payment_log(request):
+    page = Paginator(PaymentLog.objects.all(), 100).get_page(request.GET.get("page"))
+    return _render(request, "eos_invoices/log.html", {"page": page})
+
+
+@login_required
+@permission_required("eos_invoices.manage_sources")
 @require_POST
 def mark_paid(request, pk):
     source = get_object_or_404(PaymentSource, pk=pk)
     row = request.POST.get("row", "")
 
     try:
-        mark_row_paid(source, row)
+        corporation_id, invoice = mark_row_paid(source, row)
     except SourceError as exc:
         messages.error(request, str(exc))
     else:
+        main = request.user.profile.main_character
+        corporation = EveCorporationInfo.objects.filter(corporation_id=corporation_id).first()
         # the owning app keeps no record of who flipped its flag - we do
+        PaymentLog.objects.create(
+            user=request.user,
+            user_name=main.character_name if main else request.user.username,
+            source=source,
+            source_name=source.name,
+            row_pk=str(invoice.pk),
+            corporation_id=corporation_id,
+            corporation_name=corporation.corporation_name if corporation else "",
+            amount=invoice.amount,
+            reason=invoice.reason[:255],
+            label=invoice.label[:255],
+        )
         logger.info("eos_invoices: %s marked row %s of %s as paid", request.user, row, source)
         messages.success(request, _("Marked as paid."))
 
     target = request.POST.get("next", "")
     if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
-        target = reverse("eos_invoices:index")
+        target = reverse("eos_invoices:admin")
     return redirect(target)
 
 

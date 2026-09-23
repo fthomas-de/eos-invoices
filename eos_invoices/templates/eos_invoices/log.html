@@ -1,0 +1,61 @@
+{% extends "eos_invoices/base.html" %}
+{% load i18n %}
+
+{% block details %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <div class="card-title mb-0">{% translate "Payments marked as paid" %}</div>
+        </div>
+
+        <div class="card-body">
+            {% if page.object_list %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>{% translate "Date" %}</th>
+                                <th>{% translate "Marked by" %}</th>
+                                <th>{% translate "Source" %}</th>
+                                <th>{% translate "Corporation" context "EVE jargon" %}</th>
+                                <th>{% translate "Description" %}</th>
+                                <th class="text-end">{% translate "Amount" %}</th>
+                                <th>{% translate "Reason" context "EVE jargon" %}</th>
+                                <th>{% translate "Row" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in page.object_list %}
+                                <tr>
+                                    <td class="text-nowrap">{{ entry.created|date:"Y-m-d H:i" }}</td>
+                                    <td>{{ entry.user_name }}</td>
+                                    <td>{{ entry.source_name }}</td>
+                                    <td>{{ entry.corporation_name|default:entry.corporation_id }}</td>
+                                    <td>{{ entry.label|default:"-" }}</td>
+                                    <td class="text-end text-nowrap">{{ entry.amount|floatformat:"2g" }} ISK</td>
+                                    <td>{% if entry.reason %}<code>{{ entry.reason }}</code>{% else %}-{% endif %}</td>
+                                    <td><code>{{ entry.row_pk }}</code></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if page.has_other_pages %}
+                    <nav class="mt-3">
+                        <ul class="pagination pagination-sm mb-0">
+                            {% if page.has_previous %}
+                                <li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}">&laquo;</a></li>
+                            {% endif %}
+                            <li class="page-item disabled"><span class="page-link">{{ page.number }} / {{ page.paginator.num_pages }}</span></li>
+                            {% if page.has_next %}
+                                <li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}">&raquo;</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <p class="mb-0">{% translate "Nothing has been marked as paid yet." %}</p>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

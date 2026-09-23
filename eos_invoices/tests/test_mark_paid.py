@@ -2,9 +2,12 @@ from datetime import date, datetime
 
 from django.urls import reverse
 
-from allianceauth.eveonline.models import EveAllianceInfo
+from unittest.mock import patch
 
-from eos_invoices.models import InvoiceConfiguration
+from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
+
+from eos_invoices.models import InvoiceConfiguration, PaymentLog
+from eos_invoices.overview import build_admin_overview
 from eos_invoices.sources import SourceError, mark_paid, paid_marker
 
 from .base import Due, DueTestCase, make_ceo, make_source
@@ -82,7 +85,7 @@ class TestMarkPaidView(DueTestCase):
 
         response = self.client.post(self.url, {"row": self.row.pk, "next": "https://evil.example/"})
 
-        self.assertRedirects(response, reverse("eos_invoices:index"), fetch_redirect_response=False)
+        self.assertRedirects(response, reverse("eos_invoices:admin"), fetch_redirect_response=False)
 
     def test_should_only_accept_post(self):
         self.client.force_login(make_ceo(perms=("manage_sources",)))
@@ -96,28 +99,120 @@ class TestAdminOverview(DueTestCase):
         alliance = EveAllianceInfo.objects.create(
             alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
         )
+        other = EveAllianceInfo.objects.create(
+            alliance_id=3002, alliance_name="B", alliance_ticker="B", executor_corp_id=2
+        )
+        for corporation_id, name, member_of in (
+            (2001, "Alpha", alliance),
+            (2002, "Beta", alliance),
+            (2003, "Gamma", alliance),
+            (2009, "Stranger", other),
+        ):
+            EveCorporationInfo.objects.create(
+                corporation_id=corporation_id, corporation_name=name,
+                corporation_ticker=name[:3].upper(), member_count=1, alliance=member_of,
+            )
         InvoiceConfiguration.objects.create(alliance=alliance)
         Due.objects.create(corp_id=2001, amount=111)
         Due.objects.create(corp_id=2002, amount=222)
+        Due.objects.create(corp_id=2002, amount=5, paid=True)
+        Due.objects.create(corp_id=2009, amount=999)
 
-    def amounts(self, response):
-        return [i.amount for r in response.context["overview"].results for i in r.invoices]
-
-    def test_should_show_an_admin_their_own_corporation_with_mark_buttons(self):
+    def test_should_list_every_alliance_corporation_with_open_payments(self):
         make_source()
         self.client.force_login(make_ceo(perms=("manage_sources",)))
 
-        response = self.client.get(reverse("eos_invoices:index"), {"corp": 2002})
+        overview = self.client.get(reverse("eos_invoices:admin")).context["overview"]
 
-        # a corp parameter from an old link changes nothing
-        self.assertEqual(self.amounts(response), [111])
-        self.assertContains(response, "Mark as paid")
+        self.assertEqual(
+            [(b.corporation.corporation_name, b.open_total) for b in overview.corporations],
+            [("Alpha", 111), ("Beta", 222)],
+        )
+        # Gamma has nothing open; Stranger is outside the Alliance
+        self.assertEqual(overview.settled_count, 1)
+        self.assertEqual(overview.open_total, 333)
 
-    def test_should_not_offer_mark_buttons_to_a_ceo(self):
+    def test_should_offer_the_mark_button_there(self):
         make_source()
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+        self.assertContains(self.client.get(reverse("eos_invoices:admin")), "Mark as paid")
+
+    def test_should_read_each_source_once_for_all_corporations(self):
+        # one query per Corporation would be 30+ queries in a real Alliance
+        make_source()
+
+        # configuration, Corporations, sources, then one query for the source
+        with self.assertNumQueries(4):
+            build_admin_overview()
+
+    def test_should_say_when_a_source_was_cut_short(self):
+        make_source()
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+        with patch("eos_invoices.overview.ADMIN_MAX_ROWS", 1):
+            overview = self.client.get(reverse("eos_invoices:admin")).context["overview"]
+
+        self.assertEqual(len(overview.problems), 1)
+
+    def test_should_keep_ceos_out(self):
         self.client.force_login(make_ceo())
 
+        self.assertEqual(self.client.get(reverse("eos_invoices:admin")).status_code, 302)
+
+    def test_should_not_offer_mark_buttons_on_the_normal_overview(self):
+        make_source()
+        self.client.force_login(make_ceo(perms=("basic_access", "manage_sources")))
+
         self.assertNotContains(self.client.get(reverse("eos_invoices:index")), "Mark as paid")
+
+
+class TestPaymentLog(DueTestCase):
+    def setUp(self):
+        self.source = make_source(name="PvE Tax", reason_template="{corp_id}/{month:02d}/{year}")
+        self.row = Due.objects.create(corp_id=2001, amount=1500000, month=7)
+        self.admin = make_ceo(perms=("manage_sources",))
+        self.url = reverse("eos_invoices:mark_paid", args=[self.source.pk])
+
+    def test_should_record_who_marked_what(self):
+        self.client.force_login(self.admin)
+
+        self.client.post(self.url, {"row": self.row.pk})
+
+        entry = PaymentLog.objects.get()
+        self.assertEqual(entry.user, self.admin)
+        self.assertEqual(entry.user_name, "ceo main")
+        self.assertEqual(entry.source_name, "PvE Tax")
+        self.assertEqual(entry.row_pk, str(self.row.pk))
+        self.assertEqual(entry.corporation_id, 2001)
+        self.assertEqual(entry.amount, 1500000)
+        self.assertEqual(entry.reason, "2001/07/2026")
+
+    def test_should_refuse_a_row_that_is_already_paid(self):
+        # a second click must not leave a second entry for nothing
+        self.client.force_login(self.admin)
+
+        self.client.post(self.url, {"row": self.row.pk})
+        self.client.post(self.url, {"row": self.row.pk})
+
+        self.assertEqual(PaymentLog.objects.count(), 1)
+
+    def test_should_keep_the_entry_when_the_source_is_deleted(self):
+        self.client.force_login(self.admin)
+        self.client.post(self.url, {"row": self.row.pk})
+
+        self.source.delete()
+
+        self.assertEqual(PaymentLog.objects.get().source_name, "PvE Tax")
+
+    def test_should_show_the_log_to_admins_only(self):
+        self.client.force_login(self.admin)
+        self.client.post(self.url, {"row": self.row.pk})
+
+        self.assertContains(self.client.get(reverse("eos_invoices:log")), "2001/07/2026")
+
+        self.client.force_login(make_ceo("other"))
+        self.assertEqual(self.client.get(reverse("eos_invoices:log")).status_code, 302)
 
 
 class TestSearchableDropdowns(DueTestCase):

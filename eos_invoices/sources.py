@@ -15,7 +15,7 @@ from decimal import Decimal
 from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist, ValidationError
 from django.db import models
-from django.db.models import BooleanField, Case, Q, Value, When
+from django.db.models import BooleanField, Case, F, Q, Value, When
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -313,8 +313,17 @@ def _paid_q(source, model):
     return query
 
 
-def get_invoices(source, corporation_id, *, include_paid=False):
-    """Payments of one Corporation in one source, newest first."""
+# the corporation value is fetched under this alias, so it cannot collide
+# with a template placeholder of the same path
+CORPORATION_ALIAS = "eos_invoices_corporation"
+
+
+def _invoice_rows(source, **filters):
+    """Annotated values() of a source, filtered, newest first.
+
+    The one place that turns rows of a foreign model into invoice data, shared
+    by the lists and by the snapshot taken before a row is marked as paid.
+    """
     errors = check_source(source)
     if errors:
         raise SourceError(" ".join(errors.values()))
@@ -322,21 +331,18 @@ def get_invoices(source, corporation_id, *, include_paid=False):
     model = resolve_model(source.model_label)
     paid_q = _paid_q(source, model)
 
-    queryset = model._default_manager.filter(**{source.corporation_field: corporation_id})
-    if not include_paid:
-        queryset = queryset.exclude(paid_q)
-
-    queryset = queryset.annotate(
+    queryset = model._default_manager.filter(**filters).annotate(
         **{
             PAID_ALIAS: Case(
                 When(paid_q, then=Value(True)),
                 default=Value(False),
                 output_field=BooleanField(),
-            )
+            ),
+            CORPORATION_ALIAS: F(source.corporation_field),
         }
     )
 
-    wanted = {"pk", source.amount_field, PAID_ALIAS}
+    wanted = {"pk", source.amount_field, PAID_ALIAS, CORPORATION_ALIAS}
     wanted.update(template_fields(source.reason_template))
     wanted.update(template_fields(source.label_template))
     if source.date_field:
@@ -345,24 +351,66 @@ def get_invoices(source, corporation_id, *, include_paid=False):
     else:
         queryset = queryset.order_by("-pk")
 
-    invoices = []
-    for row in queryset.values(*wanted)[:MAX_ROWS]:
-        when = row.get(source.date_field) if source.date_field else None
-        if isinstance(when, datetime):
-            when = when.date()
+    return queryset.values(*wanted), paid_q
 
-        invoices.append(
-            Invoice(
-                pk=row["pk"],
-                amount=Decimal(str(row[source.amount_field] or 0)),
-                paid=row[PAID_ALIAS],
-                reason=render_template(source.reason_template, row),
-                label=render_template(source.label_template, row),
-                date=when,
-            )
-        )
 
-    return invoices
+def _to_invoice(source, row):
+    when = row.get(source.date_field) if source.date_field else None
+    if isinstance(when, datetime):
+        when = when.date()
+
+    return Invoice(
+        pk=row["pk"],
+        amount=Decimal(str(row[source.amount_field] or 0)),
+        paid=row[PAID_ALIAS],
+        reason=render_template(source.reason_template, row),
+        label=render_template(source.label_template, row),
+        date=when,
+    )
+
+
+def get_invoices_by_corporation(source, corporation_ids, *, include_paid=False, limit=MAX_ROWS):
+    """Payments of several Corporations in one source, in one query.
+
+    Returns ``({corporation_id: [Invoice, ...]}, truncated)``, newest first
+    within each Corporation. ``truncated`` says the source had more rows than
+    ``limit``; the caller has to say so rather than show a short list as if it
+    were complete.
+    """
+    rows, paid_q = _invoice_rows(
+        source, **{f"{source.corporation_field}__in": list(corporation_ids)}
+    )
+    if not include_paid:
+        rows = rows.exclude(paid_q)
+
+    rows = list(rows[: limit + 1])
+    truncated = len(rows) > limit
+
+    by_corporation = {}
+    for row in rows[:limit]:
+        by_corporation.setdefault(row[CORPORATION_ALIAS], []).append(_to_invoice(source, row))
+
+    return by_corporation, truncated
+
+
+def get_invoice(source, pk):
+    """One row as ``(corporation_id, Invoice)``, or SourceError if it is gone."""
+    try:
+        rows, _paid_q = _invoice_rows(source, pk=pk)
+        row = rows.first()
+    except (ValueError, ValidationError) as exc:
+        raise SourceError(_("The payment no longer exists.")) from exc
+    if row is None:
+        raise SourceError(_("The payment no longer exists."))
+    return row[CORPORATION_ALIAS], _to_invoice(source, row)
+
+
+def get_invoices(source, corporation_id, *, include_paid=False):
+    """Payments of one Corporation in one source, newest first."""
+    by_corporation, _truncated = get_invoices_by_corporation(
+        source, [corporation_id], include_paid=include_paid
+    )
+    return by_corporation.get(corporation_id, [])
 
 
 def paid_marker(source):
@@ -394,20 +442,24 @@ def mark_paid(source, pk):
 
     save() rather than a queryset update, so the owning app's save logic and
     signals still run - its own idea of what paying means stays in charge.
+
+    Returns ``(corporation_id, Invoice)`` as the row was before, for the log.
+    A row that is already paid is refused, so the log never records a change
+    that did not happen.
     """
     marker = paid_marker(source)
     if marker is None:
         raise SourceError(_("Rows of this source cannot be marked as paid here."))
 
-    model = resolve_model(source.model_label)
-    try:
-        row = model._default_manager.get(pk=pk)
-    except (model.DoesNotExist, ValueError, ValidationError) as exc:
-        raise SourceError(_("The payment no longer exists.")) from exc
+    corporation_id, invoice = get_invoice(source, pk)
+    if invoice.paid:
+        raise SourceError(_("This payment is already marked as paid."))
 
+    model = resolve_model(source.model_label)
+    row = model._default_manager.get(pk=invoice.pk)
     setattr(row, source.paid_field, marker())
     row.save(update_fields=[source.paid_field])
-    return row
+    return corporation_id, invoice
 
 
 def probe(source):

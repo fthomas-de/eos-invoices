@@ -30,9 +30,9 @@ class TestAccess(DueTestCase):
         request.user = make_ceo("nobody", perms=())
         self.assertEqual(InvoicesMenuItem().render(request), "")
 
-        # an admin without the CEO permission uses the overview to mark payments
+        # an admin who is no CEO is sent to the admin overview
         request.user = make_ceo("keeper", perms=("manage_sources",))
-        self.assertIn(reverse("eos_invoices:index"), InvoicesMenuItem().render(request))
+        self.assertIn(f'href="{reverse("eos_invoices:admin")}"', InvoicesMenuItem().render(request))
 
 
 class TestIndex(DueTestCase):
