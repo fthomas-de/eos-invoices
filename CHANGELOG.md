@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.10] - 2026-09-24
+
+### Changed
+
+- Rows worth exactly 0 ISK are dropped from every listing and total,
+  whether paid or not - a corp exempted that month says nothing either
+  way, and only added a row to skip past.
+
 ## [0.0.9] - 2026-09-24
 
 ### Added

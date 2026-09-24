@@ -160,6 +160,13 @@ class TestGetInvoices(DueTestCase):
             state="done", created=date(2026, 6, 30),
         )
         Due.objects.create(corporation=other, corp_id=2002, amount=999, month=7)
+        Due.objects.create(corporation=cls.corp, corp_id=2001, amount=0, month=8)
+
+    def test_should_drop_a_zero_amount_row(self):
+        # a corp exempted that month tells nobody anything, paid or not
+        invoices = get_invoices(make_source(), 2001, include_paid=True)
+
+        self.assertNotIn(Decimal("0"), [i.amount for i in invoices])
 
     def test_should_only_return_open_payments_of_the_corporation(self):
         invoices = get_invoices(make_source(), 2001)

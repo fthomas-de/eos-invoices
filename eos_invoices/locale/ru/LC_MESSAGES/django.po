@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 13:34+0000\n"
-"PO-Revision-Date: 2026-09-24 13:34+0000\n"
+"POT-Creation-Date: 2026-09-24 14:29+0000\n"
+"PO-Revision-Date: 2026-09-24 14:29+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: ru\n"
 "Language: ru\n"
@@ -312,27 +312,27 @@ msgstr "Поле даты должно быть полем даты или да�
 msgid "Enter the value that means paid."
 msgstr "Укажите значение, означающее оплату."
 
-#: sources.py:402 sources.py:404 sources.py:524
+#: sources.py:406 sources.py:408 sources.py:528
 msgid "The payment no longer exists."
 msgstr "Этот платёж больше не существует."
 
-#: sources.py:487
+#: sources.py:491
 msgid "Rows of this source cannot be marked as paid here."
 msgstr "Строки этого источника нельзя отметить здесь как оплаченные."
 
-#: sources.py:491
+#: sources.py:495
 msgid "This payment belongs to another Corporation."
 msgstr "Этот платёж принадлежит другой Corporation."
 
-#: sources.py:493
+#: sources.py:497
 msgid "This payment is already marked as paid."
 msgstr "Этот платёж уже отмечен как оплаченный."
 
-#: sources.py:517 sources.py:519
+#: sources.py:521 sources.py:523
 msgid "The paid field of this source has changed since."
 msgstr "Поле оплаты этого источника с тех пор изменилось."
 
-#: sources.py:528
+#: sources.py:532
 msgid ""
 "The payment has been changed since it was marked; it was left as it is."
 msgstr "Платёж изменился после отметки; он оставлен без изменений."

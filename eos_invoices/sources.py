@@ -380,6 +380,10 @@ def get_invoices_by_corporation(source, corporation_ids, *, include_paid=False, 
     rows, paid_q = _invoice_rows(
         source, **{f"{source.corporation_field}__in": list(corporation_ids)}
     )
+    # a row worth exactly nothing - a corp exempted that month, say - tells a
+    # CEO or admin nothing either way, paid or not; drop it rather than make
+    # them skip past it
+    rows = rows.exclude(**{source.amount_field: 0})
     if not include_paid:
         rows = rows.exclude(paid_q)
 

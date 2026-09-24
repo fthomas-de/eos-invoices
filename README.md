@@ -20,6 +20,8 @@ app.
   in-game transfer
 - "Pay to" Corporation per source, chosen from the Alliance
 - Toggle between outstanding only and including paid
+- A row worth exactly 0 ISK - a corp exempted that month, say - is dropped
+  everywhere rather than shown as noise
 - Admin overview of all Corporations of the Alliance, where payments can be
   marked as paid, and a log of who marked what, filterable by Source and
   Corporation

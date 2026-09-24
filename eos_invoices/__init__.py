@@ -1,4 +1,4 @@
 """Outstanding payments of a Corporation across Alliance Auth apps."""
 
-__version__ = "0.0.9"
+__version__ = "0.0.10"
 VERSION = __version__
