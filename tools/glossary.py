@@ -92,11 +92,6 @@ TRANSLATIONS = {
         "可选的日期或日期时间字段；按其排序，最新的在前。",
     ),
     "Pay to": ("Zahlen an", "Платить", "付款给"),
-    "Whom to send the ISK to, e.g. the holding Corporation.": (
-        "An wen die ISK gehen, z. B. die Holding-Corporation.",
-        "Кому отправлять ISK, например холдинговой Corporation.",
-        "ISK 的收款方，例如控股 Corporation。",
-    ),
     "The Corporation that receives the ISK. Lists the Corporations of the Alliance chosen on the Alliance tab.": (
         "Die Corporation, die die ISK erhält. Zur Auswahl stehen die Corporations der Alliance, die im Tab Alliance gewählt ist.",
         "Corporation, получающая ISK. В списке — Corporation из Alliance, выбранной на вкладке Alliance.",
@@ -126,6 +121,8 @@ TRANSLATIONS = {
     "Corporation": ("Corporation", "Corporation", "Corporation"),
     "Payment log entry": ("Protokolleintrag", "Запись журнала", "日志条目"),
     "Payment log": ("Zahlungsprotokoll", "Журнал платежей", "款项日志"),
+    "Filter by": ("Filtern nach", "Фильтр по", "按…筛选"),
+    "All sources": ("Alle Quellen", "Все источники", "所有来源"),
     "More than %(limit)s open payments; only the newest are shown.": (
         "Mehr als %(limit)s offene Zahlungen; nur die neuesten werden angezeigt.",
         "Более %(limit)s неоплаченных платежей; показаны только самые новые.",
@@ -153,8 +150,6 @@ TRANSLATIONS = {
         "Этот платёж принадлежит другой Corporation.",
         "此款项属于其他 Corporation。",
     ),
-    "Mark all as paid": ("Alle als bezahlt markieren", "Отметить все как оплаченные", "全部标记为已付"),
-    "No Corporation given.": ("Keine Corporation angegeben.", "Corporation не указана.", "未指定 Corporation。"),
     "Undone": ("Zurückgenommen", "Отменено", "已撤销"),
     "Undone by": ("Zurückgenommen von", "Отменил", "撤销人"),
     "Undone by %(name)s": ("Zurückgenommen von %(name)s", "Отменил %(name)s", "由 %(name)s 撤销"),
@@ -282,6 +277,7 @@ TRANSLATIONS = {
     "Overview": ("Übersicht", "Обзор", "概览"),
     "Sources": ("Quellen", "Источники", "来源"),
     "Outstanding": ("Offen", "К оплате", "未付"),
+    "View overview": ("Übersicht ansehen", "Открыть обзор", "查看概览"),
     "Outstanding only": ("Nur offene", "Только неоплаченные", "仅未付"),
     "Including paid": ("Inklusive bezahlte", "Включая оплаченные", "包括已付"),
     "This source cannot be read at the moment.": (
@@ -324,18 +320,6 @@ TRANSLATIONS = {
 }
 
 PLURALS = {
-    "Mark %(counter)s payment of %(corporation)s in %(source)s as paid?": (
-        [
-            "%(counter)s Zahlung von %(corporation)s in %(source)s als bezahlt markieren?",
-            "Alle %(counter)s Zahlungen von %(corporation)s in %(source)s als bezahlt markieren?",
-        ],
-        [
-            "Отметить %(counter)s платёж %(corporation)s в %(source)s как оплаченный?",
-            "Отметить все %(counter)s платежа %(corporation)s в %(source)s как оплаченные?",
-            "Отметить все %(counter)s платежей %(corporation)s в %(source)s как оплаченные?",
-        ],
-        ["将 %(corporation)s 在 %(source)s 中的全部 %(counter)s 笔款项标记为已付？"],
-    ),
     "Marked %(count)s payment as paid.": (
         ["%(count)s Zahlung als bezahlt markiert.", "%(count)s Zahlungen als bezahlt markiert."],
         [

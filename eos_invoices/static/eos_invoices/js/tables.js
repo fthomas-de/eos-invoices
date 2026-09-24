@@ -5,6 +5,10 @@
  * page, and a ticked box on a hidden page would not be sent with the form.
  * Cells sort by their data-order where they have one, so "1.500.000 ISK"
  * sorts as a number. The server's order stays until a header is clicked.
+ *
+ * The log table is not marked here: it wants the filterDropDown dropdowns
+ * over Source and Corporation, which need DataTables' search feature turned
+ * on - see log.js.
  */
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";

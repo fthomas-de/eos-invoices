@@ -4,8 +4,9 @@ from django.urls import reverse
 
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 
-from eos_invoices.auth_hooks import InvoicesMenuItem
+from eos_invoices.auth_hooks import InvoicesDashboardHook, InvoicesMenuItem
 from eos_invoices.models import InvoiceConfiguration, PaymentSource
+from eos_invoices.views import dashboard_overview
 
 from .base import Due, DueTestCase, make_ceo, make_source
 
@@ -34,6 +35,72 @@ class TestAccess(DueTestCase):
         # an admin who is no CEO is sent to the admin overview
         request.user = make_ceo("keeper", perms=("manage_sources",))
         self.assertIn(f'href="{reverse("eos_invoices:admin")}"', InvoicesMenuItem().render(request))
+
+
+class TestDashboardWidget(DueTestCase):
+    """dashboard_overview: the CEO's overview as an Alliance Auth dashboard widget."""
+
+    def alliance_ceo(self, **kwargs):
+        alliance = EveAllianceInfo.objects.create(
+            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
+        )
+        InvoiceConfiguration.objects.create(alliance=alliance)
+        return make_ceo(**kwargs)
+
+    def render(self, user):
+        request = RequestFactory().get("/")
+        request.user = user
+        return dashboard_overview(request)
+
+    def test_should_hide_without_the_permission(self):
+        # a real open payment, so a missing permission check is not
+        # accidentally covered by the "nothing outstanding" one instead
+        make_source()
+        Due.objects.create(corp_id=2001, amount=10)
+
+        self.assertEqual(self.render(self.alliance_ceo(perms=())), "")
+
+    def test_should_hide_when_the_overview_has_nothing_to_explain(self):
+        # no Alliance configured at all - build_overview sets a notice
+        self.assertEqual(self.render(make_ceo()), "")
+
+    def test_should_hide_with_nothing_outstanding(self):
+        # configured, permitted, but no source or nothing owed
+        self.assertEqual(self.render(self.alliance_ceo()), "")
+
+    def test_should_show_the_total_and_link_to_the_full_overview(self):
+        make_source(name="PvE Tax")
+        Due.objects.create(corp_id=2001, amount=1500000)
+        user = self.alliance_ceo(corp_id=2001)
+
+        html = self.render(user)
+
+        self.assertIn("eos-invoices-dashboard-overview", html)
+        self.assertIn("PvE Tax", html)
+        self.assertIn("1.500.000 ISK", html)
+        self.assertIn(reverse("eos_invoices:index"), html)
+
+    def test_should_not_show_a_broken_source(self):
+        # nothing to sum from it, and no error text leaked onto the dashboard
+        make_source(name="Broken", amount_field="gone")
+        make_source(name="Working")
+        Due.objects.create(corp_id=2001, amount=50)
+        user = self.alliance_ceo(corp_id=2001)
+
+        html = self.render(user)
+
+        self.assertNotIn("Broken", html)
+        self.assertIn("Working", html)
+
+    def test_should_render_through_the_registered_hook_without_raising(self):
+        make_source()
+        Due.objects.create(corp_id=2001, amount=10)
+        request = RequestFactory().get("/")
+        request.user = self.alliance_ceo(corp_id=2001)
+
+        html = InvoicesDashboardHook().render(request)
+
+        self.assertIn("eos-invoices-dashboard-overview", html)
 
 
 class TestIndex(DueTestCase):

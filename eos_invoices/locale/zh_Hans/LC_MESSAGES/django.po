@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 07:49+0000\n"
-"PO-Revision-Date: 2026-09-24 07:49+0000\n"
+"POT-Creation-Date: 2026-09-24 13:34+0000\n"
+"PO-Revision-Date: 2026-09-24 13:34+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: zh_Hans\n"
 "Language: zh_Hans\n"
@@ -16,8 +16,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: auth_hooks.py:13 templates/eos_invoices/base.html:4
+#: auth_hooks.py:14 templates/eos_invoices/base.html:4
 #: templates/eos_invoices/base.html:35
+#: templates/eos_invoices/dashboard.overview.html:7
 msgid "Invoices"
 msgstr "账单"
 
@@ -111,7 +112,7 @@ msgid "Only for \"Field equals value\": the value that means paid."
 msgstr "仅用于“字段等于指定值”：表示已付的值。"
 
 #: models.py:99 models.py:170 templates/eos_invoices/admin.html:86
-#: templates/eos_invoices/index.html:71 templates/eos_invoices/log.html:25
+#: templates/eos_invoices/index.html:71 templates/eos_invoices/log.html:26
 #: tests/test_translations.py:37
 msgctxt "EVE jargon"
 msgid "Reason"
@@ -125,7 +126,7 @@ msgid ""
 msgstr "游戏内付款时填写的 Reason。花括号中的字段名会被替换为其值，可选格式：{corp_id}/{month:02d}/{year}"
 
 #: models.py:109 models.py:171 templates/eos_invoices/admin.html:84
-#: templates/eos_invoices/index.html:69 templates/eos_invoices/log.html:23
+#: templates/eos_invoices/index.html:69 templates/eos_invoices/log.html:24
 msgid "Description"
 msgstr "描述"
 
@@ -163,19 +164,19 @@ msgid "Payment sources"
 msgstr "款项来源"
 
 #: models.py:155 templates/eos_invoices/admin.html:83
-#: templates/eos_invoices/index.html:68 templates/eos_invoices/log.html:19
+#: templates/eos_invoices/index.html:68 templates/eos_invoices/log.html:20
 msgid "Date"
 msgstr "日期"
 
-#: models.py:159 templates/eos_invoices/log.html:20
+#: models.py:159 templates/eos_invoices/log.html:21
 msgid "Marked by"
 msgstr "标记人"
 
-#: models.py:163 templates/eos_invoices/log.html:21
+#: models.py:163 templates/eos_invoices/log.html:22
 msgid "Source"
 msgstr "来源"
 
-#: models.py:164 templates/eos_invoices/log.html:26
+#: models.py:164 templates/eos_invoices/log.html:27
 msgid "Row"
 msgstr "行"
 
@@ -183,13 +184,13 @@ msgstr "行"
 msgid "Corporation ID"
 msgstr "Corporation ID"
 
-#: models.py:167 templates/eos_invoices/log.html:22
+#: models.py:167 templates/eos_invoices/log.html:23
 msgctxt "EVE jargon"
 msgid "Corporation"
 msgstr "Corporation"
 
 #: models.py:169 templates/eos_invoices/admin.html:85
-#: templates/eos_invoices/index.html:70 templates/eos_invoices/log.html:24
+#: templates/eos_invoices/index.html:70 templates/eos_invoices/log.html:25
 msgctxt "eos-invoices"
 msgid "Amount"
 msgstr "金额"
@@ -327,7 +328,9 @@ msgstr "将所选款项标记为已付？"
 msgid "Mark selected as paid"
 msgstr "将所选标记为已付"
 
-#: templates/eos_invoices/admin.html:45 templates/eos_invoices/index.html:15
+#: templates/eos_invoices/admin.html:45
+#: templates/eos_invoices/dashboard.overview.html:21
+#: templates/eos_invoices/index.html:15
 msgid "Outstanding"
 msgstr "未付"
 
@@ -353,7 +356,7 @@ msgstr "没有未付款项。"
 msgid "Overview"
 msgstr "概览"
 
-#: templates/eos_invoices/base.html:16
+#: templates/eos_invoices/base.html:16 views.py:91
 msgid "All Corporations"
 msgstr "所有 Corporation"
 
@@ -368,6 +371,10 @@ msgstr "来源"
 #: templates/eos_invoices/base.html:40
 msgid "The texts of this app are machine-generated and may be inaccurate."
 msgstr "本应用的文本由机器生成，可能不准确。"
+
+#: templates/eos_invoices/dashboard.overview.html:29
+msgid "View overview"
+msgstr "查看概览"
 
 #: templates/eos_invoices/index.html:22
 msgid "Outstanding only"
@@ -403,20 +410,20 @@ msgstr "尚未配置款项来源。"
 msgid "Payments marked as paid"
 msgstr "已标记为已付的款项"
 
-#: templates/eos_invoices/log.html:45
+#: templates/eos_invoices/log.html:46
 #, python-format
 msgid "Undone by %(name)s"
 msgstr "由 %(name)s 撤销"
 
-#: templates/eos_invoices/log.html:50
+#: templates/eos_invoices/log.html:51
 msgid "Undo this and set the payment open again?"
 msgstr "撤销并将此款项重新设为未付？"
 
-#: templates/eos_invoices/log.html:54
+#: templates/eos_invoices/log.html:55
 msgid "Undo"
 msgstr "撤销"
 
-#: templates/eos_invoices/log.html:79
+#: templates/eos_invoices/log.html:80
 msgid "Nothing has been marked as paid yet."
 msgstr "尚未有任何款项被标记为已付。"
 
@@ -479,17 +486,25 @@ msgstr[0] "%(counter)s 行"
 msgid "Delete %(name)s?"
 msgstr "删除 %(name)s？"
 
-#: views.py:79
+#: views.py:88
+msgid "Filter by"
+msgstr "按…筛选"
+
+#: views.py:89
+msgid "All sources"
+msgstr "所有来源"
+
+#: views.py:111
 msgid "Marked as paid."
 msgstr "已标记为已付。"
 
-#: views.py:129
+#: views.py:161
 #, python-format
 msgid "Marked %(count)s payment as paid."
 msgid_plural "Marked %(count)s payments as paid."
 msgstr[0] "已将 %(count)s 笔款项标记为已付。"
 
-#: views.py:139
+#: views.py:171
 #, python-format
 msgid ""
 "%(count)s payment was skipped: already paid, gone or of another Corporation."
@@ -498,28 +513,28 @@ msgid_plural ""
 "Corporation."
 msgstr[0] "已跳过 %(count)s 笔款项：已付、已不存在或属于其他 Corporation。"
 
-#: views.py:146
+#: views.py:178
 msgid "Nothing was selected."
 msgstr "未选择任何内容。"
 
-#: views.py:190
+#: views.py:222
 msgid "This entry cannot be undone."
 msgstr "此条目无法撤销。"
 
-#: views.py:215
+#: views.py:247
 msgid "Undone: the payment is open again."
 msgstr "已撤销：该款项重新变为未付。"
 
-#: views.py:252
+#: views.py:284
 #, python-format
 msgid "Saved %(name)s."
 msgstr "已保存 %(name)s。"
 
-#: views.py:289
+#: views.py:321
 #, python-format
 msgid "Deleted %(name)s."
 msgstr "已删除 %(name)s。"
 
-#: views.py:302
+#: views.py:334
 msgid "Settings saved."
 msgstr "设置已保存。"

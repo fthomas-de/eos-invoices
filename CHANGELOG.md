@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.9] - 2026-09-24
+
+### Added
+
+- Filter dropdowns on the log, over Source and Corporation - Alliance Auth's
+  own `datatables-filterdropdown` (`bundles/filterdropdown-js.html`), the
+  same plugin groupmanagement uses. The other tables stay sort-only: they
+  either group by Corporation already (a card, not a column) or list too few
+  sources for a filter to earn its place.
+- A widget on Alliance Auth's own dashboard: the CEO's overview, compact,
+  with the open total per source and a link to the full page. Registered
+  through `dashboard_hook`, the same mechanism as Auth's own widgets. Hidden
+  without the `basic_access` permission, with nothing outstanding, or
+  whenever the full overview itself would only show an explanation (no main
+  character, no Alliance configured, Corporation outside it) - the full page
+  explains those, a dashboard widget only would not.
+- `docs/HANDOVER.md`: where the work stands, the decisions the user made and
+  what is open, for the next session to start from.
+- `tools/translate.py` lists glossary entries the code no longer uses; two
+  such leftovers were removed.
+
 ## [0.0.8] - 2026-09-24
 
 ### Added

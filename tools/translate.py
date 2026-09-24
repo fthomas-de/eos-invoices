@@ -178,6 +178,14 @@ def main():
 
     run_catalogue_tests()
 
+    # messages the code dropped linger in the glossary until somebody notices
+    used = {entry.msgid for entry in polib.pofile(str(paths[LANGUAGES[0]]))}
+    unused = sorted((set(TRANSLATIONS) | set(PLURALS)) - used)
+    if unused:
+        print("Not used by the code any more - remove from tools/glossary.py:")
+        for msgid in unused:
+            print(f"  {msgid!r}")
+
     print("Catalogues complete, checked, compiled and tested:", ", ".join(LANGUAGES))
 
 

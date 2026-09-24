@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -48,6 +49,28 @@ def index(request):
     )
 
 
+def dashboard_overview(request):
+    """Compact widget for Alliance Auth's own dashboard: the viewer's Corporation.
+
+    Not a URL - Alliance Auth's dashboard_hook calls this directly and drops
+    an empty string, the same way timerboard hides its widget without
+    upcoming timers. Hidden without the permission, without anything
+    outstanding, and in every case build_overview itself has nothing to show
+    (no main character, no Alliance configured, Corporation outside it) - the
+    full overview explains those, a dashboard widget only would not.
+    """
+    if not request.user.has_perm("eos_invoices.basic_access"):
+        return ""
+
+    overview = build_overview(request.user)
+    if overview.notice or not overview.open_total:
+        return ""
+
+    return render_to_string(
+        "eos_invoices/dashboard.overview.html", {"overview": overview}, request=request
+    )
+
+
 @login_required
 @permission_required("eos_invoices.manage_sources")
 def admin_overview(request):
@@ -60,7 +83,16 @@ def admin_overview(request):
 @permission_required("eos_invoices.manage_sources")
 def payment_log(request):
     page = Paginator(PaymentLog.objects.all(), 100).get_page(request.GET.get("page"))
-    return _render(request, "eos_invoices/log.html", {"page": page})
+    # a static file cannot read the catalogue; log.js reads this instead
+    filter_labels = {
+        "filterLabel": _("Filter by"),
+        "allSources": _("All sources"),
+        # same msgid as the "All Corporations" nav tab - one glossary entry for both
+        "allCorporations": _("All Corporations"),
+    }
+    return _render(
+        request, "eos_invoices/log.html", {"page": page, "filter_labels": filter_labels}
+    )
 
 
 @login_required

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 07:49+0000\n"
-"PO-Revision-Date: 2026-09-24 07:49+0000\n"
+"POT-Creation-Date: 2026-09-24 13:34+0000\n"
+"PO-Revision-Date: 2026-09-24 13:34+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: de\n"
 "Language: de\n"
@@ -16,8 +16,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: auth_hooks.py:13 templates/eos_invoices/base.html:4
+#: auth_hooks.py:14 templates/eos_invoices/base.html:4
 #: templates/eos_invoices/base.html:35
+#: templates/eos_invoices/dashboard.overview.html:7
 msgid "Invoices"
 msgstr "Rechnungen"
 
@@ -115,7 +116,7 @@ msgid "Only for \"Field equals value\": the value that means paid."
 msgstr "Nur für „Feld entspricht Wert“: der Wert, der bezahlt bedeutet."
 
 #: models.py:99 models.py:170 templates/eos_invoices/admin.html:86
-#: templates/eos_invoices/index.html:71 templates/eos_invoices/log.html:25
+#: templates/eos_invoices/index.html:71 templates/eos_invoices/log.html:26
 #: tests/test_translations.py:37
 msgctxt "EVE jargon"
 msgid "Reason"
@@ -132,7 +133,7 @@ msgstr ""
 "{corp_id}/{month:02d}/{year}"
 
 #: models.py:109 models.py:171 templates/eos_invoices/admin.html:84
-#: templates/eos_invoices/index.html:69 templates/eos_invoices/log.html:23
+#: templates/eos_invoices/index.html:69 templates/eos_invoices/log.html:24
 msgid "Description"
 msgstr "Beschreibung"
 
@@ -176,19 +177,19 @@ msgid "Payment sources"
 msgstr "Zahlungsquellen"
 
 #: models.py:155 templates/eos_invoices/admin.html:83
-#: templates/eos_invoices/index.html:68 templates/eos_invoices/log.html:19
+#: templates/eos_invoices/index.html:68 templates/eos_invoices/log.html:20
 msgid "Date"
 msgstr "Datum"
 
-#: models.py:159 templates/eos_invoices/log.html:20
+#: models.py:159 templates/eos_invoices/log.html:21
 msgid "Marked by"
 msgstr "Markiert von"
 
-#: models.py:163 templates/eos_invoices/log.html:21
+#: models.py:163 templates/eos_invoices/log.html:22
 msgid "Source"
 msgstr "Quelle"
 
-#: models.py:164 templates/eos_invoices/log.html:26
+#: models.py:164 templates/eos_invoices/log.html:27
 msgid "Row"
 msgstr "Zeile"
 
@@ -196,13 +197,13 @@ msgstr "Zeile"
 msgid "Corporation ID"
 msgstr "Corporation-ID"
 
-#: models.py:167 templates/eos_invoices/log.html:22
+#: models.py:167 templates/eos_invoices/log.html:23
 msgctxt "EVE jargon"
 msgid "Corporation"
 msgstr "Corporation"
 
 #: models.py:169 templates/eos_invoices/admin.html:85
-#: templates/eos_invoices/index.html:70 templates/eos_invoices/log.html:24
+#: templates/eos_invoices/index.html:70 templates/eos_invoices/log.html:25
 msgctxt "eos-invoices"
 msgid "Amount"
 msgstr "Betrag"
@@ -348,7 +349,9 @@ msgstr "Die ausgewählten Zahlungen als bezahlt markieren?"
 msgid "Mark selected as paid"
 msgstr "Auswahl als bezahlt markieren"
 
-#: templates/eos_invoices/admin.html:45 templates/eos_invoices/index.html:15
+#: templates/eos_invoices/admin.html:45
+#: templates/eos_invoices/dashboard.overview.html:21
+#: templates/eos_invoices/index.html:15
 msgid "Outstanding"
 msgstr "Offen"
 
@@ -375,7 +378,7 @@ msgstr "Nichts offen."
 msgid "Overview"
 msgstr "Übersicht"
 
-#: templates/eos_invoices/base.html:16
+#: templates/eos_invoices/base.html:16 views.py:91
 msgid "All Corporations"
 msgstr "Alle Corporations"
 
@@ -390,6 +393,10 @@ msgstr "Quellen"
 #: templates/eos_invoices/base.html:40
 msgid "The texts of this app are machine-generated and may be inaccurate."
 msgstr "Die Texte dieser App sind maschinell erzeugt und können ungenau sein."
+
+#: templates/eos_invoices/dashboard.overview.html:29
+msgid "View overview"
+msgstr "Übersicht ansehen"
 
 #: templates/eos_invoices/index.html:22
 msgid "Outstanding only"
@@ -425,20 +432,20 @@ msgstr "Es sind keine Zahlungsquellen eingerichtet."
 msgid "Payments marked as paid"
 msgstr "Als bezahlt markierte Zahlungen"
 
-#: templates/eos_invoices/log.html:45
+#: templates/eos_invoices/log.html:46
 #, python-format
 msgid "Undone by %(name)s"
 msgstr "Zurückgenommen von %(name)s"
 
-#: templates/eos_invoices/log.html:50
+#: templates/eos_invoices/log.html:51
 msgid "Undo this and set the payment open again?"
 msgstr "Zurücknehmen und die Zahlung wieder auf offen setzen?"
 
-#: templates/eos_invoices/log.html:54
+#: templates/eos_invoices/log.html:55
 msgid "Undo"
 msgstr "Zurücknehmen"
 
-#: templates/eos_invoices/log.html:79
+#: templates/eos_invoices/log.html:80
 msgid "Nothing has been marked as paid yet."
 msgstr "Bisher wurde nichts als bezahlt markiert."
 
@@ -505,18 +512,26 @@ msgstr[1] "%(counter)s Zeilen"
 msgid "Delete %(name)s?"
 msgstr "%(name)s löschen?"
 
-#: views.py:79
+#: views.py:88
+msgid "Filter by"
+msgstr "Filtern nach"
+
+#: views.py:89
+msgid "All sources"
+msgstr "Alle Quellen"
+
+#: views.py:111
 msgid "Marked as paid."
 msgstr "Als bezahlt markiert."
 
-#: views.py:129
+#: views.py:161
 #, python-format
 msgid "Marked %(count)s payment as paid."
 msgid_plural "Marked %(count)s payments as paid."
 msgstr[0] "%(count)s Zahlung als bezahlt markiert."
 msgstr[1] "%(count)s Zahlungen als bezahlt markiert."
 
-#: views.py:139
+#: views.py:171
 #, python-format
 msgid ""
 "%(count)s payment was skipped: already paid, gone or of another Corporation."
@@ -530,28 +545,28 @@ msgstr[1] ""
 "%(count)s Zahlungen übersprungen: bereits bezahlt, nicht mehr vorhanden oder"
 " von einer anderen Corporation."
 
-#: views.py:146
+#: views.py:178
 msgid "Nothing was selected."
 msgstr "Es wurde nichts ausgewählt."
 
-#: views.py:190
+#: views.py:222
 msgid "This entry cannot be undone."
 msgstr "Dieser Eintrag kann nicht zurückgenommen werden."
 
-#: views.py:215
+#: views.py:247
 msgid "Undone: the payment is open again."
 msgstr "Zurückgenommen: Die Zahlung ist wieder offen."
 
-#: views.py:252
+#: views.py:284
 #, python-format
 msgid "Saved %(name)s."
 msgstr "%(name)s gespeichert."
 
-#: views.py:289
+#: views.py:321
 #, python-format
 msgid "Deleted %(name)s."
 msgstr "%(name)s gelöscht."
 
-#: views.py:302
+#: views.py:334
 msgid "Settings saved."
 msgstr "Einstellungen gespeichert."

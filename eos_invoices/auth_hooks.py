@@ -4,6 +4,7 @@ from allianceauth import hooks
 from allianceauth.services.hooks import MenuItemHook, UrlHook
 
 from . import urls
+from .views import dashboard_overview
 
 
 class InvoicesMenuItem(MenuItemHook):
@@ -37,3 +38,13 @@ def register_menu():
 @hooks.register("url_hook")
 def register_urls():
     return UrlHook(urls, "eos_invoices", r"^eos_invoices/")
+
+
+class InvoicesDashboardHook(hooks.DashboardItemHook):
+    def __init__(self):
+        hooks.DashboardItemHook.__init__(self, dashboard_overview)
+
+
+@hooks.register("dashboard_hook")
+def register_dashboard():
+    return InvoicesDashboardHook()

@@ -12,8 +12,9 @@
 
         <div class="card-body">
             {% if page.object_list %}
+                {{ filter_labels|json_script:"eos-invoices-log-labels" }}
                 <div class="table-responsive">
-                    <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
+                    <table id="eos-invoices-log-table" class="table table-sm table-striped align-middle mb-0">
                         <thead>
                             <tr>
                                 <th>{% translate "Date" %}</th>
@@ -88,6 +89,7 @@
 
 {% block extra_javascript %}
     {% include "bundles/datatables-2-js-bs5.html" %}
-    {% sri_static "eos_invoices/js/tables.js" %}
+    {% include "bundles/filterdropdown-js.html" %}
+    {% sri_static "eos_invoices/js/log.js" %}
     {% sri_static "eos_invoices/js/confirm.js" %}
 {% endblock %}

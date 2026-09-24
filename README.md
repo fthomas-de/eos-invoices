@@ -14,12 +14,15 @@ app.
 
 - One overview of outstanding payments across all configured apps, per source
   and in total
+- A widget on Alliance Auth's own dashboard, for a CEO with something
+  outstanding, linking to the full overview
 - Recipient, amount and reason per payment, each ready to copy into the
   in-game transfer
 - "Pay to" Corporation per source, chosen from the Alliance
 - Toggle between outstanding only and including paid
 - Admin overview of all Corporations of the Alliance, where payments can be
-  marked as paid, and a log of who marked what
+  marked as paid, and a log of who marked what, filterable by Source and
+  Corporation
 - Sources are checked when they are saved; the source list shows whether each
   one can currently be read
 - Restricted to the Corporations of one Alliance

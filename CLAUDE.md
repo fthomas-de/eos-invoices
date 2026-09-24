@@ -2,7 +2,9 @@
 
 Alliance Auth app that lists the payments a Corporation still owes, read
 generically out of other apps' models (`PaymentSource`). `README.md` says what
-it does; this file says how to work on it.
+it does; this file says how to work on it; `docs/HANDOVER.md` says where the
+work currently stands, which decisions the user made and what is open.
+Read both before changing anything.
 
 ## Where things are
 
@@ -71,7 +73,8 @@ English only between releases. On the user's release call:
    It runs makemessages, fills the catalogues from the glossary, drops
    obsolete entries, checks every entry against the glossary, runs
    `msgfmt --check` and compilemessages, confirms each `.mo` is newer than
-   its `.po`, and finally runs the catalogue tests. A message missing from the glossary stops it with a list; that
+   its `.po`, and finally runs the catalogue tests. It also lists glossary
+   entries the code no longer uses - remove them. A message missing from the glossary stops it with a list; that
    entry is left empty, never with gettext's fuzzy guess.
 3. Split `[Unreleased]` in `CHANGELOG.md` into the new version.
 4. Commit and push - asking before the commit.

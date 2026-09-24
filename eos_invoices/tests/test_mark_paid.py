@@ -215,6 +215,20 @@ class TestPaymentLog(DueTestCase):
         self.client.force_login(make_ceo("other"))
         self.assertEqual(self.client.get(reverse("eos_invoices:log")).status_code, 302)
 
+    def test_should_wire_up_the_filter_dropdown(self):
+        self.client.force_login(self.admin)
+        self.client.post(self.url, {"row": self.row.pk})  # the table needs a row to render
+
+        response = self.client.get(reverse("eos_invoices:log"))
+
+        self.assertContains(response, 'id="eos-invoices-log-table"')
+        # the static manifest puts a hash before .js; no version number here,
+        # Alliance Auth's own bundle picks the version
+        self.assertContains(response, "datatables-filterdropdown.min")
+        self.assertContains(response, "eos_invoices/js/log")
+        self.assertContains(response, 'id="eos-invoices-log-labels"')
+        self.assertContains(response, "All sources")
+
 
 class TestSearchableDropdowns(DueTestCase):
     def test_should_make_alliance_and_pay_to_searchable(self):
@@ -340,7 +354,9 @@ class TestSortableTables(DueTestCase):
         for name in ("index", "admin", "log", "sources"):
             with self.subTest(name):
                 response = self.client.get(reverse(f"eos_invoices:{name}"))
-                self.assertContains(response, "eos_invoices/js/tables")
+                # log sorts through its own log.js, which also wires up its
+                # filterDropDown - the others through the shared tables.js
+                self.assertContains(response, "eos_invoices/js/log" if name == "log" else "eos_invoices/js/tables")
                 # the static manifest puts a hash before .js
                 self.assertContains(response, "DataTables/2.3.8/js/dataTables.min")
 
