@@ -8,11 +8,13 @@ Last updated 2026-09-24.
 
 ## Release
 
-- Version **0.0.11** in `eos_invoices/__init__.py`, committed and pushed to
-  `fthomas-de/eos-invoices` (private), branch `master`, commit `37e2f0c`
-- Migrations **0001-0006** written and applied in `aa_dev`
+- Version **0.0.12** in `eos_invoices/__init__.py`, committed to `master` as
+  `e73411a` - **not pushed yet**, on the user's own call; the previous release
+  (0.0.11) is the last one pushed to `fthomas-de/eos-invoices` (private)
+- Migrations **0001-0006** written and applied in `aa_dev` (none added this
+  release)
 - Catalogues complete: `de`, `ru`, `zh_Hans`, filled from `tools/glossary.py`
-- 121 tests green (3 catalogue tests skipped - they run inside
+- 123 tests green (3 catalogue tests skipped - they run inside
   `tools/translate.py`), `makemigrations --check` clean, `collectstatic` run
 - A personal, cross-project skill for this ritual exists now:
   `C:\Users\flt\.claude\skills\push\SKILL.md` - bumps the version, runs the
