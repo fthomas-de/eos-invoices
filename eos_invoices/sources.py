@@ -437,7 +437,7 @@ def paid_marker(source):
     return None
 
 
-def mark_paid(source, pk):
+def mark_paid(source, pk, *, corporation_id=None):
     """Mark one row of a source as paid, through the model's own save().
 
     save() rather than a queryset update, so the owning app's save logic and
@@ -445,13 +445,17 @@ def mark_paid(source, pk):
 
     Returns ``(corporation_id, Invoice)`` as the row was before, for the log.
     A row that is already paid is refused, so the log never records a change
-    that did not happen.
+    that did not happen. With ``corporation_id`` a row of any other
+    Corporation is refused as well - a batch posted for one Corporation must
+    not reach into another.
     """
     marker = paid_marker(source)
     if marker is None:
         raise SourceError(_("Rows of this source cannot be marked as paid here."))
 
-    corporation_id, invoice = get_invoice(source, pk)
+    row_corporation_id, invoice = get_invoice(source, pk)
+    if corporation_id is not None and row_corporation_id != corporation_id:
+        raise SourceError(_("This payment belongs to another Corporation."))
     if invoice.paid:
         raise SourceError(_("This payment is already marked as paid."))
 
@@ -459,7 +463,7 @@ def mark_paid(source, pk):
     row = model._default_manager.get(pk=invoice.pk)
     setattr(row, source.paid_field, marker())
     row.save(update_fields=[source.paid_field])
-    return corporation_id, invoice
+    return row_corporation_id, invoice
 
 
 def probe(source):

@@ -1,5 +1,6 @@
 {% extends "eos_invoices/base.html" %}
 {% load i18n %}
+{% load eos_invoices %}
 
 {% block details %}
     <div class="card mb-3">
@@ -31,7 +32,7 @@
                                     <td>{{ entry.source_name }}</td>
                                     <td>{{ entry.corporation_name|default:entry.corporation_id }}</td>
                                     <td>{{ entry.label|default:"-" }}</td>
-                                    <td class="text-end text-nowrap">{{ entry.amount|floatformat:"2g" }} ISK</td>
+                                    <td class="text-end text-nowrap">{{ entry.amount|isk }} ISK</td>
                                     <td>{% if entry.reason %}<code>{{ entry.reason }}</code>{% else %}-{% endif %}</td>
                                     <td><code>{{ entry.row_pk }}</code></td>
                                 </tr>

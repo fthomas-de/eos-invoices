@@ -110,7 +110,9 @@ refused.
 
 *Invoices → All Corporations* lists the open payments of every Corporation in
 the Alliance. Its *Mark as paid* button writes to the table of the other app,
-through that model's own `save()`, and adds an entry to *Invoices → Log*. The value follows the source's *Paid when* setting:
+through that model's own `save()`, and adds an entry to *Invoices → Log*.
+*Mark all as paid* above a source's table does the same for every open row of
+that Corporation in that source that the page shows. The value follows the source's *Paid when* setting:
 
 | Paid when | Written |
 |---|---|

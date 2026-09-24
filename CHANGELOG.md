@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-09-24
+
+### Added
+
+- "Mark all as paid" per source within a Corporation on the "All
+  Corporations" tab, shown when there is more than one open row. It marks
+  exactly the rows the page listed, not whatever is open at the moment of the
+  click, so a payment that arrived after the page was loaded stays open. Each
+  row gets its own log entry. Rows that are already paid, gone or of another
+  Corporation are skipped and counted in the message; the batch runs in one
+  transaction, so a database failure half way leaves nothing marked and
+  nothing logged.
+
+### Changed
+
+- ISK amounts are shown in whole ISK with dots between thousands
+  (1.500.000 ISK), the same for every language. The separator used to follow
+  the viewer's language, so one CEO read 1,500,000.00 and the next
+  1.500.000,00 for the same sum. Copy buttons are unchanged and still copy the
+  exact amount as plain digits.
+
 ## [0.0.4] - 2026-09-23
 
 ### Added

@@ -1,5 +1,6 @@
 {% extends "eos_invoices/base.html" %}
 {% load i18n %}
+{% load eos_invoices %}
 {% load sri %}
 
 {% block details %}
@@ -15,7 +16,7 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <span class="text-body-secondary">
                 {% translate "Outstanding" %}:
-                <strong>{{ overview.open_total|floatformat:"2g" }} ISK</strong>
+                <strong>{{ overview.open_total|isk }} ISK</strong>
             </span>
             {% if overview.settled_count %}
                 <span class="text-body-secondary small">
@@ -34,12 +35,29 @@
                     <div class="card-title mb-0">
                         {{ block.corporation.corporation_name }} [{{ block.corporation.corporation_ticker }}]
                     </div>
-                    <span class="text-nowrap">{{ block.open_total|floatformat:"2g" }} ISK</span>
+                    <span class="text-nowrap">{{ block.open_total|isk }} ISK</span>
                 </div>
 
                 <div class="card-body">
                     {% for result in block.results %}
-                        <h2 class="h6 {% if not forloop.first %}mt-3{% endif %}">{{ result.source.name }}</h2>
+                        <div class="d-flex justify-content-between align-items-center mb-1 {% if not forloop.first %}mt-3{% endif %}">
+                            <h2 class="h6 mb-0">{{ result.source.name }}</h2>
+                            {% if result.can_mark_paid and result.invoices|length > 1 %}
+                                <form method="post" action="{% url "eos_invoices:mark_all_paid" result.source.pk %}"
+                                      class="eos-invoices-confirm"
+                                      data-question="{% blocktranslate count counter=result.invoices|length with corporation=block.corporation.corporation_name source=result.source.name trimmed %}Mark {{ counter }} payment of {{ corporation }} in {{ source }} as paid?{% plural %}Mark all {{ counter }} payments of {{ corporation }} in {{ source }} as paid?{% endblocktranslate %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="corporation" value="{{ block.corporation.corporation_id }}">
+                                    {% for invoice in result.invoices %}
+                                        <input type="hidden" name="rows" value="{{ invoice.pk }}">
+                                    {% endfor %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <button type="submit" class="btn btn-sm btn-success py-0">
+                                        {% translate "Mark all as paid" %}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-sm table-striped align-middle mb-0">
                                 <thead>
@@ -56,7 +74,7 @@
                                         <tr>
                                             <td class="text-nowrap">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
                                             <td>{{ invoice.label|default:"-" }}</td>
-                                            <td class="text-end text-nowrap">{{ invoice.amount|floatformat:"2g" }} ISK</td>
+                                            <td class="text-end text-nowrap">{{ invoice.amount|isk }} ISK</td>
                                             <td class="text-nowrap">
                                                 {% if invoice.reason %}<code>{{ invoice.reason }}</code>{% else %}-{% endif %}
                                             </td>

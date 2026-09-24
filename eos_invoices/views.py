@@ -1,11 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, ngettext
 from django.views.decorators.http import require_POST
 
 from allianceauth.eveonline.models import EveCorporationInfo
@@ -68,28 +69,94 @@ def mark_paid(request, pk):
     row = request.POST.get("row", "")
 
     try:
-        corporation_id, invoice = mark_row_paid(source, row)
+        with transaction.atomic():
+            corporation_id, invoice = mark_row_paid(source, row)
+            _log_marking(request, source, corporation_id, invoice)
     except SourceError as exc:
         messages.error(request, str(exc))
     else:
-        main = request.user.profile.main_character
-        corporation = EveCorporationInfo.objects.filter(corporation_id=corporation_id).first()
-        # the owning app keeps no record of who flipped its flag - we do
-        PaymentLog.objects.create(
-            user=request.user,
-            user_name=main.character_name if main else request.user.username,
-            source=source,
-            source_name=source.name,
-            row_pk=str(invoice.pk),
-            corporation_id=corporation_id,
-            corporation_name=corporation.corporation_name if corporation else "",
-            amount=invoice.amount,
-            reason=invoice.reason[:255],
-            label=invoice.label[:255],
-        )
-        logger.info("eos_invoices: %s marked row %s of %s as paid", request.user, row, source)
         messages.success(request, _("Marked as paid."))
 
+    return _back(request)
+
+
+@login_required
+@permission_required("eos_invoices.manage_sources")
+@require_POST
+def mark_all_paid(request, pk):
+    """Mark the rows of one Corporation in one source that the page showed.
+
+    The page posts the keys it listed rather than asking for "everything open
+    now": a payment that arrived after the page was loaded was never seen by
+    the admin and stays open.
+    """
+    source = get_object_or_404(PaymentSource, pk=pk)
+    try:
+        corporation_id = int(request.POST.get("corporation", ""))
+    except ValueError:
+        messages.error(request, _("No Corporation given."))
+        return _back(request)
+
+    marked = skipped = 0
+    # all or nothing if the database fails half way; a row that is merely
+    # paid already, gone or of another Corporation is skipped, not fatal
+    with transaction.atomic():
+        for row in request.POST.getlist("rows"):
+            try:
+                _corporation_id, invoice = mark_row_paid(
+                    source, row, corporation_id=corporation_id
+                )
+            except SourceError:
+                skipped += 1
+                continue
+            _log_marking(request, source, corporation_id, invoice)
+            marked += 1
+
+    if marked:
+        messages.success(
+            request,
+            ngettext(
+                "Marked %(count)s payment as paid.",
+                "Marked %(count)s payments as paid.",
+                marked,
+            )
+            % {"count": marked},
+        )
+    if skipped:
+        messages.warning(
+            request,
+            ngettext(
+                "%(count)s payment was skipped: already paid, gone or of another Corporation.",
+                "%(count)s payments were skipped: already paid, gone or of another Corporation.",
+                skipped,
+            )
+            % {"count": skipped},
+        )
+    return _back(request)
+
+
+def _log_marking(request, source, corporation_id, invoice):
+    main = request.user.profile.main_character
+    corporation = EveCorporationInfo.objects.filter(corporation_id=corporation_id).first()
+    # the owning app keeps no record of who flipped its flag - we do
+    PaymentLog.objects.create(
+        user=request.user,
+        user_name=main.character_name if main else request.user.username,
+        source=source,
+        source_name=source.name,
+        row_pk=str(invoice.pk),
+        corporation_id=corporation_id,
+        corporation_name=corporation.corporation_name if corporation else "",
+        amount=invoice.amount,
+        reason=invoice.reason[:255],
+        label=invoice.label[:255],
+    )
+    logger.info(
+        "eos_invoices: %s marked row %s of %s as paid", request.user, invoice.pk, source
+    )
+
+
+def _back(request):
     target = request.POST.get("next", "")
     if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
         target = reverse("eos_invoices:admin")

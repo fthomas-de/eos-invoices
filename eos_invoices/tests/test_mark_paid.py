@@ -1,5 +1,6 @@
 from datetime import date, datetime
 
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from unittest.mock import patch
@@ -226,3 +227,87 @@ class TestSearchableDropdowns(DueTestCase):
                 self.assertContains(response, "tom-select.complete.min.js")
                 # the library alone is unreadable on a dark theme
                 self.assertContains(response, "eos_invoices/css/tom-select-theme")
+
+
+class TestMarkAllPaid(DueTestCase):
+    def setUp(self):
+        alliance = EveAllianceInfo.objects.create(
+            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
+        )
+        EveCorporationInfo.objects.create(
+            corporation_id=2001, corporation_name="Alpha", corporation_ticker="ALP",
+            member_count=1, alliance=alliance,
+        )
+        InvoiceConfiguration.objects.create(alliance=alliance)
+        self.source = make_source()
+        self.first = Due.objects.create(corp_id=2001, amount=100)
+        self.second = Due.objects.create(corp_id=2001, amount=200)
+        self.admin = make_ceo(perms=("manage_sources",))
+        self.url = reverse("eos_invoices:mark_all_paid", args=[self.source.pk])
+
+    def post(self, rows, corporation=2001):
+        return self.client.post(
+            self.url, {"corporation": corporation, "rows": [r.pk for r in rows]}
+        )
+
+    def paid(self):
+        return set(Due.objects.filter(paid=True).values_list("pk", flat=True))
+
+    def test_should_mark_the_listed_rows_and_log_each(self):
+        self.client.force_login(self.admin)
+
+        self.post([self.first, self.second])
+
+        self.assertEqual(self.paid(), {self.first.pk, self.second.pk})
+        self.assertEqual(PaymentLog.objects.count(), 2)
+
+    def test_should_leave_a_row_the_page_did_not_show(self):
+        # arrived after the page was loaded: the admin never saw it
+        late = Due.objects.create(corp_id=2001, amount=300)
+        self.client.force_login(self.admin)
+
+        self.post([self.first, self.second])
+
+        self.assertNotIn(late.pk, self.paid())
+
+    def test_should_skip_rows_of_another_corporation(self):
+        stranger = Due.objects.create(corp_id=2002, amount=999)
+        self.client.force_login(self.admin)
+
+        self.post([self.first, stranger])
+
+        self.assertEqual(self.paid(), {self.first.pk})
+        self.assertEqual(PaymentLog.objects.count(), 1)
+
+    def test_should_skip_rows_that_are_already_paid(self):
+        self.first.paid = True
+        self.first.save()
+        self.client.force_login(self.admin)
+
+        response = self.post([self.first, self.second])
+
+        self.assertEqual(PaymentLog.objects.count(), 1)
+        notes = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertIn("Marked 1 payment as paid.", notes)
+        self.assertIn(
+            "1 payment was skipped: already paid, gone or of another Corporation.", notes
+        )
+
+    def test_should_keep_ceos_out(self):
+        self.client.force_login(make_ceo("other"))
+
+        self.post([self.first, self.second])
+
+        self.assertEqual(self.paid(), set())
+
+    def test_should_offer_the_button_for_more_than_one_row(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("eos_invoices:admin"))
+
+        self.assertContains(response, "Mark all as paid")
+        self.assertContains(response, f'name="rows" value="{self.first.pk}"')
+
+        self.second.delete()
+        self.assertNotContains(self.client.get(reverse("eos_invoices:admin")), "Mark all as paid")
+

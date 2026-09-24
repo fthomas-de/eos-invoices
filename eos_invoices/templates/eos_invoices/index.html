@@ -1,5 +1,6 @@
 {% extends "eos_invoices/base.html" %}
 {% load i18n %}
+{% load eos_invoices %}
 {% load sri %}
 
 {% block details %}
@@ -11,7 +12,7 @@
                 <span class="fs-5">{{ overview.corporation_name }}</span>
                 <span class="text-body-secondary ms-2">
                     {% translate "Outstanding" %}:
-                    <strong>{{ overview.open_total|floatformat:"2g" }} ISK</strong>
+                    <strong>{{ overview.open_total|isk }} ISK</strong>
                 </span>
             </div>
 
@@ -31,7 +32,7 @@
                     <div class="card-title mb-0">{{ result.source.name }}</div>
                     {% if not result.error %}
                         <span class="text-nowrap">
-                            {{ result.open_total|floatformat:"2g" }} ISK
+                            {{ result.open_total|isk }} ISK
                             {% if result.open_total %}
                                 {% include "eos_invoices/partials/copy-button.html" with text=result.open_total_plain %}
                             {% endif %}
@@ -76,7 +77,7 @@
                                             <td class="text-nowrap">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
                                             <td>{{ invoice.label|default:"-" }}</td>
                                             <td class="text-end text-nowrap">
-                                                {{ invoice.amount|floatformat:"2g" }} ISK
+                                                {{ invoice.amount|isk }} ISK
                                                 {% if not invoice.paid %}
                                                     {% include "eos_invoices/partials/copy-button.html" with text=invoice.amount_plain %}
                                                 {% endif %}
