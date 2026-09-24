@@ -1,3 +1,6 @@
+from datetime import date
+from unittest.mock import patch
+
 from django.conf import settings
 from django.test import RequestFactory
 from django.urls import reverse
@@ -117,6 +120,23 @@ class TestIndex(DueTestCase):
 
         self.assertContains(response, "Mining tax")
         self.assertContains(response, "2001/03/2026")
+
+    def test_should_hide_the_reason_for_the_current_month(self):
+        alliance = EveAllianceInfo.objects.create(
+            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
+        )
+        InvoiceConfiguration.objects.create(alliance=alliance)
+        make_source(
+            month_field="month", year_field="year", reason_template="{corp_id}/{month}/{year}"
+        )
+        Due.objects.create(corp_id=2001, amount=100, month=7)
+        self.client.force_login(make_ceo())
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            response = self.client.get(reverse("eos_invoices:index"))
+
+        self.assertNotContains(response, "2001/7/2026")
+        self.assertContains(response, "Not shown for the current month")
 
 
 class TestSourceMaintenance(DueTestCase):

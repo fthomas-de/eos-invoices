@@ -120,6 +120,28 @@ class PaymentSource(models.Model):
         blank=True,
         help_text=_("Optional date or datetime field; rows are sorted by it, newest first."),
     )
+    month_field = models.CharField(
+        _("Month field"),
+        max_length=255,
+        blank=True,
+        help_text=_(
+            "Optional integer field (1-12) holding the row's month. Together "
+            "with the Year field below, hides the Reason while the row is for "
+            "the month still in progress - the amount owed for it can still "
+            "change. Both fields are required for this; set alone, this one "
+            "does nothing."
+        ),
+    )
+    year_field = models.CharField(
+        _("Year field"),
+        max_length=255,
+        blank=True,
+        help_text=_(
+            "Optional integer field holding the row's year, e.g. 2026. Used "
+            "together with the Month field above - a month number alone "
+            "cannot tell this year's row from the same month a year ago."
+        ),
+    )
     pay_to = models.ForeignKey(
         EveCorporationInfo,
         verbose_name=_("Pay to"),

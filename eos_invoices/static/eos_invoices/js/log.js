@@ -25,10 +25,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const labels = JSON.parse(document.getElementById("eos-invoices-log-labels").textContent);
 
+    // same eos-invoices-sort-1/-2 markers tables.js reads - Corporation, then
+    // Description, whichever of the two the log's own headers carry
+    const headers = [...table.querySelectorAll("thead th")];
+    const order = [1, 2]
+        .map((level) => headers.findIndex((th) => th.classList.contains(`eos-invoices-sort-${level}`)))
+        .filter((index) => index !== -1)
+        .map((index) => [index, "asc"]);
+
     new DataTable(table, {
         paging: false,
         info: false,
-        order: [],
+        order,
         columnDefs: [{ targets: "eos-invoices-no-sort", orderable: false }],
         filterDropDown: {
             labelFilter: labels.filterLabel,

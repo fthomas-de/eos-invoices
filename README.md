@@ -22,9 +22,12 @@ app.
 - Toggle between outstanding only and including paid
 - A row worth exactly 0 ISK - a corp exempted that month, say - is dropped
   everywhere rather than shown as noise
-- Admin overview of all Corporations of the Alliance, where payments can be
-  marked as paid, and a log of who marked what, filterable by Source and
-  Corporation
+- Admin overview of all Corporations of the Alliance, grouped by source with
+  Corporation as a column, where payments can be marked as paid, and a log of
+  who marked what, filterable by Source and Corporation
+- Optional: hide the Reason of a row for the month still in progress
+- Every table sorts by Corporation then Description on load; a header click
+  re-sorts by anything else
 - Sources are checked when they are saved; the source list shows whether each
   one can currently be read
 - Restricted to the Corporations of one Alliance
@@ -77,6 +80,8 @@ chosen on the *Alliance* tab; without an Alliance nobody sees anything.
 | Reason | Template for the in-game reason. Field names in braces are replaced: `{corp_id}/{month:02d}/{year}` |
 | Description | Template shown next to the amount, e.g. `{month:02d}/{year}` |
 | Date field | Optional, rows are sorted by it |
+| Month field | Optional integer field (1-12). Together with Year field, hides the Reason while the row is for the current month - see below |
+| Year field | Optional integer field, e.g. `2026`. Required together with Month field for hiding to take effect |
 | Pay to | The Corporation that collects the ISK, chosen from the Corporations of the configured Alliance |
 
 The field settings are dropdowns with the fields of the chosen model, one
@@ -111,13 +116,25 @@ refused.
 | Reason | `{corporation__corporation_id}/{month:02d}/{year}` |
 | Description | `{month:02d}/{year}` |
 
+## Hiding the reason for the current month
+
+Setting *both* *Month field* and *Year field* hides the Reason of a row while
+that row's month and year are the current ones - the amount owed for a month
+still in progress can still change, so the code to pay it is withheld until it
+is settled. The row still shows, with its amount; only the Reason is replaced
+by a note. Left unset (the default), or with only one of the two fields set,
+the Reason always shows - a month number alone cannot tell this year's row
+from the same month a year ago, so both are required together.
+
 ## Marking payments as paid
 
 *Invoices → All Corporations* lists the open payments of every Corporation in
-the Alliance. Its *Mark as paid* button writes to the table of the other app,
+the Alliance, grouped by source: one table per source, every Corporation's
+rows in it. *Mark as paid* on a row writes to the table of the other app,
 through that model's own `save()`, and adds an entry to *Invoices → Log*.
-*Mark all as paid* above a source's table does the same for every open row of
-that Corporation in that source that the page shows.
+Ticking rows and *Mark selected as paid* does the same for all of them at
+once, across sources and Corporations; *Select all* above a source's table
+ticks every row in it.
 
 A misclick is taken back with *Undo* in the log. It restores the exact value
 the paid field held before - unless the field has changed since, in which case

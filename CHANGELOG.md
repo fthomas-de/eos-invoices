@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.11] - 2026-09-24
+
+### Changed
+
+- "All Corporations" groups by source instead of by Corporation: one table
+  per source, with every Corporation's open rows in it and a Corporation
+  column, rather than one card per Corporation with a table per source inside
+  it. An admin working one app's payments now sees them together, across
+  every Corporation, instead of split into as many tables as there are
+  Corporations that owe it something. "Select all" is scoped to a source's
+  table now, spanning every Corporation in it, rather than to one
+  Corporation's table within a source.
+- Every table with a Description column now sorts by Corporation first, then
+  Description, on load - on a table that spans several Corporations
+  ("All Corporations", the log); the overview has no Corporation column, so
+  Description alone. A header click still re-sorts by anything else, and the
+  log keeps its filterDropDown besides.
+- README: replaced the stale mention of a standalone "Mark all as paid"
+  button (removed when ticking rows and "Select all" took its place) with the
+  current wording, and documented the "All Corporations" grouping.
+
+### Added
+
+- Payment sources may name a *Month field* and a *Year field* (both optional
+  integer fields; migrations 0005-0006). While a row's values in both equal
+  today's month and year, its Reason is hidden on the overview and "All
+  Corporations" - the amount owed for a month still in progress can still
+  change, so the payment code is withheld until it is settled. The row
+  itself, its amount and its Description still show; only the Reason is
+  replaced by a note. The real Reason is kept internally and still reaches
+  the log if the row is marked paid regardless - only the two live overviews
+  hide it, and only while the condition holds. Both fields are required
+  together: a month number alone cannot tell this year's row from the same
+  month a year ago, so setting only one of the two never hides anything.
+
 ## [0.0.10] - 2026-09-24
 
 ### Changed

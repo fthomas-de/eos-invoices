@@ -15,9 +15,9 @@
         {% endfor %}
 
         {% comment %}
-            One form around every Corporation, so ticked rows of all of them go
-            out with a single click. The per-row buttons submit the same form to
-            another address (formaction) - forms cannot be nested.
+            One form around every source, so ticked rows of all of them go
+            out with a single click. The per-row buttons submit the same form
+            to another address (formaction) - forms cannot be nested.
         {% endcomment %}
         <form method="post" action="{% url "eos_invoices:mark_selected_paid" %}" class="eos-invoices-confirm">
             {% csrf_token %}
@@ -25,7 +25,7 @@
 
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
                 <div class="d-flex flex-wrap align-items-center gap-3">
-                    {% if overview.corporations %}
+                    {% if overview.sources %}
                         <div class="form-check mb-0">
                             <input class="form-check-input" type="checkbox" id="eos-invoices-select-all"
                                    data-eos-invoices-select-all="all">
@@ -56,69 +56,74 @@
                 {% endif %}
             </div>
 
-            {% for block in overview.corporations %}
+            {% for result in overview.sources %}
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <div class="card-title mb-0">
-                            {{ block.corporation.corporation_name }} [{{ block.corporation.corporation_ticker }}]
-                        </div>
-                        <span class="text-nowrap">{{ block.open_total|isk }} ISK</span>
+                        <div class="card-title mb-0">{{ result.source.name }}</div>
+                        <span class="text-nowrap">{{ result.open_total|isk }} ISK</span>
                     </div>
 
                     <div class="card-body">
-                        {% for result in block.results %}
-                                <h2 class="h6 mb-1 {% if not forloop.first %}mt-3{% endif %}">{{ result.source.name }}</h2>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
-                                        <thead>
-                                            <tr>
-                                                <th class="eos-invoices-no-sort" style="width: 2rem">
-                                                    {% if result.can_mark_paid %}
-                                                        <input class="form-check-input" type="checkbox"
-                                                               data-eos-invoices-select-all="{{ block.corporation.corporation_id|unlocalize }}-{{ result.source.pk|unlocalize }}"
-                                                               title="{% translate "Select all" %}">
-                                                    {% endif %}
-                                                </th>
-                                                <th>{% translate "Date" %}</th>
-                                                <th>{% translate "Description" %}</th>
-                                                <th class="text-end">{% translate "Amount" context "eos-invoices" %}</th>
-                                                <th>{% translate "Reason" context "EVE jargon" %}</th>
-                                                <th class="eos-invoices-no-sort"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for invoice in result.invoices %}
-                                                <tr>
-                                                    <td>
-                                                        {% if result.can_mark_paid %}
-                                                            <input class="form-check-input eos-invoices-row" type="checkbox"
-                                                                   name="selected"
-                                                                   value="{{ result.source.pk|unlocalize }}:{{ block.corporation.corporation_id|unlocalize }}:{{ invoice.pk|unlocalize }}"
-                                                                   data-group="{{ block.corporation.corporation_id|unlocalize }}-{{ result.source.pk|unlocalize }}">
-                                                        {% endif %}
-                                                    </td>
-                                                    <td class="text-nowrap" data-order="{{ invoice.date|date:"Y-m-d" }}">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
-                                                    <td>{{ invoice.label|default:"-" }}</td>
-                                                    <td class="text-end text-nowrap" data-order="{{ invoice.amount|unlocalize }}">{{ invoice.amount|isk }} ISK</td>
-                                                    <td class="text-nowrap">
-                                                        {% if invoice.reason %}<code>{{ invoice.reason }}</code>{% else %}-{% endif %}
-                                                    </td>
-                                                    <td class="text-end text-nowrap">
-                                                        {% if result.can_mark_paid %}
-                                                            <button type="submit" class="btn btn-sm btn-outline-success py-0"
-                                                                    formaction="{% url "eos_invoices:mark_paid" result.source.pk %}"
-                                                                    name="row" value="{{ invoice.pk|unlocalize }}"
-                                                                    data-question="{% translate "Mark this payment as paid?" %}">
-                                                                {% translate "Mark as paid" %}
-                                                            </button>
-                                                        {% endif %}
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                        {% endfor %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
+                                <thead>
+                                    <tr>
+                                        <th class="eos-invoices-no-sort" style="width: 2rem">
+                                            {% if result.can_mark_paid %}
+                                                <input class="form-check-input" type="checkbox"
+                                                       data-eos-invoices-select-all="{{ result.source.pk|unlocalize }}"
+                                                       title="{% translate "Select all" %}">
+                                            {% endif %}
+                                        </th>
+                                        <th class="eos-invoices-sort-1">{% translate "Corporation" context "EVE jargon" %}</th>
+                                        <th>{% translate "Date" %}</th>
+                                        <th class="eos-invoices-sort-2">{% translate "Description" %}</th>
+                                        <th class="text-end">{% translate "Amount" context "eos-invoices" %}</th>
+                                        <th>{% translate "Reason" context "EVE jargon" %}</th>
+                                        <th class="eos-invoices-no-sort"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in result.rows %}
+                                        <tr>
+                                            <td>
+                                                {% if result.can_mark_paid %}
+                                                    <input class="form-check-input eos-invoices-row" type="checkbox"
+                                                           name="selected"
+                                                           value="{{ result.source.pk|unlocalize }}:{{ row.corporation.corporation_id|unlocalize }}:{{ row.invoice.pk|unlocalize }}"
+                                                           data-group="{{ result.source.pk|unlocalize }}">
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-nowrap">
+                                                {{ row.corporation.corporation_name }} [{{ row.corporation.corporation_ticker }}]
+                                            </td>
+                                            <td class="text-nowrap" data-order="{{ row.invoice.date|date:"Y-m-d" }}">{{ row.invoice.date|date:"Y-m-d"|default:"-" }}</td>
+                                            <td>{{ row.invoice.label|default:"-" }}</td>
+                                            <td class="text-end text-nowrap" data-order="{{ row.invoice.amount|unlocalize }}">{{ row.invoice.amount|isk }} ISK</td>
+                                            <td class="text-nowrap">
+                                                {% if row.invoice.reason_hidden %}
+                                                    <span class="text-body-secondary small">{% translate "Not shown for the current month" %}</span>
+                                                {% elif row.invoice.reason %}
+                                                    <code>{{ row.invoice.reason }}</code>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end text-nowrap">
+                                                {% if result.can_mark_paid %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-success py-0"
+                                                            formaction="{% url "eos_invoices:mark_paid" result.source.pk %}"
+                                                            name="row" value="{{ row.invoice.pk|unlocalize }}"
+                                                            data-question="{% translate "Mark this payment as paid?" %}">
+                                                        {% translate "Mark as paid" %}
+                                                    </button>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             {% empty %}

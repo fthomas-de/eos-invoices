@@ -17,7 +17,9 @@ from eos_invoices.sources import (
 )
 
 # settings that name a single field of the chosen model
-PATH_FIELDS = ("corporation_field", "amount_field", "paid_field", "date_field")
+PATH_FIELDS = (
+    "corporation_field", "amount_field", "paid_field", "date_field", "month_field", "year_field",
+)
 
 
 def model_choices():
@@ -63,6 +65,8 @@ class PaymentSourceForm(forms.ModelForm):
             "reason_template",
             "label_template",
             "date_field",
+            "month_field",
+            "year_field",
             "pay_to",
         ]
 

@@ -91,6 +91,33 @@ TRANSLATIONS = {
         "Необязательное поле даты или даты-времени; строки сортируются по нему, сначала новые.",
         "可选的日期或日期时间字段；按其排序，最新的在前。",
     ),
+    "Month field": ("Feld Monat", "Поле месяца", "月份字段"),
+    "Optional integer field (1-12) holding the row's month. Together with the Year field below, hides the Reason while the row is for the month still in progress - the amount owed for it can still change. Both fields are required for this; set alone, this one does nothing.": (
+        "Optionales Ganzzahlfeld (1-12) mit dem Monat der Zeile. Zusammen mit dem Feld Jahr unten wird der Reason ausgeblendet, solange die Zeile den noch laufenden Monat betrifft - der geschuldete Betrag dafür kann sich noch ändern. Beide Felder sind dafür nötig; allein gesetzt bewirkt dieses Feld nichts.",
+        "Необязательное целочисленное поле (1-12) с месяцем строки. Вместе с полем Год ниже скрывает Reason, пока строка относится к ещё текущему месяцу - причитающаяся за него сумма может ещё измениться. Для этого нужны оба поля; заданное отдельно, это поле ничего не делает.",
+        "可选的整数字段（1-12），存放该行的月份。与下方的年份字段一起使用时，会在该行所属月份仍在进行中时隐藏 Reason —— 因为该月应付金额仍可能变化。需要同时设置两个字段；仅设置此字段不会生效。",
+    ),
+    "Year field": ("Feld Jahr", "Поле года", "年份字段"),
+    "Optional integer field holding the row's year, e.g. 2026. Used together with the Month field above - a month number alone cannot tell this year's row from the same month a year ago.": (
+        "Optionales Ganzzahlfeld mit dem Jahr der Zeile, z. B. 2026. Wird zusammen mit dem Feld Monat oben genutzt - eine Monatszahl allein kann die Zeile dieses Jahres nicht von demselben Monat vor einem Jahr unterscheiden.",
+        "Необязательное целочисленное поле с годом строки, например 2026. Используется вместе с полем Месяц выше - одно число месяца не позволяет отличить строку этого года от того же месяца год назад.",
+        "可选的整数字段，存放该行的年份，例如 2026。需与上方的月份字段配合使用 —— 仅凭月份数字无法区分本年度的行与去年同月的行。",
+    ),
+    "The month field must be an integer field.": (
+        "Das Feld Monat muss ein Ganzzahlfeld sein.",
+        "Поле месяца должно быть целочисленным.",
+        "月份字段必须是整数字段。",
+    ),
+    "The year field must be an integer field.": (
+        "Das Feld Jahr muss ein Ganzzahlfeld sein.",
+        "Поле года должно быть целочисленным.",
+        "年份字段必须是整数字段。",
+    ),
+    "Not shown for the current month": (
+        "Für den aktuellen Monat nicht angezeigt",
+        "Не показывается за текущий месяц",
+        "本月不显示",
+    ),
     "Pay to": ("Zahlen an", "Платить", "付款给"),
     "The Corporation that receives the ISK. Lists the Corporations of the Alliance chosen on the Alliance tab.": (
         "Die Corporation, die die ISK erhält. Zur Auswahl stehen die Corporations der Alliance, die im Tab Alliance gewählt ist.",

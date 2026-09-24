@@ -59,6 +59,9 @@ class Invoice:
     amount: Decimal
     paid: bool
     reason: str
+    # the Reason above is still the real one, for logging when this row is
+    # marked paid - only display is expected to check this and hide it
+    reason_hidden: bool
     label: str
     date: date | None
 
@@ -169,6 +172,8 @@ ACCEPTED_KINDS = {
     "corporation_field": {"integer"},
     "amount_field": {"integer", "number"},
     "date_field": {"date"},
+    "month_field": {"integer"},
+    "year_field": {"integer"},
 }
 
 
@@ -260,6 +265,8 @@ def check_source(source):
         "amount_field": _("The amount field must be a number field."),
         "paid_field": _("\"Field is true\" needs a boolean field."),
         "date_field": _("The date field must be a date or datetime field."),
+        "month_field": _("The month field must be an integer field."),
+        "year_field": _("The year field must be an integer field."),
     }
 
     def check(name):
@@ -287,6 +294,12 @@ def check_source(source):
 
     if source.date_field:
         check("date_field")
+
+    if source.month_field:
+        check("month_field")
+
+    if source.year_field:
+        check("year_field")
 
     for name in ("reason_template", "label_template"):
         try:
@@ -345,6 +358,10 @@ def _invoice_rows(source, **filters):
     wanted = {"pk", source.amount_field, PAID_ALIAS, CORPORATION_ALIAS}
     wanted.update(template_fields(source.reason_template))
     wanted.update(template_fields(source.label_template))
+    if source.month_field:
+        wanted.add(source.month_field)
+    if source.year_field:
+        wanted.add(source.year_field)
     if source.date_field:
         wanted.add(source.date_field)
         queryset = queryset.order_by(f"-{source.date_field}", "-pk")
@@ -359,11 +376,24 @@ def _to_invoice(source, row):
     if isinstance(when, datetime):
         when = when.date()
 
+    # both fields have to be set: a month number alone cannot tell this
+    # year's row from the same month a year ago - comparing plain integers
+    # both sides (the field's value, timezone.localdate()'s month/year), so
+    # a stored "07" vs a formatted "7" never comes up, whichever direction
+    today = timezone.localdate()
+    reason_hidden = bool(
+        source.month_field
+        and source.year_field
+        and row.get(source.month_field) == today.month
+        and row.get(source.year_field) == today.year
+    )
+
     return Invoice(
         pk=row["pk"],
         amount=Decimal(str(row[source.amount_field] or 0)),
         paid=row[PAID_ALIAS],
         reason=render_template(source.reason_template, row),
+        reason_hidden=reason_hidden,
         label=render_template(source.label_template, row),
         date=when,
     )

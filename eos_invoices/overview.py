@@ -82,46 +82,66 @@ def build_overview(user, *, include_paid=False):
 ADMIN_MAX_ROWS = 2000
 
 
-@dataclass
-class CorporationInvoices:
+@dataclass(frozen=True)
+class CorporationInvoice:
+    """One invoice next to whose Corporation it is - a row of a table grouped
+    by source, where the Corporation is a column rather than the grouping."""
+
     corporation: object
-    results: list = field(default_factory=list)
+    invoice: object
+
+
+@dataclass
+class SourceInvoices:
+    source: object
+    can_mark_paid: bool = False
+    rows: list = field(default_factory=list)  # list[CorporationInvoice]
 
     @property
     def open_total(self):
-        return sum((r.open_total for r in self.results), Decimal(0))
+        return sum((r.invoice.amount for r in self.rows if not r.invoice.paid), Decimal(0))
 
 
 @dataclass
 class AdminOverview:
     notice: str = ""
-    corporations: list = field(default_factory=list)
+    sources: list = field(default_factory=list)  # list[SourceInvoices]
     # (source, message) for sources that failed or were cut short
     problems: list = field(default_factory=list)
     settled_count: int = 0
 
     @property
     def open_total(self):
-        return sum((c.open_total for c in self.corporations), Decimal(0))
+        return sum((s.open_total for s in self.sources), Decimal(0))
 
 
 def build_admin_overview():
-    """Open payments of every Corporation in the Alliance, one query per source."""
+    """Open payments of every Corporation in the Alliance, grouped by source.
+
+    One table per source rather than one per Corporation: an admin working a
+    given app's payments (mining tax, say) wants that app's rows together,
+    across every Corporation, not split into as many tables as there are
+    Corporations that owe it something.
+    """
     # the key is enough; loading the Alliance itself would cost a query for nothing
     alliance_pk = InvoiceConfiguration.get_solo().alliance_id
     if alliance_pk is None:
         return AdminOverview(notice=_("No Alliance has been configured for this app yet."))
 
-    corporations = list(
-        EveCorporationInfo.objects.filter(alliance_id=alliance_pk).order_by("corporation_name")
-    )
-    per_corporation = {c.corporation_id: [] for c in corporations}
+    corporations = {
+        c.corporation_id: c
+        for c in EveCorporationInfo.objects.filter(alliance_id=alliance_pk).order_by(
+            "corporation_name"
+        )
+    }
+    corporation_ids = list(corporations)
+    has_open = set()
     overview = AdminOverview()
 
     for source in PaymentSource.objects.filter(enabled=True).select_related("pay_to"):
         try:
             by_corporation, truncated = get_invoices_by_corporation(
-                source, per_corporation, limit=ADMIN_MAX_ROWS
+                source, corporation_ids, limit=ADMIN_MAX_ROWS
             )
         except SourceError as exc:
             overview.problems.append((source, str(exc)))
@@ -140,16 +160,18 @@ def build_admin_overview():
                 )
             )
 
-        can_mark = paid_marker(source) is not None
+        rows = []
         for corporation_id, invoices in by_corporation.items():
-            per_corporation[corporation_id].append(
-                SourceResult(source=source, invoices=invoices, can_mark_paid=can_mark)
+            has_open.add(corporation_id)
+            corporation = corporations[corporation_id]
+            rows.extend(CorporationInvoice(corporation, invoice) for invoice in invoices)
+
+        if rows:
+            overview.sources.append(
+                SourceInvoices(
+                    source=source, rows=rows, can_mark_paid=paid_marker(source) is not None
+                )
             )
 
-    overview.corporations = [
-        CorporationInvoices(corporation=c, results=per_corporation[c.corporation_id])
-        for c in corporations
-        if per_corporation[c.corporation_id]
-    ]
-    overview.settled_count = len(corporations) - len(overview.corporations)
+    overview.settled_count = len(corporation_ids) - len(has_open)
     return overview

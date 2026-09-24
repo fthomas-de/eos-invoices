@@ -119,14 +119,16 @@ class TestAdminOverview(DueTestCase):
         Due.objects.create(corp_id=2002, amount=5, paid=True)
         Due.objects.create(corp_id=2009, amount=999)
 
-    def test_should_list_every_alliance_corporation_with_open_payments(self):
+    def test_should_group_open_payments_by_source_across_corporations(self):
         make_source()
         self.client.force_login(make_ceo(perms=("manage_sources",)))
 
         overview = self.client.get(reverse("eos_invoices:admin")).context["overview"]
 
+        # one table for the one source, every Corporation's rows in it
+        self.assertEqual(len(overview.sources), 1)
         self.assertEqual(
-            [(b.corporation.corporation_name, b.open_total) for b in overview.corporations],
+            sorted((r.corporation.corporation_name, r.invoice.amount) for r in overview.sources[0].rows),
             [("Alpha", 111), ("Beta", 222)],
         )
         # Gamma has nothing open; Stranger is outside the Alliance
@@ -160,6 +162,20 @@ class TestAdminOverview(DueTestCase):
         self.client.force_login(make_ceo())
 
         self.assertEqual(self.client.get(reverse("eos_invoices:admin")).status_code, 302)
+
+    def test_should_group_by_source_rather_than_by_corporation(self):
+        # two sources: proves the grouping is by source, not by Corporation -
+        # the old layout needed one card per Corporation instead
+        make_source(name="First")
+        make_source(name="Second")
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+        overview = self.client.get(reverse("eos_invoices:admin")).context["overview"]
+
+        self.assertEqual([s.source.name for s in overview.sources], ["First", "Second"])
+        self.assertEqual(
+            {r.corporation.corporation_name for r in overview.sources[0].rows}, {"Alpha", "Beta"}
+        )
 
     def test_should_not_offer_mark_buttons_on_the_normal_overview(self):
         make_source()
@@ -228,6 +244,8 @@ class TestPaymentLog(DueTestCase):
         self.assertContains(response, "eos_invoices/js/log")
         self.assertContains(response, 'id="eos-invoices-log-labels"')
         self.assertContains(response, "All sources")
+        self.assertContains(response, 'class="eos-invoices-sort-1"')
+        self.assertContains(response, 'class="eos-invoices-sort-2"')
 
 
 class TestSearchableDropdowns(DueTestCase):
@@ -331,7 +349,9 @@ class TestMarkSelectedPaid(DueTestCase):
         self.assertContains(response, f'value="{self.box(self.alpha)}"')
         self.assertContains(response, f'value="{self.box(self.beta)}"')
         self.assertContains(response, 'data-eos-invoices-select-all="all"')
-        self.assertContains(response, f'data-eos-invoices-select-all="2001-{self.source.pk}"')
+        # one table per source now, spanning every Corporation, so its own
+        # select-all covers the whole source rather than one Corporation of it
+        self.assertContains(response, f'data-eos-invoices-select-all="{self.source.pk}"')
         self.assertContains(response, "Mark selected as paid")
 
     def test_should_still_mark_a_single_row_from_the_same_form(self):
@@ -373,3 +393,27 @@ class TestSortableTables(DueTestCase):
         self.assertContains(
             self.client.get(reverse("eos_invoices:index")), 'data-order="1500000.00"'
         )
+
+    def test_should_default_sort_by_corporation_then_description(self):
+        alliance = EveAllianceInfo.objects.create(
+            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
+        )
+        # the admin overview reads Corporations of the Alliance, not the character
+        EveCorporationInfo.objects.create(
+            corporation_id=2001, corporation_name="Corp", corporation_ticker="C",
+            member_count=1, alliance=alliance,
+        )
+        InvoiceConfiguration.objects.create(alliance=alliance)
+        make_source()
+        Due.objects.create(corp_id=2001, amount=10)
+        self.client.force_login(make_ceo(perms=("basic_access", "manage_sources")))
+
+        index = self.client.get(reverse("eos_invoices:index"))
+        admin = self.client.get(reverse("eos_invoices:admin"))
+
+        # the CEO overview has no Corporation column - one Corporation only
+        self.assertNotContains(index, 'class="eos-invoices-sort-1"')
+        self.assertContains(index, 'class="eos-invoices-sort-2"')
+        # "All Corporations" spans several - Corporation first, then Description
+        self.assertContains(admin, 'class="eos-invoices-sort-1"')
+        self.assertContains(admin, 'class="eos-invoices-sort-2"')

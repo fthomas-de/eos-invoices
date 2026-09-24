@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+from unittest.mock import patch
 
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 
@@ -144,6 +145,18 @@ class TestCheckSource(DueTestCase):
     def test_should_report_a_bad_placeholder(self):
         self.assertIn("reason_template", self.check(reason_template="{nothing}"))
 
+    def test_should_require_the_month_field_to_be_an_integer(self):
+        self.assertIn("month_field", self.check(month_field="state"))
+
+    def test_should_not_require_a_month_field(self):
+        self.assertEqual(self.check(month_field=""), {})
+
+    def test_should_require_the_year_field_to_be_an_integer(self):
+        self.assertIn("year_field", self.check(year_field="state"))
+
+    def test_should_not_require_a_year_field(self):
+        self.assertEqual(self.check(year_field=""), {})
+
 
 class TestGetInvoices(DueTestCase):
     @classmethod
@@ -206,6 +219,56 @@ class TestGetInvoices(DueTestCase):
 
         self.assertEqual(invoice.reason, "2001/07/2026")
         self.assertEqual(invoice.label, "07/2026")
+
+    def test_should_hide_the_reason_when_month_and_year_both_match(self):
+        # the fixture row is month=7, year=2026 (Due's own default)
+        source = make_source(
+            month_field="month", year_field="year", reason_template="{corp_id}/{month}/{year}"
+        )
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            invoice = get_invoices(source, 2001)[0]
+
+        self.assertTrue(invoice.reason_hidden)
+        # the real reason is kept, for the log when this row is marked paid -
+        # only display is expected to check reason_hidden
+        self.assertEqual(invoice.reason, "2001/7/2026")
+
+    def test_should_show_the_reason_once_the_month_is_over(self):
+        source = make_source(month_field="month", year_field="year")
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 8, 1)):
+            invoice = get_invoices(source, 2001)[0]
+
+        self.assertFalse(invoice.reason_hidden)
+
+    def test_should_show_the_reason_when_the_year_differs_even_if_the_month_matches(self):
+        # the exact case a month-only comparison would have wrongly hidden:
+        # July of some other year is not "the current month" of July 2026
+        source = make_source(month_field="month", year_field="year")
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2027, 7, 15)):
+            invoice = get_invoices(source, 2001)[0]
+
+        self.assertFalse(invoice.reason_hidden)
+
+    def test_should_never_hide_with_only_the_month_field_configured(self):
+        # both fields are required - a month number alone cannot tell this
+        # year's row from the same month a year ago
+        source = make_source(month_field="month")
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            invoice = get_invoices(source, 2001)[0]
+
+        self.assertFalse(invoice.reason_hidden)
+
+    def test_should_never_hide_without_any_month_or_year_field_configured(self):
+        source = make_source()
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            invoice = get_invoices(source, 2001)[0]
+
+        self.assertFalse(invoice.reason_hidden)
 
     def test_should_raise_for_a_broken_source(self):
         with self.assertRaises(SourceError):
