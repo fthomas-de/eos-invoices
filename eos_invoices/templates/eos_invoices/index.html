@@ -1,5 +1,6 @@
 {% extends "eos_invoices/base.html" %}
 {% load i18n %}
+{% load l10n %}
 {% load eos_invoices %}
 {% load sri %}
 
@@ -61,12 +62,12 @@
                         <p class="text-body-secondary mb-0">{% translate "Nothing outstanding." %}</p>
                     {% else %}
                         <div class="table-responsive">
-                            <table class="table table-sm table-striped align-middle mb-0">
+                            <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
                                 <thead>
                                     <tr>
                                         <th>{% translate "Date" %}</th>
                                         <th>{% translate "Description" %}</th>
-                                        <th class="text-end">{% translate "Amount" %}</th>
+                                        <th class="text-end">{% translate "Amount" context "eos-invoices" %}</th>
                                         <th>{% translate "Reason" context "EVE jargon" %}</th>
                                         <th>{% translate "Status" %}</th>
                                     </tr>
@@ -74,9 +75,9 @@
                                 <tbody>
                                     {% for invoice in result.invoices %}
                                         <tr>
-                                            <td class="text-nowrap">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
+                                            <td class="text-nowrap" data-order="{{ invoice.date|date:"Y-m-d" }}">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
                                             <td>{{ invoice.label|default:"-" }}</td>
-                                            <td class="text-end text-nowrap">
+                                            <td class="text-end text-nowrap" data-order="{{ invoice.amount|unlocalize }}">
                                                 {{ invoice.amount|isk }} ISK
                                                 {% if not invoice.paid %}
                                                     {% include "eos_invoices/partials/copy-button.html" with text=invoice.amount_plain %}
@@ -90,11 +91,11 @@
                                                     -
                                                 {% endif %}
                                             </td>
-                                            <td>
+                                            <td data-order="{% if invoice.paid %}1{% else %}0{% endif %}">
                                                 {% if invoice.paid %}
                                                     <span class="badge text-bg-success">{% translate "Paid" %}</span>
                                                 {% else %}
-                                                    <span class="badge text-bg-danger">{% translate "Open" %}</span>
+                                                    <span class="badge text-bg-danger">{% translate "Open" context "eos-invoices" %}</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -111,7 +112,13 @@
     {% endif %}
 {% endblock %}
 
+{% block extra_css %}
+    {% include "bundles/datatables-2-css-bs5.html" %}
+{% endblock %}
+
 {% block extra_javascript %}
+    {% include "bundles/datatables-2-js-bs5.html" %}
+    {% sri_static "eos_invoices/js/tables.js" %}
     {% include "bundles/clipboard-js.html" %}
     {% sri_static "eos_invoices/js/copy.js" %}
 {% endblock %}

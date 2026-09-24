@@ -58,10 +58,10 @@ class PaymentSource(models.Model):
         NOT_EMPTY = "not_empty", _("Field is not empty")
         EQUALS = "equals", _("Field equals value")
 
-    name = models.CharField(_("Name"), max_length=100, unique=True)
-    enabled = models.BooleanField(_("Enabled"), default=True)
+    name = models.CharField(pgettext_lazy("eos-invoices", "Name"), max_length=100, unique=True)
+    enabled = models.BooleanField(pgettext_lazy("eos-invoices", "Enabled"), default=True)
     model_label = models.CharField(
-        _("Model"),
+        pgettext_lazy("eos-invoices", "Model"),
         max_length=255,
         help_text=_("The model holding one row per payment, as app_label.ModelName."),
     )
@@ -166,9 +166,24 @@ class PaymentLog(models.Model):
     corporation_name = models.CharField(
         pgettext_lazy("EVE jargon", "Corporation"), max_length=254, blank=True
     )
-    amount = models.DecimalField(_("Amount"), max_digits=24, decimal_places=2)
+    amount = models.DecimalField(pgettext_lazy("eos-invoices", "Amount"), max_digits=24, decimal_places=2)
     reason = models.CharField(pgettext_lazy("EVE jargon", "Reason"), max_length=255, blank=True)
     label = models.CharField(_("Description"), max_length=255, blank=True)
+
+    # what was written, to undo it exactly; empty on entries made before 0.0.7,
+    # which therefore cannot be undone from here
+    paid_field = models.CharField(max_length=255, blank=True, default="")
+    # plain JSON, filled through sources.to_json: DjangoJSONEncoder would cut
+    # datetimes to milliseconds
+    previous_value = models.JSONField(null=True)
+    written_value = models.JSONField(null=True)
+
+    # an undone entry stays: a log that loses lines proves nothing
+    reverted_at = models.DateTimeField(_("Undone"), null=True)
+    reverted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    reverted_by_name = models.CharField(_("Undone by"), max_length=254, blank=True, default="")
 
     class Meta:
         default_permissions = ()
@@ -178,3 +193,7 @@ class PaymentLog(models.Model):
 
     def __str__(self):
         return f"{self.created:%Y-%m-%d %H:%M} {self.user_name}: {self.source_name} {self.row_pk}"
+
+    @property
+    def can_undo(self):
+        return self.reverted_at is None and bool(self.paid_field) and self.source_id is not None

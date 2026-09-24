@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-09-24
+
+### Added
+
+- Undo in the log, for the misclick: puts back the exact value the paid
+  field held before, through the owning model's `save()`. The log now stores
+  the paid field with its value before and after (migration 0004). Undo is
+  refused when the field no longer holds what was written - the owning app or
+  somebody else changed it since, and putting the old value back would
+  overwrite an automatic payment check, for instance. The entry stays in the
+  log, marked with who undid it and when; each entry can be undone once, and
+  the row is locked while it is, so two admins cannot both write. Entries
+  made before this version hold no previous value and offer no undo.
+- The values are stored as plain JSON through our own conversion rather
+  than `DjangoJSONEncoder`, which cuts datetimes to milliseconds while the
+  database keeps microseconds: the stored stamp would never have matched the
+  field again, and undoing a date would always have been refused.
+- The model dropdown on the source form filters while typing, like the
+  Alliance and "Pay to" dropdowns; the field dropdowns still refill when the
+  model changes.
+- A test that asks Django, for every entry of our catalogues, what it
+  actually shows in each language, and fails when that is not our
+  translation. Like the other catalogue tests it is skipped in the normal
+  suite - between releases the catalogues describe the last release, not the
+  code - and runs at the end of `tools/translate.py` instead.
+
+### Fixed
+
+- Fourteen translations never showed, because Alliance Auth translates the
+  same short words itself and an app earlier in `INSTALLED_APPS` wins a msgid
+  clash: German showed "Öffnen" for an open payment and "Menge" for an
+  amount, Chinese "公开" (public) for open and "角色名" (character name) for
+  the source name, Russian "Открыть" (to open). Amount, Display, Enabled,
+  Model, Open, Save, Disabled and Name now carry the message context
+  `eos-invoices`, which no other catalogue has. The new test found them and
+  keeps new ones from slipping in.
+
+### Changed
+
+- The "All Corporations" tab has a box per row, one per source table and
+  "Select all" at the top, and a single "Mark selected as paid" button that
+  marks the ticked rows of every Corporation at once. It replaces the "Mark
+  all as paid" button per source, which a table's own box now does. The same
+  guards as before: only the ticked rows are marked, each only if it still
+  belongs to the Corporation it was listed under, one log entry per row, all
+  in one transaction. The per-row button stays.
+- Every table - overview, "All Corporations", log, sources - sorts by a click
+  on its header (DataTables from Alliance Auth's bundle). No paging, so no
+  ticked box drops out of the form; amounts and dates sort by their raw
+  value, not by the formatted text. The log sorts within its page of 100.
+- README, glossary and every catalogue say that the translations are
+  machine-generated and may be inaccurate.
+
 ## [0.0.6] - 2026-09-24
 
 ### Added

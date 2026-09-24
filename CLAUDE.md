@@ -21,6 +21,11 @@ Run from `~/aa-dev/working/myauth`:
 eos-test eos_invoices --parallel 2
 ```
 
+The catalogue tests (`tests/test_translations.py`) are skipped in this run;
+`tools/translate.py` runs them at a release, on fresh catalogues. A failing
+subtest hangs `--parallel` - the runner cannot pickle it - so drop the flag
+to see which one.
+
 ```bash
 ~/aa-dev/venv/bin/python manage.py makemigrations eos_invoices
 ```
@@ -44,10 +49,14 @@ eos-test eos_invoices --parallel 2
 
 ## Translations and releases
 
-Alliance Auth translates many plain words itself and wins a msgid clash.
-EVE jargon that has to stay English therefore gets the context
-`EVE jargon` (`pgettext_lazy`, `{% translate ... context %}`);
-`tests/test_translations.py` checks it.
+Alliance Auth translates many plain words itself and wins a msgid clash -
+"Open" becomes the verb, "Amount" a quantity. Two contexts keep ours:
+`EVE jargon` for terms that must stay English, `eos-invoices` for ordinary
+words AA translates differently (`pgettext_lazy`, `{% translate ... context %}`).
+`test_should_show_our_translation_for_every_message` asks Django what it shows
+for each entry and names every clash; give a clashing word the `eos-invoices`
+context. It runs only inside `tools/translate.py`, like the other catalogue
+tests: between releases the catalogues describe the last release, not the code.
 
 English only between releases. On the user's release call:
 
@@ -61,8 +70,8 @@ English only between releases. On the user's release call:
 
    It runs makemessages, fills the catalogues from the glossary, drops
    obsolete entries, checks every entry against the glossary, runs
-   `msgfmt --check` and compilemessages, and confirms each `.mo` is newer than
-   its `.po`. A message missing from the glossary stops it with a list; that
+   `msgfmt --check` and compilemessages, confirms each `.mo` is newer than
+   its `.po`, and finally runs the catalogue tests. A message missing from the glossary stops it with a list; that
    entry is left empty, never with gettext's fuzzy guess.
 3. Split `[Unreleased]` in `CHANGELOG.md` into the new version.
 4. Commit and push - asking before the commit.

@@ -16,7 +16,9 @@ admin.site.register(InvoiceConfiguration, SingletonModelAdmin)
 
 @admin.register(PaymentLog)
 class PaymentLogAdmin(admin.ModelAdmin):
-    list_display = ("created", "user_name", "source_name", "corporation_name", "amount", "reason")
+    list_display = (
+        "created", "user_name", "source_name", "corporation_name", "amount", "reason", "reverted_at"
+    )
     list_filter = ("source_name",)
     search_fields = ("user_name", "corporation_name", "reason")
 

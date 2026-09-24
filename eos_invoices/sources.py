@@ -437,17 +437,50 @@ def paid_marker(source):
     return None
 
 
+def to_json(value):
+    """A field value as JSON, without losing precision on the way.
+
+    Not DjangoJSONEncoder: it cuts datetimes to milliseconds, while the
+    database keeps microseconds - the stored stamp would then never equal the
+    field again, and undoing a date would always be refused as "changed".
+    """
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return str(value)
+    return value
+
+
+@dataclass(frozen=True)
+class Marking:
+    """What mark_paid changed, as the log needs it to show and to undo it."""
+
+    corporation_id: int
+    invoice: Invoice
+    paid_field: str
+    previous: object
+    written: object
+
+    @property
+    def previous_json(self):
+        return to_json(self.previous)
+
+    @property
+    def written_json(self):
+        return to_json(self.written)
+
+
 def mark_paid(source, pk, *, corporation_id=None):
     """Mark one row of a source as paid, through the model's own save().
 
     save() rather than a queryset update, so the owning app's save logic and
     signals still run - its own idea of what paying means stays in charge.
 
-    Returns ``(corporation_id, Invoice)`` as the row was before, for the log.
-    A row that is already paid is refused, so the log never records a change
-    that did not happen. With ``corporation_id`` a row of any other
-    Corporation is refused as well - a batch posted for one Corporation must
-    not reach into another.
+    Returns a ``Marking``: the row as it was, and the paid field's value
+    before and after, so the change can be undone exactly. A row that is
+    already paid is refused, so the log never records a change that did not
+    happen. With ``corporation_id`` a row of any other Corporation is refused
+    as well - a batch posted for one Corporation must not reach into another.
     """
     marker = paid_marker(source)
     if marker is None:
@@ -461,9 +494,42 @@ def mark_paid(source, pk, *, corporation_id=None):
 
     model = resolve_model(source.model_label)
     row = model._default_manager.get(pk=invoice.pk)
-    setattr(row, source.paid_field, marker())
+    previous = getattr(row, source.paid_field)
+    written = marker()
+    setattr(row, source.paid_field, written)
     row.save(update_fields=[source.paid_field])
-    return row_corporation_id, invoice
+    return Marking(row_corporation_id, invoice, source.paid_field, previous, written)
+
+
+def undo_mark_paid(source, pk, paid_field, previous, written):
+    """Put back the value mark_paid replaced, through the model's own save().
+
+    Refused when the field no longer holds what was written: then the owning
+    app, or somebody else, has changed it since, and putting the old value
+    back would overwrite that - an automatic payment check, for instance.
+    ``previous`` and ``written`` may come back from JSON as strings; the
+    field turns them into its own type before anything is compared.
+    """
+    model = resolve_model(source.model_label)
+    try:
+        model_field = resolve_field(model, paid_field)
+    except SourceError as exc:
+        raise SourceError(_("The paid field of this source has changed since.")) from exc
+    if "__" in paid_field:
+        raise SourceError(_("The paid field of this source has changed since."))
+
+    try:
+        row = model._default_manager.get(pk=pk)
+    except (model.DoesNotExist, ValueError, ValidationError) as exc:
+        raise SourceError(_("The payment no longer exists.")) from exc
+
+    if getattr(row, paid_field) != model_field.to_python(written):
+        raise SourceError(
+            _("The payment has been changed since it was marked; it was left as it is.")
+        )
+
+    setattr(row, paid_field, model_field.to_python(previous))
+    row.save(update_fields=[paid_field])
 
 
 def probe(source):

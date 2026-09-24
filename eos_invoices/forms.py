@@ -80,6 +80,7 @@ class PaymentSourceForm(forms.ModelForm):
             label=PaymentSource._meta.get_field("model_label").verbose_name,
             help_text=PaymentSource._meta.get_field("model_label").help_text,
             choices=choices,
+            widget=forms.Select(attrs={"data-eos-invoices-search": ""}),
         )
 
         self.fields["pay_to"].queryset = self._pay_to_corporations()

@@ -1,5 +1,7 @@
 {% extends "eos_invoices/base.html" %}
 {% load i18n %}
+{% load l10n %}
+{% load sri %}
 {% load eos_invoices %}
 
 {% block details %}
@@ -11,7 +13,7 @@
         <div class="card-body">
             {% if page.object_list %}
                 <div class="table-responsive">
-                    <table class="table table-sm table-striped align-middle mb-0">
+                    <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
                         <thead>
                             <tr>
                                 <th>{% translate "Date" %}</th>
@@ -19,22 +21,41 @@
                                 <th>{% translate "Source" %}</th>
                                 <th>{% translate "Corporation" context "EVE jargon" %}</th>
                                 <th>{% translate "Description" %}</th>
-                                <th class="text-end">{% translate "Amount" %}</th>
+                                <th class="text-end">{% translate "Amount" context "eos-invoices" %}</th>
                                 <th>{% translate "Reason" context "EVE jargon" %}</th>
                                 <th>{% translate "Row" %}</th>
+                                <th class="eos-invoices-no-sort"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for entry in page.object_list %}
-                                <tr>
-                                    <td class="text-nowrap">{{ entry.created|date:"Y-m-d H:i" }}</td>
+                                <tr{% if entry.reverted_at %} class="text-body-secondary"{% endif %}>
+                                    <td class="text-nowrap" data-order="{{ entry.created|date:"c" }}">{{ entry.created|date:"Y-m-d H:i" }}</td>
                                     <td>{{ entry.user_name }}</td>
                                     <td>{{ entry.source_name }}</td>
                                     <td>{{ entry.corporation_name|default:entry.corporation_id }}</td>
                                     <td>{{ entry.label|default:"-" }}</td>
-                                    <td class="text-end text-nowrap">{{ entry.amount|isk }} ISK</td>
+                                    <td class="text-end text-nowrap" data-order="{{ entry.amount|unlocalize }}">{{ entry.amount|isk }} ISK</td>
                                     <td>{% if entry.reason %}<code>{{ entry.reason }}</code>{% else %}-{% endif %}</td>
                                     <td><code>{{ entry.row_pk }}</code></td>
+                                    <td class="text-end">
+                                        {% if entry.reverted_at %}
+                                            <span class="badge text-bg-secondary"
+                                                  title="{{ entry.reverted_at|date:"Y-m-d H:i" }}">
+                                                {% blocktranslate with name=entry.reverted_by_name trimmed %}Undone by {{ name }}{% endblocktranslate %}
+                                            </span>
+                                        {% elif entry.can_undo %}
+                                            <form method="post" action="{% url "eos_invoices:undo_marking" entry.pk %}"
+                                                  class="d-inline eos-invoices-confirm"
+                                                  data-question="{% translate "Undo this and set the payment open again?" %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0">
+                                                    {% translate "Undo" %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -59,4 +80,14 @@
             {% endif %}
         </div>
     </div>
+{% endblock %}
+
+{% block extra_css %}
+    {% include "bundles/datatables-2-css-bs5.html" %}
+{% endblock %}
+
+{% block extra_javascript %}
+    {% include "bundles/datatables-2-js-bs5.html" %}
+    {% sri_static "eos_invoices/js/tables.js" %}
+    {% sri_static "eos_invoices/js/confirm.js" %}
 {% endblock %}

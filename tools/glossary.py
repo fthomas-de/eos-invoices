@@ -1,4 +1,7 @@
-"""Reviewed translations of every eos_invoices message: (de, ru, zh_Hans).
+"""Translations of every eos_invoices message: (de, ru, zh_Hans).
+
+The German, Russian and Simplified Chinese translations are machine-generated and may be inaccurate.
+Checked for sense, not by a native speaker - a correction goes here.
 
 The source of truth for the catalogues - tools/translate.py writes these into
 the .po files and refuses to run while a message is missing here. Add a new
@@ -8,6 +11,10 @@ EVE jargon stays English in every language: Corporation, Alliance, Main,
 Reason, ISK. A term Alliance Auth translates itself (Alliance, Reason,
 Corporation) needs the "EVE jargon" context in the code as well, or AA's
 catalogue wins and the English never shows.
+
+A short word Alliance Auth translates differently ("Open", "Amount", "Name")
+needs the "eos-invoices" context in the code; the translation test in
+tests/test_translations.py names every such clash.
 
 Plural forms: de 2, ru 3, zh_Hans 1.
 """
@@ -148,6 +155,43 @@ TRANSLATIONS = {
     ),
     "Mark all as paid": ("Alle als bezahlt markieren", "Отметить все как оплаченные", "全部标记为已付"),
     "No Corporation given.": ("Keine Corporation angegeben.", "Corporation не указана.", "未指定 Corporation。"),
+    "Undone": ("Zurückgenommen", "Отменено", "已撤销"),
+    "Undone by": ("Zurückgenommen von", "Отменил", "撤销人"),
+    "Undone by %(name)s": ("Zurückgenommen von %(name)s", "Отменил %(name)s", "由 %(name)s 撤销"),
+    "Undo": ("Zurücknehmen", "Отменить", "撤销"),
+    "Undo this and set the payment open again?": (
+        "Zurücknehmen und die Zahlung wieder auf offen setzen?",
+        "Отменить и снова отметить платёж как неоплаченный?",
+        "撤销并将此款项重新设为未付？",
+    ),
+    "Undone: the payment is open again.": (
+        "Zurückgenommen: Die Zahlung ist wieder offen.",
+        "Отменено: платёж снова не оплачен.",
+        "已撤销：该款项重新变为未付。",
+    ),
+    "This entry cannot be undone.": (
+        "Dieser Eintrag kann nicht zurückgenommen werden.",
+        "Эту запись нельзя отменить.",
+        "此条目无法撤销。",
+    ),
+    "The paid field of this source has changed since.": (
+        "Das Bezahlt-Feld dieser Quelle wurde inzwischen geändert.",
+        "Поле оплаты этого источника с тех пор изменилось.",
+        "此来源的已付字段已被更改。",
+    ),
+    "The payment has been changed since it was marked; it was left as it is.": (
+        "Die Zahlung wurde seit dem Markieren geändert; sie bleibt unverändert.",
+        "Платёж изменился после отметки; он оставлен без изменений.",
+        "该款项在标记后已被更改；保持不变。",
+    ),
+    "Select all": ("Alle auswählen", "Выбрать все", "全选"),
+    "Mark selected as paid": ("Auswahl als bezahlt markieren", "Отметить выбранные как оплаченные", "将所选标记为已付"),
+    "Mark the selected payments as paid?": (
+        "Die ausgewählten Zahlungen als bezahlt markieren?",
+        "Отметить выбранные платежи как оплаченные?",
+        "将所选款项标记为已付？",
+    ),
+    "Nothing was selected.": ("Es wurde nichts ausgewählt.", "Ничего не выбрано.", "未选择任何内容。"),
     "Payment source": ("Zahlungsquelle", "Источник платежей", "款项来源"),
     "Payment sources": ("Zahlungsquellen", "Источники платежей", "款项来源"),
     "You have no main character.": (

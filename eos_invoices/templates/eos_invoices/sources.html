@@ -22,13 +22,13 @@
 
             {% if rows %}
                 <div class="table-responsive">
-                    <table class="table table-sm table-striped align-middle mb-0">
+                    <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
                         <thead>
                             <tr>
-                                <th>{% translate "Name" %}</th>
-                                <th>{% translate "Model" %}</th>
+                                <th>{% translate "Name" context "eos-invoices" %}</th>
+                                <th>{% translate "Model" context "eos-invoices" %}</th>
                                 <th>{% translate "Status" %}</th>
-                                <th></th>
+                                <th class="eos-invoices-no-sort"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -37,7 +37,7 @@
                                     <td>
                                         {{ row.source.name }}
                                         {% if not row.source.enabled %}
-                                            <span class="badge text-bg-secondary ms-1">{% translate "Disabled" %}</span>
+                                            <span class="badge text-bg-secondary ms-1">{% translate "Disabled" context "eos-invoices" %}</span>
                                         {% endif %}
                                     </td>
                                     <td><code>{{ row.source.model_label }}</code></td>
@@ -79,6 +79,12 @@
     </div>
 {% endblock %}
 
+{% block extra_css %}
+    {% include "bundles/datatables-2-css-bs5.html" %}
+{% endblock %}
+
 {% block extra_javascript %}
+    {% include "bundles/datatables-2-js-bs5.html" %}
+    {% sri_static "eos_invoices/js/tables.js" %}
     {% sri_static "eos_invoices/js/confirm.js" %}
 {% endblock %}

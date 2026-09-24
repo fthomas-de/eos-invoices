@@ -112,7 +112,11 @@ refused.
 the Alliance. Its *Mark as paid* button writes to the table of the other app,
 through that model's own `save()`, and adds an entry to *Invoices → Log*.
 *Mark all as paid* above a source's table does the same for every open row of
-that Corporation in that source that the page shows. The value follows the source's *Paid when* setting:
+that Corporation in that source that the page shows.
+
+A misclick is taken back with *Undo* in the log. It restores the exact value
+the paid field held before - unless the field has changed since, in which case
+it is left alone. The entry stays in the log, marked as undone. The value follows the source's *Paid when* setting:
 
 | Paid when | Written |
 |---|---|
@@ -124,6 +128,12 @@ There is no button for a text field under *Field is not empty*, nor for a paid
 field behind a relation (`something__paid`). Only the paid field itself is
 written; a separate "paid at" column of the other app, as aa-miningtax has,
 stays as it is.
+
+## Translations
+
+The German, Russian and Simplified Chinese translations are machine-generated and may be inaccurate. Corrections are welcome: every translation lives in
+`tools/glossary.py`; `tools/translate.py` writes it into the catalogues.
+EVE terms (Corporation, Alliance, Main, Reason, ISK) stay English on purpose.
 
 ## Possible extensions
 

@@ -5,6 +5,7 @@ from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _, ngettext
 from django.views.decorators.http import require_POST
@@ -21,6 +22,7 @@ from eos_invoices.sources import (
     SourceError,
     field_options,
     mark_paid as mark_row_paid,
+    undo_mark_paid,
     probe,
     resolve_model,
 )
@@ -70,8 +72,7 @@ def mark_paid(request, pk):
 
     try:
         with transaction.atomic():
-            corporation_id, invoice = mark_row_paid(source, row)
-            _log_marking(request, source, corporation_id, invoice)
+            _log_marking(request, source, mark_row_paid(source, row))
     except SourceError as exc:
         messages.error(request, str(exc))
     else:
@@ -83,33 +84,42 @@ def mark_paid(request, pk):
 @login_required
 @permission_required("eos_invoices.manage_sources")
 @require_POST
-def mark_all_paid(request, pk):
-    """Mark the rows of one Corporation in one source that the page showed.
+def mark_selected_paid(request):
+    """Mark every row ticked on the admin overview, across Corporations.
 
-    The page posts the keys it listed rather than asking for "everything open
-    now": a payment that arrived after the page was loaded was never seen by
-    the admin and stays open.
+    Each box carries "source:corporation:row" as the page showed it. Only
+    those rows are marked - a payment that arrived after the page was loaded
+    was never seen and stays open - and each one only if it still belongs to
+    the Corporation it was listed under.
     """
-    source = get_object_or_404(PaymentSource, pk=pk)
-    try:
-        corporation_id = int(request.POST.get("corporation", ""))
-    except ValueError:
-        messages.error(request, _("No Corporation given."))
-        return _back(request)
+    sources = {}
+    wanted = []
+    skipped = 0
+    for value in request.POST.getlist("selected"):
+        try:
+            source_pk, corporation_id, row = value.split(":", 2)
+            wanted.append((int(source_pk), int(corporation_id), row))
+        except ValueError:
+            skipped += 1
 
-    marked = skipped = 0
+    for source in PaymentSource.objects.filter(pk__in={w[0] for w in wanted}):
+        sources[source.pk] = source
+
+    marked = 0
     # all or nothing if the database fails half way; a row that is merely
     # paid already, gone or of another Corporation is skipped, not fatal
     with transaction.atomic():
-        for row in request.POST.getlist("rows"):
+        for source_pk, corporation_id, row in wanted:
+            source = sources.get(source_pk)
+            if source is None:
+                skipped += 1
+                continue
             try:
-                _corporation_id, invoice = mark_row_paid(
-                    source, row, corporation_id=corporation_id
-                )
+                marking = mark_row_paid(source, row, corporation_id=corporation_id)
             except SourceError:
                 skipped += 1
                 continue
-            _log_marking(request, source, corporation_id, invoice)
+            _log_marking(request, source, marking)
             marked += 1
 
     if marked:
@@ -132,28 +142,85 @@ def mark_all_paid(request, pk):
             )
             % {"count": skipped},
         )
+    if not marked and not skipped:
+        messages.info(request, _("Nothing was selected."))
     return _back(request)
 
 
-def _log_marking(request, source, corporation_id, invoice):
-    main = request.user.profile.main_character
-    corporation = EveCorporationInfo.objects.filter(corporation_id=corporation_id).first()
+def _user_name(user):
+    main = user.profile.main_character
+    return main.character_name if main else user.username
+
+
+def _log_marking(request, source, marking):
+    invoice = marking.invoice
+    corporation = EveCorporationInfo.objects.filter(
+        corporation_id=marking.corporation_id
+    ).first()
     # the owning app keeps no record of who flipped its flag - we do
     PaymentLog.objects.create(
         user=request.user,
-        user_name=main.character_name if main else request.user.username,
+        user_name=_user_name(request.user),
         source=source,
         source_name=source.name,
         row_pk=str(invoice.pk),
-        corporation_id=corporation_id,
+        corporation_id=marking.corporation_id,
         corporation_name=corporation.corporation_name if corporation else "",
         amount=invoice.amount,
         reason=invoice.reason[:255],
         label=invoice.label[:255],
+        paid_field=marking.paid_field,
+        previous_value=marking.previous_json,
+        written_value=marking.written_json,
     )
     logger.info(
         "eos_invoices: %s marked row %s of %s as paid", request.user, invoice.pk, source
     )
+
+
+@login_required
+@permission_required("eos_invoices.manage_sources")
+@require_POST
+def undo_marking(request, pk):
+    """Take back a mark as paid, for the misclick."""
+    with transaction.atomic():
+        # locked, so two admins undoing the same entry cannot both write
+        entry = get_object_or_404(PaymentLog.objects.select_for_update(), pk=pk)
+        if not entry.can_undo:
+            messages.error(request, _("This entry cannot be undone."))
+            return _back_to_log(request)
+        try:
+            undo_mark_paid(
+                entry.source,
+                entry.row_pk,
+                entry.paid_field,
+                entry.previous_value,
+                entry.written_value,
+            )
+        except SourceError as exc:
+            messages.error(request, str(exc))
+            return _back_to_log(request)
+
+        entry.reverted_at = timezone.now()
+        entry.reverted_by = request.user
+        entry.reverted_by_name = _user_name(request.user)
+        entry.save(update_fields=["reverted_at", "reverted_by", "reverted_by_name"])
+
+    logger.info(
+        "eos_invoices: %s undid marking row %s of %s as paid",
+        request.user,
+        entry.row_pk,
+        entry.source_name,
+    )
+    messages.success(request, _("Undone: the payment is open again."))
+    return _back_to_log(request)
+
+
+def _back_to_log(request):
+    target = request.POST.get("next", "")
+    if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}):
+        target = reverse("eos_invoices:log")
+    return redirect(target)
 
 
 def _back(request):

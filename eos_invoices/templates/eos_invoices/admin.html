@@ -1,5 +1,6 @@
 {% extends "eos_invoices/base.html" %}
 {% load i18n %}
+{% load l10n %}
 {% load eos_invoices %}
 {% load sri %}
 
@@ -13,99 +14,127 @@
             </div>
         {% endfor %}
 
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <span class="text-body-secondary">
-                {% translate "Outstanding" %}:
-                <strong>{{ overview.open_total|isk }} ISK</strong>
-            </span>
-            {% if overview.settled_count %}
-                <span class="text-body-secondary small">
-                    {% blocktranslate count counter=overview.settled_count trimmed %}
-                        {{ counter }} Corporation with nothing outstanding
-                    {% plural %}
-                        {{ counter }} Corporations with nothing outstanding
-                    {% endblocktranslate %}
-                </span>
-            {% endif %}
-        </div>
+        {% comment %}
+            One form around every Corporation, so ticked rows of all of them go
+            out with a single click. The per-row buttons submit the same form to
+            another address (formaction) - forms cannot be nested.
+        {% endcomment %}
+        <form method="post" action="{% url "eos_invoices:mark_selected_paid" %}" class="eos-invoices-confirm">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
 
-        {% for block in overview.corporations %}
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div class="card-title mb-0">
-                        {{ block.corporation.corporation_name }} [{{ block.corporation.corporation_ticker }}]
-                    </div>
-                    <span class="text-nowrap">{{ block.open_total|isk }} ISK</span>
-                </div>
-
-                <div class="card-body">
-                    {% for result in block.results %}
-                        <div class="d-flex justify-content-between align-items-center mb-1 {% if not forloop.first %}mt-3{% endif %}">
-                            <h2 class="h6 mb-0">{{ result.source.name }}</h2>
-                            {% if result.can_mark_paid and result.invoices|length > 1 %}
-                                <form method="post" action="{% url "eos_invoices:mark_all_paid" result.source.pk %}"
-                                      class="eos-invoices-confirm"
-                                      data-question="{% blocktranslate count counter=result.invoices|length with corporation=block.corporation.corporation_name source=result.source.name trimmed %}Mark {{ counter }} payment of {{ corporation }} in {{ source }} as paid?{% plural %}Mark all {{ counter }} payments of {{ corporation }} in {{ source }} as paid?{% endblocktranslate %}">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="corporation" value="{{ block.corporation.corporation_id }}">
-                                    {% for invoice in result.invoices %}
-                                        <input type="hidden" name="rows" value="{{ invoice.pk }}">
-                                    {% endfor %}
-                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                    <button type="submit" class="btn btn-sm btn-success py-0">
-                                        {% translate "Mark all as paid" %}
-                                    </button>
-                                </form>
-                            {% endif %}
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    {% if overview.corporations %}
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="eos-invoices-select-all"
+                                   data-eos-invoices-select-all="all">
+                            <label class="form-check-label" for="eos-invoices-select-all">
+                                {% translate "Select all" %}
+                            </label>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-sm table-striped align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>{% translate "Date" %}</th>
-                                        <th>{% translate "Description" %}</th>
-                                        <th class="text-end">{% translate "Amount" %}</th>
-                                        <th>{% translate "Reason" context "EVE jargon" %}</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for invoice in result.invoices %}
-                                        <tr>
-                                            <td class="text-nowrap">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
-                                            <td>{{ invoice.label|default:"-" }}</td>
-                                            <td class="text-end text-nowrap">{{ invoice.amount|isk }} ISK</td>
-                                            <td class="text-nowrap">
-                                                {% if invoice.reason %}<code>{{ invoice.reason }}</code>{% else %}-{% endif %}
-                                            </td>
-                                            <td class="text-end text-nowrap">
-                                                {% if result.can_mark_paid %}
-                                                    <form method="post" action="{% url "eos_invoices:mark_paid" result.source.pk %}"
-                                                          class="d-inline eos-invoices-confirm"
-                                                          data-question="{% translate "Mark this payment as paid?" %}">
-                                                        {% csrf_token %}
-                                                        <input type="hidden" name="row" value="{{ invoice.pk }}">
-                                                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                                        <button type="submit" class="btn btn-sm btn-outline-success py-0">
-                                                            {% translate "Mark as paid" %}
-                                                        </button>
-                                                    </form>
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% endfor %}
+                        <button type="submit" class="btn btn-sm btn-success" disabled
+                                data-eos-invoices-selected-count
+                                data-question="{% translate "Mark the selected payments as paid?" %}">
+                            {% translate "Mark selected as paid" %}
+                            <span class="badge text-bg-light ms-1 eos-invoices-count">0</span>
+                        </button>
+                    {% endif %}
+                    <span class="text-body-secondary">
+                        {% translate "Outstanding" %}:
+                        <strong>{{ overview.open_total|isk }} ISK</strong>
+                    </span>
                 </div>
+                {% if overview.settled_count %}
+                    <span class="text-body-secondary small">
+                        {% blocktranslate count counter=overview.settled_count trimmed %}
+                            {{ counter }} Corporation with nothing outstanding
+                        {% plural %}
+                            {{ counter }} Corporations with nothing outstanding
+                        {% endblocktranslate %}
+                    </span>
+                {% endif %}
             </div>
-        {% empty %}
-            <div class="alert alert-success">{% translate "Nothing outstanding." %}</div>
-        {% endfor %}
+
+            {% for block in overview.corporations %}
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="card-title mb-0">
+                            {{ block.corporation.corporation_name }} [{{ block.corporation.corporation_ticker }}]
+                        </div>
+                        <span class="text-nowrap">{{ block.open_total|isk }} ISK</span>
+                    </div>
+
+                    <div class="card-body">
+                        {% for result in block.results %}
+                                <h2 class="h6 mb-1 {% if not forloop.first %}mt-3{% endif %}">{{ result.source.name }}</h2>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
+                                        <thead>
+                                            <tr>
+                                                <th class="eos-invoices-no-sort" style="width: 2rem">
+                                                    {% if result.can_mark_paid %}
+                                                        <input class="form-check-input" type="checkbox"
+                                                               data-eos-invoices-select-all="{{ block.corporation.corporation_id|unlocalize }}-{{ result.source.pk|unlocalize }}"
+                                                               title="{% translate "Select all" %}">
+                                                    {% endif %}
+                                                </th>
+                                                <th>{% translate "Date" %}</th>
+                                                <th>{% translate "Description" %}</th>
+                                                <th class="text-end">{% translate "Amount" context "eos-invoices" %}</th>
+                                                <th>{% translate "Reason" context "EVE jargon" %}</th>
+                                                <th class="eos-invoices-no-sort"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for invoice in result.invoices %}
+                                                <tr>
+                                                    <td>
+                                                        {% if result.can_mark_paid %}
+                                                            <input class="form-check-input eos-invoices-row" type="checkbox"
+                                                                   name="selected"
+                                                                   value="{{ result.source.pk|unlocalize }}:{{ block.corporation.corporation_id|unlocalize }}:{{ invoice.pk|unlocalize }}"
+                                                                   data-group="{{ block.corporation.corporation_id|unlocalize }}-{{ result.source.pk|unlocalize }}">
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-nowrap" data-order="{{ invoice.date|date:"Y-m-d" }}">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
+                                                    <td>{{ invoice.label|default:"-" }}</td>
+                                                    <td class="text-end text-nowrap" data-order="{{ invoice.amount|unlocalize }}">{{ invoice.amount|isk }} ISK</td>
+                                                    <td class="text-nowrap">
+                                                        {% if invoice.reason %}<code>{{ invoice.reason }}</code>{% else %}-{% endif %}
+                                                    </td>
+                                                    <td class="text-end text-nowrap">
+                                                        {% if result.can_mark_paid %}
+                                                            <button type="submit" class="btn btn-sm btn-outline-success py-0"
+                                                                    formaction="{% url "eos_invoices:mark_paid" result.source.pk %}"
+                                                                    name="row" value="{{ invoice.pk|unlocalize }}"
+                                                                    data-question="{% translate "Mark this payment as paid?" %}">
+                                                                {% translate "Mark as paid" %}
+                                                            </button>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="alert alert-success">{% translate "Nothing outstanding." %}</div>
+            {% endfor %}
+        </form>
     {% endif %}
 {% endblock %}
 
+{% block extra_css %}
+    {% include "bundles/datatables-2-css-bs5.html" %}
+{% endblock %}
+
 {% block extra_javascript %}
+    {% include "bundles/datatables-2-js-bs5.html" %}
+    {% sri_static "eos_invoices/js/tables.js" %}
     {% sri_static "eos_invoices/js/confirm.js" %}
+    {% sri_static "eos_invoices/js/select.js" %}
 {% endblock %}
