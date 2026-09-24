@@ -63,7 +63,7 @@ def dashboard_overview(request):
         return ""
 
     overview = build_overview(request.user)
-    if overview.notice or not overview.open_total:
+    if overview.notice or not overview.open_total_settled:
         return ""
 
     return render_to_string(

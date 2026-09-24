@@ -10,16 +10,16 @@
             <table class="table mb-2">
                 <tbody>
                     {% for result in overview.results %}
-                        {% if result.open_total %}
+                        {% if result.open_total_settled %}
                             <tr>
                                 <td>{{ result.source.name }}</td>
-                                <td class="text-end text-nowrap">{{ result.open_total|isk }} ISK</td>
+                                <td class="text-end text-nowrap">{{ result.open_total_settled|isk }} ISK</td>
                             </tr>
                         {% endif %}
                     {% endfor %}
                     <tr class="fw-bold border-top">
                         <td>{% translate "Outstanding" %}</td>
-                        <td class="text-end text-nowrap">{{ overview.open_total|isk }} ISK</td>
+                        <td class="text-end text-nowrap">{{ overview.open_total_settled|isk }} ISK</td>
                     </tr>
                 </tbody>
             </table>

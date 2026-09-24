@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 16:38+0000\n"
-"PO-Revision-Date: 2026-09-24 16:38+0000\n"
+"POT-Creation-Date: 2026-09-24 17:56+0000\n"
+"PO-Revision-Date: 2026-09-24 17:56+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: ru\n"
 "Language: ru\n"
@@ -257,52 +257,52 @@ msgstr "Запись журнала"
 msgid "Payment log"
 msgstr "Журнал платежей"
 
-#: overview.py:45
+#: overview.py:49
 msgid "You have no main character."
 msgstr "У вас нет Main-персонажа."
 
-#: overview.py:54 overview.py:129
+#: overview.py:58 overview.py:133
 msgid "No Alliance has been configured for this app yet."
 msgstr "Для этого приложения ещё не настроена Alliance."
 
-#: overview.py:59
+#: overview.py:63
 #, python-format
 msgid "%(corporation)s is not a member of %(alliance)s."
 msgstr "%(corporation)s не состоит в %(alliance)s."
 
-#: overview.py:158
+#: overview.py:162
 #, python-format
 msgid "More than %(limit)s open payments; only the newest are shown."
 msgstr "Более %(limit)s неоплаченных платежей; показаны только самые новые."
 
-#: sources.py:93
+#: sources.py:104
 #, python-format
 msgid "Unknown model %(label)s."
 msgstr "Неизвестная модель %(label)s."
 
-#: sources.py:117
+#: sources.py:128
 #, python-format
 msgid "Invalid field name %(name)s."
 msgstr "Недопустимое имя поля %(name)s."
 
-#: sources.py:123
+#: sources.py:134
 #, python-format
 msgid "%(model)s has no field %(field)s. Available: %(fields)s"
 msgstr "У %(model)s нет поля %(field)s. Доступны: %(fields)s"
 
-#: sources.py:134
+#: sources.py:145
 #, python-format
 msgid "%(field)s is not a relation and cannot be followed."
 msgstr "%(field)s не является связью, по нему нельзя перейти."
 
-#: sources.py:141
+#: sources.py:152
 #, python-format
 msgid "%(field)s points at many rows; only single relations can be followed."
 msgstr ""
 "%(field)s указывает на множество строк; переходить можно только по одиночным"
 " связям."
 
-#: sources.py:148
+#: sources.py:159
 #, python-format
 msgid ""
 "%(path)s ends at a relation. Name a field on it, e.g. %(path)s__%(example)s."
@@ -310,12 +310,12 @@ msgstr ""
 "%(path)s заканчивается на связи. Укажите её поле, например "
 "%(path)s__%(example)s."
 
-#: sources.py:226
+#: sources.py:237
 #, python-format
 msgid "Malformed template: %(error)s"
 msgstr "Некорректный шаблон: %(error)s"
 
-#: sources.py:234
+#: sources.py:245
 #, python-format
 msgid ""
 "Invalid placeholder {%(name)s}. Use a field name with an optional format."
@@ -323,55 +323,55 @@ msgstr ""
 "Недопустимый заполнитель {%(name)s}. Используйте имя поля с необязательным "
 "форматом."
 
-#: sources.py:264
+#: sources.py:275
 msgid "The Corporation ID field must be an integer field."
 msgstr "Поле ID Corporation должно быть целочисленным."
 
-#: sources.py:265
+#: sources.py:276
 msgid "The amount field must be a number field."
 msgstr "Поле суммы должно быть числовым."
 
-#: sources.py:266
+#: sources.py:277
 msgid "\"Field is true\" needs a boolean field."
 msgstr "«Поле истинно» требует логического поля."
 
-#: sources.py:267
+#: sources.py:278
 msgid "The date field must be a date or datetime field."
 msgstr "Поле даты должно быть полем даты или даты-времени."
 
-#: sources.py:268
+#: sources.py:279
 msgid "The month field must be an integer field."
 msgstr "Поле месяца должно быть целочисленным."
 
-#: sources.py:269
+#: sources.py:280
 msgid "The year field must be an integer field."
 msgstr "Поле года должно быть целочисленным."
 
-#: sources.py:288
+#: sources.py:299
 msgid "Enter the value that means paid."
 msgstr "Укажите значение, означающее оплату."
 
-#: sources.py:436 sources.py:438 sources.py:558
+#: sources.py:447 sources.py:449 sources.py:569
 msgid "The payment no longer exists."
 msgstr "Этот платёж больше не существует."
 
-#: sources.py:521
+#: sources.py:532
 msgid "Rows of this source cannot be marked as paid here."
 msgstr "Строки этого источника нельзя отметить здесь как оплаченные."
 
-#: sources.py:525
+#: sources.py:536
 msgid "This payment belongs to another Corporation."
 msgstr "Этот платёж принадлежит другой Corporation."
 
-#: sources.py:527
+#: sources.py:538
 msgid "This payment is already marked as paid."
 msgstr "Этот платёж уже отмечен как оплаченный."
 
-#: sources.py:551 sources.py:553
+#: sources.py:562 sources.py:564
 msgid "The paid field of this source has changed since."
 msgstr "Поле оплаты этого источника с тех пор изменилось."
 
-#: sources.py:562
+#: sources.py:573
 msgid ""
 "The payment has been changed since it was marked; it was left as it is."
 msgstr "Платёж изменился после отметки; он оставлен без изменений."

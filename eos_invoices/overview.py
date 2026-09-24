@@ -32,6 +32,10 @@ class Overview:
     def open_total(self):
         return sum((r.open_total for r in self.results), Decimal(0))
 
+    @property
+    def open_total_settled(self):
+        return sum((r.open_total_settled for r in self.results), Decimal(0))
+
 
 def build_overview(user, *, include_paid=False):
     """Payments of the Corporation of the user's main, across all sources.

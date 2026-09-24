@@ -4,6 +4,12 @@
  * few repeating values for, the same way groupmanagement filters by
  * Corporation and Group.
  *
+ * Unlike the other sortable tables it does not default to Corporation then
+ * Description: a log reads as a log, newest first, matching the order the
+ * query itself already returns across every page - not the Corporation/
+ * Description grouping tables.js uses elsewhere. A header click still
+ * re-sorts the current page by anything else.
+ *
  * filterDropDown reads each column's search through DataTables' own search
  * feature, so unlike tables.js this table cannot set searching: false.
  * Labels are translated server side and travel as data - a static file
@@ -25,18 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const labels = JSON.parse(document.getElementById("eos-invoices-log-labels").textContent);
 
-    // same eos-invoices-sort-1/-2 markers tables.js reads - Corporation, then
-    // Description, whichever of the two the log's own headers carry
-    const headers = [...table.querySelectorAll("thead th")];
-    const order = [1, 2]
-        .map((level) => headers.findIndex((th) => th.classList.contains(`eos-invoices-sort-${level}`)))
-        .filter((index) => index !== -1)
-        .map((index) => [index, "asc"]);
-
     new DataTable(table, {
         paging: false,
         info: false,
-        order,
+        order: [[0, "desc"]], // Date, newest first
         columnDefs: [{ targets: "eos-invoices-no-sort", orderable: false }],
         filterDropDown: {
             labelFilter: labels.filterLabel,

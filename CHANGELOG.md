@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.12] - 2026-09-24
+
+### Changed
+
+- The dashboard widget's total now leaves out rows for the current month
+  (the ones whose Reason is hidden as still in progress): the amount owed for
+  them can still change, so the compact widget only sums what is actually
+  settled. The full overview still shows those rows, and their amount still
+  counts toward its own total - only the dashboard widget's number changes.
+- The log now defaults to chronological order (newest first), not the
+  Corporation/Description convention the other tables use - a log reads as a
+  log. A header click still re-sorts the current page by anything else.
+
 ## [0.0.11] - 2026-09-24
 
 ### Changed

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 16:38+0000\n"
-"PO-Revision-Date: 2026-09-24 16:38+0000\n"
+"POT-Creation-Date: 2026-09-24 17:56+0000\n"
+"PO-Revision-Date: 2026-09-24 17:56+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: zh_Hans\n"
 "Language: zh_Hans\n"
@@ -237,115 +237,115 @@ msgstr "日志条目"
 msgid "Payment log"
 msgstr "款项日志"
 
-#: overview.py:45
+#: overview.py:49
 msgid "You have no main character."
 msgstr "你没有 Main 角色。"
 
-#: overview.py:54 overview.py:129
+#: overview.py:58 overview.py:133
 msgid "No Alliance has been configured for this app yet."
 msgstr "此应用尚未配置 Alliance。"
 
-#: overview.py:59
+#: overview.py:63
 #, python-format
 msgid "%(corporation)s is not a member of %(alliance)s."
 msgstr "%(corporation)s 不是 %(alliance)s 的成员。"
 
-#: overview.py:158
+#: overview.py:162
 #, python-format
 msgid "More than %(limit)s open payments; only the newest are shown."
 msgstr "未付款项超过 %(limit)s 笔；仅显示最新的。"
 
-#: sources.py:93
+#: sources.py:104
 #, python-format
 msgid "Unknown model %(label)s."
 msgstr "未知模型 %(label)s。"
 
-#: sources.py:117
+#: sources.py:128
 #, python-format
 msgid "Invalid field name %(name)s."
 msgstr "无效的字段名 %(name)s。"
 
-#: sources.py:123
+#: sources.py:134
 #, python-format
 msgid "%(model)s has no field %(field)s. Available: %(fields)s"
 msgstr "%(model)s 没有字段 %(field)s。可用字段：%(fields)s"
 
-#: sources.py:134
+#: sources.py:145
 #, python-format
 msgid "%(field)s is not a relation and cannot be followed."
 msgstr "%(field)s 不是关联字段，无法继续访问。"
 
-#: sources.py:141
+#: sources.py:152
 #, python-format
 msgid "%(field)s points at many rows; only single relations can be followed."
 msgstr "%(field)s 指向多行；只能访问单一关联。"
 
-#: sources.py:148
+#: sources.py:159
 #, python-format
 msgid ""
 "%(path)s ends at a relation. Name a field on it, e.g. %(path)s__%(example)s."
 msgstr "%(path)s 止于一个关联。请指定其字段，例如 %(path)s__%(example)s。"
 
-#: sources.py:226
+#: sources.py:237
 #, python-format
 msgid "Malformed template: %(error)s"
 msgstr "模板格式错误：%(error)s"
 
-#: sources.py:234
+#: sources.py:245
 #, python-format
 msgid ""
 "Invalid placeholder {%(name)s}. Use a field name with an optional format."
 msgstr "无效的占位符 {%(name)s}。请使用字段名，可附加格式。"
 
-#: sources.py:264
+#: sources.py:275
 msgid "The Corporation ID field must be an integer field."
 msgstr "Corporation ID 字段必须是整数字段。"
 
-#: sources.py:265
+#: sources.py:276
 msgid "The amount field must be a number field."
 msgstr "金额字段必须是数字字段。"
 
-#: sources.py:266
+#: sources.py:277
 msgid "\"Field is true\" needs a boolean field."
 msgstr "“字段为真”需要布尔字段。"
 
-#: sources.py:267
+#: sources.py:278
 msgid "The date field must be a date or datetime field."
 msgstr "日期字段必须是日期或日期时间字段。"
 
-#: sources.py:268
+#: sources.py:279
 msgid "The month field must be an integer field."
 msgstr "月份字段必须是整数字段。"
 
-#: sources.py:269
+#: sources.py:280
 msgid "The year field must be an integer field."
 msgstr "年份字段必须是整数字段。"
 
-#: sources.py:288
+#: sources.py:299
 msgid "Enter the value that means paid."
 msgstr "请输入表示已付的值。"
 
-#: sources.py:436 sources.py:438 sources.py:558
+#: sources.py:447 sources.py:449 sources.py:569
 msgid "The payment no longer exists."
 msgstr "该款项已不存在。"
 
-#: sources.py:521
+#: sources.py:532
 msgid "Rows of this source cannot be marked as paid here."
 msgstr "此来源的行无法在此标记为已付。"
 
-#: sources.py:525
+#: sources.py:536
 msgid "This payment belongs to another Corporation."
 msgstr "此款项属于其他 Corporation。"
 
-#: sources.py:527
+#: sources.py:538
 msgid "This payment is already marked as paid."
 msgstr "此款项已标记为已付。"
 
-#: sources.py:551 sources.py:553
+#: sources.py:562 sources.py:564
 msgid "The paid field of this source has changed since."
 msgstr "此来源的已付字段已被更改。"
 
-#: sources.py:562
+#: sources.py:573
 msgid ""
 "The payment has been changed since it was marked; it was left as it is."
 msgstr "该款项在标记后已被更改；保持不变。"

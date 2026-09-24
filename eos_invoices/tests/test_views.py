@@ -83,6 +83,30 @@ class TestDashboardWidget(DueTestCase):
         self.assertIn("1.500.000 ISK", html)
         self.assertIn(reverse("eos_invoices:index"), html)
 
+    def test_should_hide_a_row_still_in_progress_from_the_total(self):
+        # the amount owed for the current month can still change; the
+        # compact widget only sums what is actually settled
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=1500000, month=7, year=2026)
+        user = self.alliance_ceo(corp_id=2001)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            html = self.render(user)
+
+        self.assertEqual(html, "")
+
+    def test_should_sum_only_the_settled_rows(self):
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=500000, month=6, year=2026)
+        Due.objects.create(corp_id=2001, amount=1500000, month=7, year=2026)
+        user = self.alliance_ceo(corp_id=2001)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            html = self.render(user)
+
+        self.assertIn("500.000 ISK", html)
+        self.assertNotIn("2.000.000", html)
+
     def test_should_not_show_a_broken_source(self):
         # nothing to sum from it, and no error text leaked onto the dashboard
         make_source(name="Broken", amount_field="gone")

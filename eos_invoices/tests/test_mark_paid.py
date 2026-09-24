@@ -244,8 +244,10 @@ class TestPaymentLog(DueTestCase):
         self.assertContains(response, "eos_invoices/js/log")
         self.assertContains(response, 'id="eos-invoices-log-labels"')
         self.assertContains(response, "All sources")
-        self.assertContains(response, 'class="eos-invoices-sort-1"')
-        self.assertContains(response, 'class="eos-invoices-sort-2"')
+        # the log defaults to chronological order, not the Corporation/
+        # Description convention the other tables use
+        self.assertNotContains(response, 'class="eos-invoices-sort-1"')
+        self.assertNotContains(response, 'class="eos-invoices-sort-2"')
 
 
 class TestSearchableDropdowns(DueTestCase):

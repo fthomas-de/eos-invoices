@@ -85,6 +85,17 @@ class SourceResult:
     def open_total_plain(self):
         return plain_isk(self.open_total)
 
+    @property
+    def open_total_settled(self):
+        """open_total without a row still in progress (``reason_hidden``) -
+        the amount owed for the current month can still change, so the
+        dashboard widget's total leaves it out rather than show a number
+        that moves under the viewer."""
+        return sum(
+            (i.amount for i in self.invoices if not i.paid and not i.reason_hidden),
+            Decimal(0),
+        )
+
 
 def resolve_model(label):
     try:

@@ -9,13 +9,12 @@
  * sort, in that order - Corporation then Description on a table that spans
  * several Corporations, Description alone where there is no Corporation
  * column. Either or both may be absent; without any, the server's own order
- * stays until a header is clicked. log.js applies the same two markers
- * through its own copy of this lookup - the two files load on different
- * pages and neither is guaranteed to load before the other.
+ * stays until a header is clicked.
  *
  * The log table is not marked here: it wants the filterDropDown dropdowns
  * over Source and Corporation, which need DataTables' search feature turned
- * on - see log.js.
+ * on, and it defaults to chronological order rather than this
+ * Corporation/Description convention - see log.js.
  */
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
