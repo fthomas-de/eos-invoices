@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test import RequestFactory
 from django.urls import reverse
 
@@ -210,3 +211,18 @@ class TestFieldsEndpointAccess(DueTestCase):
         response = self.client.get(reverse("eos_invoices:source_fields"), {"model": "eos_invoices.Due"})
 
         self.assertEqual(response.status_code, 302)
+
+
+class TestTranslationNote(DueTestCase):
+    def setUp(self):
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+    def page(self, language):
+        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = language
+        return self.client.get(reverse("eos_invoices:sources"))
+
+    def test_should_note_generated_texts_in_every_language(self):
+        for language in ("en", "de", "ru", "zh-hans"):
+            with self.subTest(language):
+                self.assertContains(self.page(language), "eos-invoices-translation-note")
+

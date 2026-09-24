@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-24 07:30+0000\n"
-"PO-Revision-Date: 2026-09-24 07:30+0000\n"
+"POT-Creation-Date: 2026-09-24 07:49+0000\n"
+"PO-Revision-Date: 2026-09-24 07:49+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: de\n"
 "Language: de\n"
@@ -386,6 +386,10 @@ msgstr "Protokoll"
 #: templates/eos_invoices/base.html:24
 msgid "Sources"
 msgstr "Quellen"
+
+#: templates/eos_invoices/base.html:40
+msgid "The texts of this app are machine-generated and may be inaccurate."
+msgstr "Die Texte dieser App sind maschinell erzeugt und können ungenau sein."
 
 #: templates/eos_invoices/index.html:22
 msgid "Outstanding only"

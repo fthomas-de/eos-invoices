@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.8] - 2026-09-24
+
+### Added
+
+- A line at the foot of every page of the app, in every language, says its
+  texts are machine-generated and may be inaccurate.
+
 ## [0.0.7] - 2026-09-24
 
 ### Added

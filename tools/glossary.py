@@ -192,6 +192,11 @@ TRANSLATIONS = {
         "将所选款项标记为已付？",
     ),
     "Nothing was selected.": ("Es wurde nichts ausgewählt.", "Ничего не выбрано.", "未选择任何内容。"),
+    "The texts of this app are machine-generated and may be inaccurate.": (
+        "Die Texte dieser App sind maschinell erzeugt und können ungenau sein.",
+        "Тексты этого приложения созданы автоматически и могут быть неточными.",
+        "本应用的文本由机器生成，可能不准确。",
+    ),
     "Payment source": ("Zahlungsquelle", "Источник платежей", "款项来源"),
     "Payment sources": ("Zahlungsquellen", "Источники платежей", "款项来源"),
     "You have no main character.": (

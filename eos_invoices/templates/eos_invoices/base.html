@@ -35,5 +35,9 @@
         <h1 class="text-center mb-3">{% translate "Invoices" %} ({{ version }})</h1>
 
         {% block details %}{% endblock %}
+
+        <footer class="text-center text-body-secondary small mt-4 mb-2 eos-invoices-translation-note">
+            {% translate "The texts of this app are machine-generated and may be inaccurate." %}
+        </footer>
     </div>
 {% endblock %}
