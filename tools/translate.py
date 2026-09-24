@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+"""Update, fill, check and compile the eos_invoices catalogues in one go.
+
+    ~/aa-dev/venv/bin/python tools/translate.py
+
+Run it at a release, not in between: messages still change during
+development, and each change would throw away a round of translation.
+
+Steps:
+1. makemessages for every language in tools/glossary.py
+2. fill every entry from the glossary; stop with a list of what is missing
+3. drop obsolete entries, check every entry against the glossary
+4. msgfmt --check, compilemessages, and confirm each .mo is newer than its .po
+
+Needs polib (pip install polib) and a Django settings module that has
+eos_invoices installed; by default the Alliance Auth instance next to this
+repo (../myauth), override with DJANGO_SETTINGS_MODULE and PYTHONPATH.
+"""
+
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+try:
+    import polib
+except ImportError:
+    sys.exit("polib is missing: pip install polib")
+
+TOOLS = Path(__file__).resolve().parent
+REPO = TOOLS.parent
+APP = REPO / "eos_invoices"
+LOCALE = APP / "locale"
+
+sys.path.insert(0, str(TOOLS))
+from glossary import LANGUAGES, PLURAL_FORMS, PLURALS, TRANSLATIONS  # noqa: E402
+
+
+def django_env():
+    env = dict(os.environ)
+    instance = REPO.parent / "myauth"
+    env.setdefault("DJANGO_SETTINGS_MODULE", "myauth.settings.local")
+    env["PYTHONPATH"] = os.pathsep.join(
+        p for p in (env.get("PYTHONPATH", ""), str(instance)) if p
+    )
+    return env
+
+
+def django_admin(*args):
+    command = [sys.executable, "-m", "django", *args]
+    # makemessages works on the current directory: the app, not the repo
+    result = subprocess.run(command, cwd=APP, env=django_env(), capture_output=True, text=True)
+    if result.returncode:
+        sys.exit(f"{' '.join(args)} failed:\n{result.stderr[-2000:]}")
+
+
+def expected_for(entry, index):
+    if entry.msgid_plural:
+        forms = PLURALS.get(entry.msgid)
+        return dict(enumerate(forms[index])) if forms else None
+    values = TRANSLATIONS.get(entry.msgid)
+    return values[index] if values else None
+
+
+def fill(language, index):
+    path = LOCALE / language / "LC_MESSAGES" / "django.po"
+    po = polib.pofile(str(path))
+    po.metadata.update(
+        {
+            "Project-Id-Version": "eos-invoices",
+            "Language": language,
+            "Language-Team": language,
+            "Last-Translator": "eos-invoices",
+            "PO-Revision-Date": po.metadata.get("POT-Creation-Date", ""),
+            "Content-Type": "text/plain; charset=UTF-8",
+            "Plural-Forms": PLURAL_FORMS[language],
+        }
+    )
+    po.metadata_is_fuzzy = False
+
+    for entry in po.obsolete_entries():
+        po.remove(entry)
+
+    missing = []
+    for entry in po:
+        entry.previous_msgid = entry.previous_msgctxt = entry.previous_msgid_plural = None
+        expected = expected_for(entry, index)
+        if expected is None:
+            # empty and still fuzzy: gettext's guess from the nearest old entry
+            # is wrong nearly every time and must never ship as reviewed
+            missing.append(entry.msgid)
+            if entry.msgid_plural:
+                entry.msgstr_plural = {i: "" for i in entry.msgstr_plural}
+            else:
+                entry.msgstr = ""
+            continue
+        entry.flags = [flag for flag in entry.flags if flag != "fuzzy"]
+        if entry.msgid_plural:
+            entry.msgstr_plural = expected
+        else:
+            entry.msgstr = expected
+
+    po.save(str(path))
+    return path, missing
+
+
+def verify(language, index, path):
+    for entry in polib.pofile(str(path)):
+        actual = (
+            {int(k): v for k, v in entry.msgstr_plural.items()}
+            if entry.msgid_plural
+            else entry.msgstr
+        )
+        if entry.obsolete or "fuzzy" in entry.flags or actual != expected_for(entry, index):
+            sys.exit(f"{language}: {entry.msgid!r} does not match the glossary")
+
+    check = subprocess.run(["msgfmt", "--check", "-o", os.devnull, str(path)], capture_output=True, text=True)
+    if check.returncode:
+        sys.exit(f"{language}: msgfmt --check failed:\n{check.stderr}")
+
+
+def main():
+    django_admin("makemessages", *[arg for lang in LANGUAGES for arg in ("-l", lang)])
+
+    paths, missing = {}, {}
+    for index, language in enumerate(LANGUAGES):
+        paths[language], gaps = fill(language, index)
+        if gaps:
+            missing[language] = gaps
+
+    if missing:
+        first = next(iter(missing.values()))
+        print("Missing in tools/glossary.py - add them there and run again:")
+        for msgid in first:
+            print(f"  {msgid!r}")
+        sys.exit(1)
+
+    for index, language in enumerate(LANGUAGES):
+        verify(language, index, paths[language])
+
+    django_admin("compilemessages")
+
+    # compilemessages chained behind a failing command silently never runs
+    for language, path in paths.items():
+        mo = path.with_suffix(".mo")
+        if not mo.exists() or mo.stat().st_mtime < path.stat().st_mtime:
+            sys.exit(f"{language}: {mo.name} is older than its .po - compile did not run")
+
+    print("Catalogues complete, checked and compiled:", ", ".join(LANGUAGES))
+
+
+if __name__ == "__main__":
+    main()

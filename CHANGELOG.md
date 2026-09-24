@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.6] - 2026-09-24
+
+### Added
+
+- `tools/translate.py` and `tools/glossary.py`: the translation run of every
+  release as one command, with the reviewed translations kept in the repo
+  instead of in a session's scratch directory. A message missing from the
+  glossary stops the run and stays empty in the catalogue - the earlier ad
+  hoc script cleared gettext's fuzzy flag before it knew whether it had a
+  translation of its own, which would have shipped gettext's guess as
+  reviewed. After filling, every entry is checked against the glossary and
+  each `.mo` against its `.po`. Not part of the installed package.
+
 ## [0.0.5] - 2026-09-24
 
 ### Added

@@ -49,7 +49,23 @@ EVE jargon that has to stay English therefore gets the context
 `EVE jargon` (`pgettext_lazy`, `{% translate ... context %}`);
 `tests/test_translations.py` checks it.
 
-English only between releases. On the user's release call: raise the version
-in `eos_invoices/__init__.py`, translate into `de`, `ru`, `zh_Hans` (EVE jargon
-stays English), split `[Unreleased]` in `CHANGELOG.md`, then commit and push -
-asking before the commit.
+English only between releases. On the user's release call:
+
+1. Raise the version in `eos_invoices/__init__.py`.
+2. Add every new message to `tools/glossary.py` (de, ru, zh_Hans; EVE jargon
+   stays English), then run from the repo root:
+
+   ```bash
+   ~/aa-dev/venv/bin/python tools/translate.py
+   ```
+
+   It runs makemessages, fills the catalogues from the glossary, drops
+   obsolete entries, checks every entry against the glossary, runs
+   `msgfmt --check` and compilemessages, and confirms each `.mo` is newer than
+   its `.po`. A message missing from the glossary stops it with a list; that
+   entry is left empty, never with gettext's fuzzy guess.
+3. Split `[Unreleased]` in `CHANGELOG.md` into the new version.
+4. Commit and push - asking before the commit.
+
+The glossary is the source of truth: never edit a `.po` file by hand, the next
+run overwrites it. The tool needs `polib` in the venv (`pip install polib`).
