@@ -8,16 +8,12 @@ Last updated 2026-09-25.
 
 ## Release
 
-- Version **0.0.15** in `eos_invoices/__init__.py`, about to become the
-  `Release 0.0.15` commit and get pushed.
-- Migrations **0001-0008** applied in `aa_dev`. **0008**
-  (`0008_paymentsource_url`) adds `PaymentSource.url`, a plain optional
-  `URLField` - no data migration, nothing to backfill.
-- Catalogues updated this session: `"URL"` and its help text
-  ("Optional link to the app that manages these payments, shown on the
-  source's name.") added to `tools/glossary.py` and run through
-  `tools/translate.py` (de, ru, zh_Hans machine-translated, not checked by a
-  native speaker).
+- Version **0.0.16** in `eos_invoices/__init__.py`, about to become the
+  `Release 0.0.16` commit and get pushed.
+- Migrations **0001-0008** applied in `aa_dev`, unchanged this release - no
+  new migration.
+- No catalogue changes this session; nothing to run through
+  `tools/translate.py`.
 - 148 tests green (translation tests excluded, as they are for every
   `/commit`), `makemigrations --check` clean.
 - The release ritual is three skills, read by every AA sister app's
@@ -147,12 +143,13 @@ otherwise:
   plain name. Not offered on the plain "Payment sources" management table
   or the dashboard widget, since neither shows the name as a card heading.
 
-## Since 0.0.14 (now in 0.0.15)
+## Since 0.0.15 (now in 0.0.16)
 
-Everything under `[0.0.15]` in `CHANGELOG.md`. Short version: a payment
-source can now carry a URL to the app it belongs to (`PaymentSource.url`,
-migration 0008); when set, the source's name becomes a link to it on the
-CEO overview and "All Corporations" cards.
+Everything under `[0.0.16]` in `CHANGELOG.md`. Short version: the dashboard
+widget's `order` (`InvoicesDashboardHook` in `auth_hooks.py`) went from the
+default `10` to `4`, so it now renders above Alliance Auth's own character
+and group widgets (order `5`) instead of below them; still below the
+admin-status widget (order `1`).
 
 ## Open
 
