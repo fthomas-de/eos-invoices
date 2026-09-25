@@ -8,23 +8,19 @@ Last updated 2026-09-25.
 
 ## Release
 
-- Version **0.0.14** in `eos_invoices/__init__.py`, about to become the
-  `Release 0.0.14` commit and get pushed. `origin/master`'s last commit is
-  `4437298` ("opus rework"), which already carried the version to 0.0.13
-  outside the normal release flow - there never was its own "Release 0.0.13"
-  commit, so 0.0.13 is the last version actually in `fthomas-de/eos-invoices`
-  (private) until this push lands.
-- Migrations **0001-0007** applied in `aa_dev`, unchanged this session (no
-  model changes). **0007** (`0007_log_model_label_and_texts`) added
-  `PaymentLog.model_label`, new help texts, new permission names plus a
-  RunPython that renames the two existing `auth.Permission` rows.
-- Catalogues unchanged this session: the two `{% translate %}` calls touched
-  ("Outstanding", "Nothing outstanding." with the `eos-invoices` context)
-  reuse existing msgids at a new place (the dashboard widget's empty state),
-  so no glossary or `tools/translate.py` run was needed.
+- Version **0.0.15** in `eos_invoices/__init__.py`, about to become the
+  `Release 0.0.15` commit and get pushed.
+- Migrations **0001-0008** applied in `aa_dev`. **0008**
+  (`0008_paymentsource_url`) adds `PaymentSource.url`, a plain optional
+  `URLField` - no data migration, nothing to backfill.
+- Catalogues updated this session: `"URL"` and its help text
+  ("Optional link to the app that manages these payments, shown on the
+  source's name.") added to `tools/glossary.py` and run through
+  `tools/translate.py` (de, ru, zh_Hans machine-translated, not checked by a
+  native speaker).
 - 148 tests green (translation tests excluded, as they are for every
   `/commit`), `makemigrations --check` clean.
-- The release ritual is now three skills, read by every AA sister app's
+- The release ritual is three skills, read by every AA sister app's
   `CLAUDE.md` under `## Release`: `/commit` (tests, checks, local commit,
   never pushes), `/push` (version, CHANGELOG split, this file, release
   commit, confirm, push), `/projekt-setup` for a project with none of this
@@ -35,8 +31,9 @@ Last updated 2026-09-25.
 A Corporation's outstanding payments across other Alliance Auth apps, read
 generically: a `PaymentSource` names a model and its fields (Corporation ID,
 amount, paid flag, optional reason/description templates, date, month/year,
-pay-to Corporation). Nothing is written for one app in particular; all reads
-and writes go through the ORM and the owning model's `save()`.
+pay-to Corporation, optional URL to the owning app). Nothing is written for
+one app in particular; all reads and writes go through the ORM and the
+owning model's `save()`.
 
 | Page | Permission | What |
 |---|---|---|
@@ -144,23 +141,18 @@ otherwise:
 - testauth has its **own database, never `aa_dev`**.
 - Permission names were reworded; `manage_sources` names marking, the log
   and undo.
+- A source's **name links to its app** wherever it heads a card (CEO
+  overview, "All Corporations") once an optional `url` is set on it - a
+  plain link, no icon or button; a source without a URL still shows its
+  plain name. Not offered on the plain "Payment sources" management table
+  or the dashboard widget, since neither shows the name as a card heading.
 
-## Since 0.0.13 (now in 0.0.14)
+## Since 0.0.14 (now in 0.0.15)
 
-Everything under `[0.0.14]` in `CHANGELOG.md`. Short version: every
-outstanding total - the dashboard widget, the overview's Outstanding line,
-and each source's card total - now leaves out a row still in progress for
-the current month, not just the dashboard's total as before. That
-"in progress" window itself was widened to run through the 1st of the
-following month, not just to the end of its own month, so a total does not
-pick a row up the instant the calendar flips. The dashboard widget no
-longer hides itself when there is nothing outstanding; it shows a "Nothing
-outstanding." state with a check icon instead. Also: the catalogue tests
-switched from the `EOS_INVOICES_CHECK_TRANSLATIONS` environment variable to
-the `translations` tag, the same switch as the sister apps use, done by a
-concurrent session working the same working tree (its commit is `4437298`,
-already on `origin/master`) - not this session's work, noted here only so
-the next one does not go looking for that env var.
+Everything under `[0.0.15]` in `CHANGELOG.md`. Short version: a payment
+source can now carry a URL to the app it belongs to (`PaymentSource.url`,
+migration 0008); when set, the source's name becomes a link to it on the
+CEO overview and "All Corporations" cards.
 
 ## Open
 
