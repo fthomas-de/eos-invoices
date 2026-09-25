@@ -1,33 +1,47 @@
+import importlib
 from datetime import date
+from pathlib import Path
 from unittest.mock import patch
 
-from django.conf import settings
+from django.apps import apps as django_apps
+from django.contrib.auth.models import Permission
 from django.test import RequestFactory
 from django.urls import reverse
 
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 
+import eos_invoices
 from eos_invoices.auth_hooks import InvoicesDashboardHook, InvoicesMenuItem
-from eos_invoices.models import InvoiceConfiguration, PaymentSource
+from eos_invoices.models import InvoiceConfiguration, PaymentLog, PaymentSource
 from eos_invoices.views import dashboard_overview
 
-from .base import Due, DueTestCase, make_ceo, make_source
+from .base import Due, DueTestCase, configure_alliance, make_ceo, make_corporation, make_source
+
+# every page behind a permission, GET only
+PAGES = ("index", "admin", "log", "sources", "source_add", "source_fields", "settings")
+MAINTENANCE_PAGES = PAGES[1:]
 
 
 class TestAccess(DueTestCase):
+    """Who may open which page; the POST views check the same, next to their tests."""
+
+    def status(self, name):
+        return self.client.get(reverse(f"eos_invoices:{name}")).status_code
+
     def test_should_keep_users_without_permission_out(self):
         self.client.force_login(make_ceo(perms=()))
 
-        for name in ("index", "sources", "settings"):
+        for name in PAGES:
             with self.subTest(name):
-                response = self.client.get(reverse(f"eos_invoices:{name}"))
-                self.assertEqual(response.status_code, 302)
+                self.assertEqual(self.status(name), 302)
 
     def test_should_keep_a_ceo_out_of_the_maintenance_pages(self):
         self.client.force_login(make_ceo())
 
-        self.assertEqual(self.client.get(reverse("eos_invoices:index")).status_code, 200)
-        self.assertEqual(self.client.get(reverse("eos_invoices:sources")).status_code, 302)
+        self.assertEqual(self.status("index"), 200)
+        for name in MAINTENANCE_PAGES:
+            with self.subTest(name):
+                self.assertEqual(self.status(name), 302)
 
     def test_should_show_the_menu_entry_only_with_a_permission(self):
         request = RequestFactory().get("/")
@@ -40,14 +54,53 @@ class TestAccess(DueTestCase):
         self.assertIn(f'href="{reverse("eos_invoices:admin")}"', InvoicesMenuItem().render(request))
 
 
+class TestPageFrame(DueTestCase):
+    """What every page of the app shares: header, navigation, footer."""
+
+    def setUp(self):
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+    def page(self, name="sources", language="en"):
+        return self.client.get(reverse(f"eos_invoices:{name}"), HTTP_ACCEPT_LANGUAGE=language)
+
+    def test_should_note_generated_texts(self):
+        self.assertContains(
+            self.page(), "The texts of this app are machine-generated and may be inaccurate."
+        )
+
+    def test_should_use_alliance_auths_page_header(self):
+        response = self.page()
+
+        self.assertContains(response, 'class="aa-page-header')
+        self.assertContains(response, eos_invoices.__version__)
+
+    def test_should_write_the_navigation_like_alliance_auth(self):
+        # the theme colours the active link, as in groupmanagement
+        sources = reverse("eos_invoices:sources")
+
+        for name in ("sources", "source_add"):
+            with self.subTest(name):
+                response = self.page(name)
+                self.assertContains(response, f'class="nav-link active" href="{sources}"')
+                self.assertNotContains(response, "text-warning")
+
+    def test_should_hand_datatables_its_translation(self):
+        # the static manifest puts a hash before .json
+        self.assertContains(
+            self.page(language="de"),
+            'data-eos-invoices-datatables-language="/static/allianceauth/libs/DataTables/Plugins/2.3.6/i18n/de-DE.',
+        )
+        # English needs none
+        self.assertContains(
+            self.page(language="en"), 'data-eos-invoices-datatables-language=""'
+        )
+
+
 class TestDashboardWidget(DueTestCase):
     """dashboard_overview: the CEO's overview as an Alliance Auth dashboard widget."""
 
     def alliance_ceo(self, **kwargs):
-        alliance = EveAllianceInfo.objects.create(
-            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
-        )
-        InvoiceConfiguration.objects.create(alliance=alliance)
+        configure_alliance()
         return make_ceo(**kwargs)
 
     def render(self, user):
@@ -63,8 +116,9 @@ class TestDashboardWidget(DueTestCase):
 
         self.assertEqual(self.render(self.alliance_ceo(perms=())), "")
 
-    def test_should_hide_when_the_overview_has_nothing_to_explain(self):
-        # no Alliance configured at all - build_overview sets a notice
+    def test_should_hide_when_the_overview_only_explains_itself(self):
+        # no Alliance configured: build_overview sets a notice, and the full
+        # page explains it - a widget would only show an empty box
         self.assertEqual(self.render(make_ceo()), "")
 
     def test_should_hide_with_nothing_outstanding(self):
@@ -131,36 +185,199 @@ class TestDashboardWidget(DueTestCase):
 
 
 class TestIndex(DueTestCase):
-    def test_should_list_open_payments_with_their_reason(self):
-        alliance = EveAllianceInfo.objects.create(
-            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
-        )
-        InvoiceConfiguration.objects.create(alliance=alliance)
-        make_source(name="Mining tax", reason_template="{corp_id}/{month:02d}/{year}")
-        Due.objects.create(corp_id=2001, amount=1234567, month=3)
+    def setUp(self):
+        configure_alliance()
         self.client.force_login(make_ceo())
 
-        response = self.client.get(reverse("eos_invoices:index"))
+    def index(self, **params):
+        return self.client.get(reverse("eos_invoices:index"), params)
+
+    def test_should_list_open_payments_with_their_reason(self):
+        make_source(name="Mining tax", reason_template="{corp_id}/{month:02d}/{year}")
+        Due.objects.create(corp_id=2001, amount=1234567, month=3)
+
+        response = self.index()
 
         self.assertContains(response, "Mining tax")
         self.assertContains(response, "2001/03/2026")
 
     def test_should_hide_the_reason_for_the_current_month(self):
-        alliance = EveAllianceInfo.objects.create(
-            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
-        )
-        InvoiceConfiguration.objects.create(alliance=alliance)
         make_source(
             month_field="month", year_field="year", reason_template="{corp_id}/{month}/{year}"
         )
         Due.objects.create(corp_id=2001, amount=100, month=7)
-        self.client.force_login(make_ceo())
 
         with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
-            response = self.client.get(reverse("eos_invoices:index"))
+            response = self.index()
 
         self.assertNotContains(response, "2001/7/2026")
         self.assertContains(response, "Not shown for the current month")
+
+    def test_should_not_offer_the_amount_of_a_month_in_progress_for_copying(self):
+        # its amount can still change; the row and its amount still show,
+        # and the source total keeps its copy button
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=100, month=7)
+        Due.objects.create(corp_id=2001, amount=50, month=6)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            response = self.index()
+
+        self.assertContains(response, "100 ISK")
+        self.assertNotContains(response, 'data-clipboard-text="100"')
+        self.assertContains(response, 'data-clipboard-text="50"')
+        self.assertContains(response, 'data-clipboard-text="150"')
+
+    def test_should_say_when_a_source_was_cut_short(self):
+        make_source()
+        Due.objects.create(corp_id=2001, amount=10)
+        Due.objects.create(corp_id=2001, amount=20)
+
+        with patch("eos_invoices.overview.MAX_ROWS", 1):
+            response = self.index(paid="1")
+
+        self.assertContains(response, "Only the newest 1 payments are shown")
+
+    def test_should_sort_descriptions_by_their_period(self):
+        # as text "01/2027" would sort before "12/2026"
+        make_source(month_field="month", year_field="year", label_template="{month:02d}/{year}")
+        Due.objects.create(corp_id=2001, amount=10, month=12, year=2026)
+        Due.objects.create(corp_id=2001, amount=10, month=1, year=2027)
+
+        response = self.index()
+
+        self.assertContains(response, 'data-order="2026-12 12/2026"')
+        self.assertContains(response, 'data-order="2027-01 01/2027"')
+
+
+class TestSortableTables(DueTestCase):
+    def test_should_make_every_table_page_sortable(self):
+        self.client.force_login(make_ceo(perms=("basic_access", "manage_sources")))
+
+        for name in ("index", "admin", "log", "sources"):
+            with self.subTest(name):
+                response = self.client.get(reverse(f"eos_invoices:{name}"))
+                # the log has its own log.js - chronological, plus the filter
+                self.assertContains(response, "eos_invoices/js/log" if name == "log" else "eos_invoices/js/tables")
+                # the static manifest puts a hash before .js
+                self.assertContains(response, "DataTables/2.3.8/js/dataTables.min")
+
+    def test_should_sort_amounts_by_their_raw_value(self):
+        # "1.500.000 ISK" would sort as text; the cell carries the number
+        configure_alliance()
+        make_source()
+        Due.objects.create(corp_id=2001, amount=1500000)
+        self.client.force_login(make_ceo())
+
+        self.assertContains(
+            self.client.get(reverse("eos_invoices:index")), 'data-order="1500000.00"'
+        )
+
+    def test_should_default_sort_by_corporation_then_description(self):
+        alliance = configure_alliance()
+        # the admin overview reads Corporations of the Alliance, not the character
+        make_corporation(2001, "Corp", alliance)
+        make_source()
+        Due.objects.create(corp_id=2001, amount=10)
+        self.client.force_login(make_ceo(perms=("basic_access", "manage_sources")))
+
+        index = self.client.get(reverse("eos_invoices:index"))
+        admin = self.client.get(reverse("eos_invoices:admin"))
+
+        # the CEO overview has no Corporation column - one Corporation only
+        self.assertNotContains(index, 'class="eos-invoices-sort-1"')
+        self.assertContains(index, 'class="eos-invoices-sort-2"')
+        # "All Corporations" spans several - Corporation first, then Description
+        self.assertContains(admin, 'class="eos-invoices-sort-1"')
+        self.assertContains(admin, 'class="eos-invoices-sort-2"')
+
+
+class TestSearchableDropdowns(DueTestCase):
+    def setUp(self):
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+    def test_should_make_alliance_and_pay_to_searchable(self):
+        for url in (reverse("eos_invoices:settings"), reverse("eos_invoices:source_add")):
+            with self.subTest(url):
+                response = self.client.get(url)
+                self.assertContains(response, "data-eos-invoices-search")
+                self.assertContains(response, "tom-select.complete.min.js")
+                # the library alone is unreadable on a dark theme
+                self.assertContains(response, "eos_invoices/css/tom-select-theme")
+
+    def test_should_make_the_model_dropdown_searchable(self):
+        form = self.client.get(reverse("eos_invoices:source_add")).context["form"]
+
+        self.assertIn("data-eos-invoices-search", form.fields["model_label"].widget.attrs)
+
+
+class TestLog(DueTestCase):
+    """The log's filter runs in the query, over every page, not only the shown one."""
+
+    def setUp(self):
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+    def entry(self, source_name="PvE Tax", corporation_id=2001, corporation_name="Alpha"):
+        return PaymentLog(
+            user_name="x", source_name=source_name, row_pk="1",
+            corporation_id=corporation_id, corporation_name=corporation_name, amount=10,
+        )
+
+    def log(self, **params):
+        return self.client.get(reverse("eos_invoices:log"), params)
+
+    def shown(self, response):
+        return [(e.source_name, e.corporation_id) for e in response.context["page"].object_list]
+
+    def test_should_filter_by_source_across_pages(self):
+        # the oldest entry lands on page 2; the filter still finds it
+        PaymentLog.objects.bulk_create([self.entry("Rent")] + [self.entry() for _ in range(100)])
+
+        self.assertNotIn(("Rent", 2001), self.shown(self.log()))
+        self.assertEqual(self.shown(self.log(source="Rent")), [("Rent", 2001)])
+
+    def test_should_filter_by_corporation(self):
+        PaymentLog.objects.bulk_create(
+            [self.entry(), self.entry(corporation_id=2002, corporation_name="Beta")]
+        )
+
+        self.assertEqual(self.shown(self.log(corporation="2002")), [("PvE Tax", 2002)])
+        # not a Corporation ID: no filter rather than an error
+        self.assertEqual(len(self.shown(self.log(corporation="x"))), 2)
+
+    def test_should_offer_every_source_and_corporation_of_the_whole_log(self):
+        PaymentLog.objects.bulk_create(
+            [self.entry("Rent", 2002, "Beta")] + [self.entry() for _ in range(100)]
+        )
+
+        response = self.log()
+
+        # both only on page 2, still in the choice, each once
+        self.assertContains(response, '<option value="Rent">Rent</option>', count=1)
+        self.assertContains(response, '<option value="2002">Beta</option>', count=1)
+        self.assertContains(response, '<option value="2001">Alpha</option>', count=1)
+
+    def test_should_keep_the_filter_in_the_page_links(self):
+        PaymentLog.objects.bulk_create([self.entry() for _ in range(101)])
+
+        self.assertContains(self.log(source="PvE Tax"), "?source=PvE+Tax&amp;page=2")
+
+    def test_should_say_when_the_filter_matches_nothing(self):
+        PaymentLog.objects.bulk_create([self.entry()])
+
+        self.assertContains(self.log(source="Nope"), "No entries match this filter.")
+
+    def test_should_not_filter_in_the_browser_any_more(self):
+        # datatables-filterdropdown only ever saw the entries of one page
+        PaymentLog.objects.bulk_create([self.entry()])
+
+        response = self.log()
+
+        self.assertContains(response, 'id="eos-invoices-log-filter"')
+        self.assertNotContains(response, "datatables-filterdropdown")
+        # chronological by default, not the Corporation/Description convention
+        self.assertNotContains(response, 'class="eos-invoices-sort-1"')
+        self.assertNotContains(response, 'class="eos-invoices-sort-2"')
 
 
 class TestSourceMaintenance(DueTestCase):
@@ -198,6 +415,15 @@ class TestSourceMaintenance(DueTestCase):
         Due.objects.create(corp_id=1)
 
         self.assertContains(self.client.get(reverse("eos_invoices:sources")), "1 row")
+
+    def test_should_name_the_icon_buttons(self):
+        # an icon alone says nothing to a screen reader
+        make_source()
+
+        response = self.client.get(reverse("eos_invoices:sources"))
+
+        self.assertContains(response, 'aria-label="Edit"')
+        self.assertContains(response, 'aria-label="Delete"')
 
     def test_should_delete_only_by_post(self):
         source = make_source()
@@ -315,25 +541,41 @@ class TestPayTo(DueTestCase):
         self.assertNotContains(response, 'data-clipboard-text="999"')
 
 
-class TestFieldsEndpointAccess(DueTestCase):
-    def test_should_need_the_maintenance_permission(self):
-        self.client.force_login(make_ceo())
+class TestPermissionNames(DueTestCase):
+    def ours(self, codename):
+        # other apps have a basic_access too
+        return Permission.objects.filter(content_type__app_label="eos_invoices", codename=codename)
 
-        response = self.client.get(reverse("eos_invoices:source_fields"), {"model": "eos_invoices.Due"})
+    def test_should_say_what_manage_sources_allows(self):
+        name = self.ours("manage_sources").get().name
 
-        self.assertEqual(response.status_code, 302)
+        for part in ("mark them as paid", "undo the log", "payment sources"):
+            with self.subTest(part):
+                self.assertIn(part, name)
+
+    def test_should_rename_the_permissions_of_an_installed_site(self):
+        # Django never renames an existing permission; migration 0007 does
+        migration = importlib.import_module(
+            "eos_invoices.migrations.0007_log_model_label_and_texts"
+        )
+        self.ours("basic_access").update(
+            name="Can view outstanding payments of the own corporation"
+        )
+
+        migration.rename_permissions(django_apps, None)
+
+        self.assertEqual(
+            self.ours("basic_access").get().name,
+            "Can view the outstanding payments of their own Corporation",
+        )
 
 
-class TestTranslationNote(DueTestCase):
-    def setUp(self):
-        self.client.force_login(make_ceo(perms=("manage_sources",)))
+class TestCopyScript(DueTestCase):
+    def test_should_confirm_with_an_icon_font_awesome_free_has(self):
+        # Font Awesome Free has no regular "check": "far fa-check" draws nothing
+        script = (
+            Path(eos_invoices.__file__).parent / "static" / "eos_invoices" / "js" / "copy.js"
+        ).read_text()
 
-    def page(self, language):
-        self.client.cookies[settings.LANGUAGE_COOKIE_NAME] = language
-        return self.client.get(reverse("eos_invoices:sources"))
-
-    def test_should_note_generated_texts_in_every_language(self):
-        for language in ("en", "de", "ru", "zh-hans"):
-            with self.subTest(language):
-                self.assertContains(self.page(language), "eos-invoices-translation-note")
-
+        self.assertIn('classList.replace("far", "fas")', script)
+        self.assertIn('clipboard.on("error"', script)

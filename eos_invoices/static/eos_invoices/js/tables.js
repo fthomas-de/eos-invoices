@@ -9,12 +9,11 @@
  * sort, in that order - Corporation then Description on a table that spans
  * several Corporations, Description alone where there is no Corporation
  * column. Either or both may be absent; without any, the server's own order
- * stays until a header is clicked.
+ * stays until a header is clicked. A Description cell carries the row's
+ * period in data-order, so "01/2027" sorts after "12/2026".
  *
- * The log table is not marked here: it wants the filterDropDown dropdowns
- * over Source and Corporation, which need DataTables' search feature turned
- * on, and it defaults to chronological order rather than this
- * Corporation/Description convention - see log.js.
+ * The log table is not marked here: it defaults to chronological order
+ * rather than this Corporation/Description convention - see log.js.
  */
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
@@ -27,8 +26,14 @@ document.addEventListener("DOMContentLoaded", () => {
             .map((index) => [index, "asc"]);
     };
 
+    // Alliance Auth's DataTables translation for the viewer's language, set
+    // by base.html; empty for English, where DataTables needs none
+    const holder = document.querySelector("[data-eos-invoices-datatables-language]");
+    const languageUrl = holder ? holder.dataset.eosInvoicesDatatablesLanguage : "";
+
     document.querySelectorAll("table.eos-invoices-sortable").forEach((table) => {
         new DataTable(table, {
+            ...(languageUrl ? { language: { url: languageUrl } } : {}),
             paging: false,
             searching: false,
             info: false,

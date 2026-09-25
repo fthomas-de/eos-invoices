@@ -1,47 +1,41 @@
 /*
- * The log table: sortable like the others, plus AA's own filterDropDown
- * above the Source and Corporation columns - the two a long log actually has
- * few repeating values for, the same way groupmanagement filters by
- * Corporation and Group.
+ * The log page: a sortable table, and the Source/Corporation filter above it.
  *
- * Unlike the other sortable tables it does not default to Corporation then
- * Description: a log reads as a log, newest first, matching the order the
- * query itself already returns across every page - not the Corporation/
- * Description grouping tables.js uses elsewhere. A header click still
- * re-sorts the current page by anything else.
+ * The filter runs on the server, across every page of 100 entries - a filter
+ * in the browser (datatables-filterdropdown, used here before) only ever saw
+ * the rows of the page it ran on. Changing a choice sends the filter form;
+ * the page links keep the filter.
  *
- * filterDropDown reads each column's search through DataTables' own search
- * feature, so unlike tables.js this table cannot set searching: false.
- * Labels are translated server side and travel as data - a static file
- * cannot read the catalogue.
- *
- * Option names are camelCase (labelFilter, labelDropdownAll) - this is
- * ppfeufer's datatables-filterdropdown (bundled by Alliance Auth as
- * bundles/filterdropdown-js.html), not the older snake_case filterDropDown.js
- * a plain look at Alliance Auth's own git checkout would suggest; the venv's
- * installed version is the one that actually renders.
+ * Unlike the other sortable tables the log does not default to Corporation
+ * then Description: a log reads as a log, newest first, matching the order
+ * the query itself already returns. A header click still re-sorts the
+ * current page by anything else.
  */
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
-    const table = document.querySelector("#eos-invoices-log-table");
-    if (!table) {
-        return; // the empty state renders no table at all
+    const filter = document.querySelector("#eos-invoices-log-filter");
+    if (filter) {
+        filter.querySelectorAll("select").forEach((select) => {
+            select.addEventListener("change", () => filter.requestSubmit());
+        });
     }
 
-    const labels = JSON.parse(document.getElementById("eos-invoices-log-labels").textContent);
+    const table = document.querySelector("#eos-invoices-log-table");
+    if (!table) {
+        return; // an empty log, or an empty filter result, renders no table
+    }
+
+    // Alliance Auth's DataTables translation, set by base.html; empty for English
+    const holder = document.querySelector("[data-eos-invoices-datatables-language]");
+    const languageUrl = holder ? holder.dataset.eosInvoicesDatatablesLanguage : "";
 
     new DataTable(table, {
+        ...(languageUrl ? { language: { url: languageUrl } } : {}),
         paging: false,
+        searching: false,
         info: false,
         order: [[0, "desc"]], // Date, newest first
         columnDefs: [{ targets: "eos-invoices-no-sort", orderable: false }],
-        filterDropDown: {
-            labelFilter: labels.filterLabel,
-            columns: [
-                { idx: 2, labelDropdownAll: labels.allSources },
-                { idx: 3, labelDropdownAll: labels.allCorporations },
-            ],
-        },
     });
 });

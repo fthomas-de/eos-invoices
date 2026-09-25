@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.http import url_has_allowed_host_and_scheme, urlencode
 from django.utils.translation import gettext_lazy as _, ngettext
 from django.views.decorators.http import require_POST
 
@@ -63,6 +63,8 @@ def dashboard_overview(request):
         return ""
 
     overview = build_overview(request.user)
+    # a notice comes without results today, so the total alone would hide the
+    # widget too; the notice check keeps it hidden should that ever change
     if overview.notice or not overview.open_total_settled:
         return ""
 
@@ -82,16 +84,55 @@ def admin_overview(request):
 @login_required
 @permission_required("eos_invoices.manage_sources")
 def payment_log(request):
-    page = Paginator(PaymentLog.objects.all(), 100).get_page(request.GET.get("page"))
-    # a static file cannot read the catalogue; log.js reads this instead
-    filter_labels = {
-        "filterLabel": _("Filter by"),
-        "allSources": _("All sources"),
-        # same msgid as the "All Corporations" nav tab - one glossary entry for both
-        "allCorporations": _("All Corporations"),
+    """Every marking, newest first, 100 per page, filterable by Source and Corporation.
+
+    The filter runs in the query, not in the browser: a filter over the rows
+    of one page would miss every matching entry on the others. The choices
+    come from the whole log, by stored name, so a deleted source or a
+    Corporation that left stays filterable.
+    """
+    entries = PaymentLog.objects.all()
+
+    source_name = request.GET.get("source", "")
+    if source_name:
+        entries = entries.filter(source_name=source_name)
+
+    try:
+        corporation_id = int(request.GET.get("corporation", ""))
+    except ValueError:
+        corporation_id = None
+    if corporation_id is not None:
+        entries = entries.filter(corporation_id=corporation_id)
+
+    # order_by() drops the model's ordering, which DISTINCT would otherwise
+    # select as well and so repeat every Corporation once per entry
+    corporations = dict(
+        PaymentLog.objects.order_by()
+        .values_list("corporation_id", "corporation_name")
+        .distinct()
+    )
+    filters = {
+        key: value
+        for key, value in (("source", source_name), ("corporation", corporation_id))
+        if value not in ("", None)
     }
+
     return _render(
-        request, "eos_invoices/log.html", {"page": page, "filter_labels": filter_labels}
+        request,
+        "eos_invoices/log.html",
+        {
+            "page": Paginator(entries, 100).get_page(request.GET.get("page")),
+            "source_names": PaymentLog.objects.order_by("source_name")
+            .values_list("source_name", flat=True)
+            .distinct(),
+            "corporations": sorted(
+                corporations.items(), key=lambda item: (item[1] or str(item[0])).lower()
+            ),
+            "selected_source": source_name,
+            "selected_corporation": corporation_id,
+            # the page links keep the filter
+            "filter_query": urlencode(filters),
+        },
     )
 
 
@@ -168,8 +209,10 @@ def mark_selected_paid(request):
         messages.warning(
             request,
             ngettext(
-                "%(count)s payment was skipped: already paid, gone or of another Corporation.",
-                "%(count)s payments were skipped: already paid, gone or of another Corporation.",
+                "%(count)s payment was skipped: already paid, gone, of another "
+                "Corporation, or its source cannot be read or marked here.",
+                "%(count)s payments were skipped: already paid, gone, of another "
+                "Corporation, or their source cannot be read or marked here.",
                 skipped,
             )
             % {"count": skipped},
@@ -202,6 +245,7 @@ def _log_marking(request, source, marking):
         reason=invoice.reason[:255],
         label=invoice.label[:255],
         paid_field=marking.paid_field,
+        model_label=marking.model_label,
         previous_value=marking.previous_json,
         written_value=marking.written_json,
     )
@@ -228,6 +272,7 @@ def undo_marking(request, pk):
                 entry.paid_field,
                 entry.previous_value,
                 entry.written_value,
+                model_label=entry.model_label,
             )
         except SourceError as exc:
             messages.error(request, str(exc))

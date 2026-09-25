@@ -56,14 +56,18 @@
                                         {% endif %}
                                     </td>
                                     <td class="text-end text-nowrap">
-                                        <a href="{% url "eos_invoices:source_edit" row.source.pk %}" class="btn btn-sm btn-primary">
-                                            <i class="fas fa-pen"></i>
+                                        {% translate "Edit" context "eos-invoices" as edit_label %}
+                                        {% translate "Delete" context "eos-invoices" as delete_label %}
+                                        <a href="{% url "eos_invoices:source_edit" row.source.pk %}" class="btn btn-sm btn-primary"
+                                           title="{{ edit_label }}" aria-label="{{ edit_label }}">
+                                            <i class="fas fa-pen" aria-hidden="true"></i>
                                         </a>
                                         <form method="post" action="{% url "eos_invoices:source_delete" row.source.pk %}" class="d-inline eos-invoices-confirm"
                                               data-question="{% blocktranslate with name=row.source.name %}Delete {{ name }}?{% endblocktranslate %}">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                    title="{{ delete_label }}" aria-label="{{ delete_label }}">
+                                                <i class="fas fa-trash" aria-hidden="true"></i>
                                             </button>
                                         </form>
                                     </td>

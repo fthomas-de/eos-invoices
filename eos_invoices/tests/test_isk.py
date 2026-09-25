@@ -2,12 +2,17 @@ from decimal import Decimal
 
 from django.urls import reverse
 
-from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
-
-from eos_invoices.models import InvoiceConfiguration
 from eos_invoices.templatetags.eos_invoices import isk
 
-from .base import Due, DueTestCase, EosInvoicesTestCase, make_ceo, make_source
+from .base import (
+    Due,
+    DueTestCase,
+    EosInvoicesTestCase,
+    configure_alliance,
+    make_ceo,
+    make_corporation,
+    make_source,
+)
 
 
 class TestIskFilter(EosInvoicesTestCase):
@@ -26,22 +31,24 @@ class TestIskFilter(EosInvoicesTestCase):
     def test_should_keep_small_and_negative_amounts_readable(self):
         self.assertEqual(isk(0), "0")
         self.assertEqual(isk(Decimal("-1234")), "-1.234")
+        self.assertEqual(isk(Decimal("-0.4")), "0")
 
     def test_should_leave_what_is_no_number(self):
         self.assertEqual(isk(""), "")
+        self.assertIsNone(isk(None))
+
+    def test_should_leave_what_is_no_finite_number(self):
+        # a NaN float - PostgreSQL can store one - used to raise from int()
+        # and take the whole page down
+        for value in (float("nan"), Decimal("NaN"), float("inf")):
+            with self.subTest(value):
+                self.assertIs(isk(value), value)
 
 
 class TestIskOnPages(DueTestCase):
     @classmethod
     def setUpTestData(cls):
-        alliance = EveAllianceInfo.objects.create(
-            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
-        )
-        EveCorporationInfo.objects.create(
-            corporation_id=2001, corporation_name="Alpha", corporation_ticker="ALP",
-            member_count=1, alliance=alliance,
-        )
-        InvoiceConfiguration.objects.create(alliance=alliance)
+        make_corporation(2001, "Alpha", configure_alliance())
         Due.objects.create(corp_id=2001, amount=Decimal("1500000.40"))
 
     def test_should_format_amounts_on_both_overviews(self):
@@ -53,4 +60,3 @@ class TestIskOnPages(DueTestCase):
                 response = self.client.get(reverse(f"eos_invoices:{name}"))
                 self.assertContains(response, "1.500.000 ISK")
                 self.assertNotContains(response, "1,500,000")
-

@@ -27,7 +27,22 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
 ]
 dependencies = [
+    # 5.1.4: first release with eveonline migration 0025, which ours depend
+    # on. Everything the templates use - the datatables-2 bundles, the
+    # DataTables translations, framework/header/page-header.html - ships
+    # with it. (bundles/filterdropdown-js.html changed its plugin in 5.3.0;
+    # the log no longer uses it, its filter runs on the server.)
     "allianceauth>=5.1.4",
+    # imported directly (solo.models, solo.admin), not only through AA
+    "django-solo",
+]
+
+[project.optional-dependencies]
+# tools/translate.py needs polib; tox and coverage run the suite standalone
+dev = [
+    "coverage",
+    "polib",
+    "tox",
 ]
 
 [project.urls]
@@ -52,7 +67,7 @@ sections = [
     "LOCALFOLDER"
 ]
 known_allianceauth = ["allianceauth", "app_utils"]
-known_django = ["django", "django_webtest", "esi", "eveuniverse"]
+known_django = ["django", "solo"]
 
 [tool.pylint.'MASTER']
 ignore-patterns = ["test_.*.py,__init__.py", "generate_.*.py"]

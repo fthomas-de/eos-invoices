@@ -4,12 +4,12 @@ from unittest.mock import patch
 
 from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 
+from eos_invoices import sources
 from eos_invoices.models import PaymentSource
 from eos_invoices.sources import (
     SourceError,
     check_source,
     field_options,
-    get_invoices,
     plain_isk,
     render_template,
     resolve_field,
@@ -17,6 +17,12 @@ from eos_invoices.sources import (
 )
 
 from .base import Due, DueTestCase, EosInvoicesTestCase, make_source
+
+
+def get_invoices(*args, **kwargs):
+    """The rows alone; whether they were cut short is tested on its own."""
+    invoices, _truncated = sources.get_invoices(*args, **kwargs)
+    return invoices
 
 
 class TestResolveField(DueTestCase):
@@ -83,7 +89,12 @@ class TestPlainIsk(EosInvoicesTestCase):
     def test_should_accept_integers_and_floats(self):
         # sources may hold BigIntegerField or FloatField amounts
         self.assertEqual(plain_isk(250000000), "250000000")
-        self.assertEqual(plain_isk(Decimal(str(0.1 + 0.2))), "0.30")
+        self.assertEqual(plain_isk(0.1 + 0.2), "0.30")
+
+    def test_should_round_half_a_cent_up_like_the_display(self):
+        # half even, the context's default, would give 100 and 0.12
+        self.assertEqual(plain_isk(Decimal("100.005")), "100.01")
+        self.assertEqual(plain_isk(Decimal("0.125")), "0.13")
 
 
 class TestTemplates(EosInvoicesTestCase):
@@ -180,6 +191,36 @@ class TestGetInvoices(DueTestCase):
         invoices = get_invoices(make_source(), 2001, include_paid=True)
 
         self.assertNotIn(Decimal("0"), [i.amount for i in invoices])
+
+    def test_should_drop_a_row_without_an_amount(self):
+        # it would show as 0 ISK; exclude(field=0) alone keeps NULL rows
+        Due.objects.create(corp_id=2001, maybe_amount=30)
+
+        invoices = get_invoices(make_source(amount_field="maybe_amount"), 2001, include_paid=True)
+
+        self.assertEqual([i.amount for i in invoices], [Decimal("30")])
+
+    def test_should_say_when_the_rows_were_cut_short(self):
+        cut = sources.get_invoices(make_source(), 2001, include_paid=True, limit=1)
+        whole = sources.get_invoices(make_source(name="Whole"), 2001, include_paid=True)
+
+        self.assertEqual((len(cut[0]), cut[1]), (1, True))
+        self.assertEqual((len(whole[0]), whole[1]), (2, False))
+
+    def test_should_sort_the_description_by_year_and_month(self):
+        source = make_source(month_field="month", year_field="year", label_template="{month:02d}/{year}")
+
+        self.assertEqual(get_invoices(source, 2001)[0].label_order, "2026-07 07/2026")
+
+    def test_should_sort_the_description_by_date_without_year_and_month(self):
+        source = make_source(date_field="created", label_template="{month:02d}/{year}")
+
+        self.assertEqual(get_invoices(source, 2001)[0].label_order, "2026-07-31 07/2026")
+
+    def test_should_sort_the_description_as_text_without_a_period(self):
+        source = make_source(label_template="{month:02d}/{year}")
+
+        self.assertEqual(get_invoices(source, 2001)[0].label_order, "07/2026")
 
     def test_should_only_return_open_payments_of_the_corporation(self):
         invoices = get_invoices(make_source(), 2001)

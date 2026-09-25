@@ -7,7 +7,9 @@ Run it at a release, not in between: messages still change during
 development, and each change would throw away a round of translation.
 
 Steps:
-1. makemessages for every language in tools/glossary.py
+0. check the glossary's own shape (glossary.problems()): one translation per
+   language, the right number of plural forms, the same placeholders
+1. makemessages for every language in tools/glossary.py, tests/ left out
 2. fill every entry from the glossary; stop with a list of what is missing
 3. drop obsolete entries, check every entry against the glossary
 4. msgfmt --check, compilemessages, and confirm each .mo is newer than its .po
@@ -15,7 +17,7 @@ Steps:
    test suite skips: compiled catalogues load, EVE jargon stays English, and
    no other app's catalogue hides one of our translations
 
-Needs polib (pip install polib) and a Django settings module that has
+Needs polib (pip install -e ".[dev]" or pip install polib) and a Django settings module that has
 eos_invoices installed; by default the Alliance Auth instance next to this
 repo (../myauth), override with DJANGO_SETTINGS_MODULE and PYTHONPATH.
 """
@@ -36,7 +38,7 @@ APP = REPO / "eos_invoices"
 LOCALE = APP / "locale"
 
 sys.path.insert(0, str(TOOLS))
-from glossary import LANGUAGES, PLURAL_FORMS, PLURALS, TRANSLATIONS  # noqa: E402
+from glossary import LANGUAGES, PLURAL_FORMS, PLURALS, TRANSLATIONS, problems  # noqa: E402
 
 
 def django_env():
@@ -72,9 +74,12 @@ def run_catalogue_tests():
         failures = [
             line for line in result.stderr.splitlines() if line.startswith(("FAIL:", "ERROR:"))
         ]
+        # which test failed decides the fix; only the clash test means a context
         sys.exit(
-            "Catalogue tests failed - a word another app translates differently needs\n"
-            'the "eos-invoices" context in the code:\n  ' + "\n  ".join(failures or [result.stderr[-2000:]])
+            "Catalogue tests failed:\n  "
+            + "\n  ".join(failures or [result.stderr[-2000:]])
+            + "\nA failure of test_should_show_our_translation_for_every_message means a word\n"
+            'another app translates differently: give it the "eos-invoices" context in the code.'
         )
 
 
@@ -150,7 +155,18 @@ def verify(language, index, path):
 
 
 def main():
-    django_admin("makemessages", *[arg for lang in LANGUAGES for arg in ("-l", lang)])
+    # a malformed glossary entry stops here, before any catalogue is touched
+    broken = problems()
+    if broken:
+        sys.exit("tools/glossary.py is malformed:\n  " + "\n  ".join(broken))
+
+    # tests/ holds no message of the app; scanning it only adds occurrences
+    # that keep an entry alive after the app itself dropped it
+    django_admin(
+        "makemessages",
+        "--ignore=tests/*",
+        *[arg for lang in LANGUAGES for arg in ("-l", lang)],
+    )
 
     paths, missing = {}, {}
     for index, language in enumerate(LANGUAGES):

@@ -30,16 +30,13 @@ INSTALLED_APPS += [
     "eos_invoices",
 ]
 
-# Enter credentials to use MySQL/MariaDB. Comment out to use sqlite3
-DATABASES['default'] = {
-    'ENGINE': 'django.db.backends.mysql',
-    'NAME': 'aa_dev',
-    'USER': 'admin',
-    'PASSWORD': 'YOUR-PASSWORD',
-    'HOST': '127.0.0.1',
-    'PORT': '3306',
-    'OPTIONS': {'charset': 'utf8mb4'},
-    "TEST": {"CHARSET": "utf8mb4"},
+# sqlite of its own, never a real Alliance Auth database: this test project
+# used to name "aa_dev" here, the dev instance's database with corptools data
+# that cannot be fetched again - one "migrate" with these settings would have
+# gone there. The test runner puts the test database in memory.
+DATABASES["default"] = {
+    "ENGINE": "django.db.backends.sqlite3",
+    "NAME": os.path.join(BASE_DIR, "eos_invoices_testauth.sqlite3"),
 }
 
 # Register an application at https://developers.eveonline.com for Authentication

@@ -14,8 +14,12 @@ class General(models.Model):
         managed = False
         default_permissions = ()
         permissions = (
-            ("basic_access", "Can view outstanding payments of the own corporation"),
-            ("manage_sources", "Can manage payment sources and app settings"),
+            ("basic_access", "Can view the outstanding payments of their own Corporation"),
+            (
+                "manage_sources",
+                "Can view the payments of all Corporations, mark them as paid, read "
+                "and undo the log, and manage payment sources and the Alliance",
+            ),
         )
 
 
@@ -101,8 +105,9 @@ class PaymentSource(models.Model):
         blank=True,
         help_text=_(
             "Reason to enter with the payment in game. Field names in braces are "
-            "replaced by their values, with an optional format: "
-            "{corp_id}/{month:02d}/{year}"
+            "replaced by their values, e.g. {corp_id}/{month}/{year}; a format "
+            "may follow a colon, as in {month:02d}. Use the exact form the "
+            "receiving app matches payments against."
         ),
     )
     label_template = models.CharField(
@@ -118,7 +123,11 @@ class PaymentSource(models.Model):
         _("Date field"),
         max_length=255,
         blank=True,
-        help_text=_("Optional date or datetime field; rows are sorted by it, newest first."),
+        help_text=_(
+            "Optional date or datetime field, shown in the Date column. Without a "
+            "Month and Year field, the Description column sorts by it; a source "
+            "with too many rows for one page keeps its newest ones."
+        ),
     )
     month_field = models.CharField(
         _("Month field"),
@@ -195,6 +204,9 @@ class PaymentLog(models.Model):
     # what was written, to undo it exactly; empty on entries made before 0.0.7,
     # which therefore cannot be undone from here
     paid_field = models.CharField(max_length=255, blank=True, default="")
+    # the model the row was marked in; undo refuses once the source reads
+    # another one. Empty on entries older than migration 0007, not checked
+    model_label = models.CharField(max_length=255, blank=True, default="")
     # plain JSON, filled through sources.to_json: DjangoJSONEncoder would cut
     # datetimes to milliseconds
     previous_value = models.JSONField(null=True)

@@ -10,6 +10,7 @@ from allianceauth.services.hooks import get_extension_logger
 
 from eos_invoices.models import InvoiceConfiguration, PaymentSource
 from eos_invoices.sources import (
+    MAX_ROWS,
     SourceError,
     SourceResult,
     get_invoices,
@@ -27,6 +28,8 @@ class Overview:
     # why nothing is shown; empty when the user may see their Corporation
     notice: str = ""
     results: list = field(default_factory=list)
+    # rows one source shows at most; a result that hit it says so
+    row_limit: int = 0
 
     @property
     def open_total(self):
@@ -51,6 +54,7 @@ def build_overview(user, *, include_paid=False):
     overview = Overview(
         corporation_id=main.corporation_id,
         corporation_name=main.corporation_name,
+        row_limit=MAX_ROWS,
     )
 
     alliance = InvoiceConfiguration.get_solo().alliance
@@ -67,8 +71,13 @@ def build_overview(user, *, include_paid=False):
     for source in PaymentSource.objects.filter(enabled=True).select_related("pay_to"):
         result = SourceResult(source=source)
         try:
-            result.invoices = get_invoices(
-                source, overview.corporation_id, include_paid=include_paid
+            # cut short, the "Including paid" list would drop the oldest open
+            # rows and the Outstanding total with them - the page says so
+            result.invoices, result.truncated = get_invoices(
+                source,
+                overview.corporation_id,
+                include_paid=include_paid,
+                limit=overview.row_limit,
             )
         except SourceError as exc:
             result.error = str(exc)
@@ -177,5 +186,8 @@ def build_admin_overview():
                 )
             )
 
-    overview.settled_count = len(corporation_ids) - len(has_open)
+    # a source that failed or was cut short may hold what a Corporation owes;
+    # counting that Corporation as settled would be a claim nobody checked
+    if not overview.problems:
+        overview.settled_count = len(corporation_ids) - len(has_open)
     return overview

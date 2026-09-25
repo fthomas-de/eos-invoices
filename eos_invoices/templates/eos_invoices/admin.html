@@ -68,7 +68,7 @@
                             <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
                                 <thead>
                                     <tr>
-                                        <th class="eos-invoices-no-sort" style="width: 2rem">
+                                        <th class="eos-invoices-no-sort">
                                             {% if result.can_mark_paid %}
                                                 <input class="form-check-input" type="checkbox"
                                                        data-eos-invoices-select-all="{{ result.source.pk|unlocalize }}"
@@ -98,7 +98,7 @@
                                                 {{ row.corporation.corporation_name }} [{{ row.corporation.corporation_ticker }}]
                                             </td>
                                             <td class="text-nowrap" data-order="{{ row.invoice.date|date:"Y-m-d" }}">{{ row.invoice.date|date:"Y-m-d"|default:"-" }}</td>
-                                            <td>{{ row.invoice.label|default:"-" }}</td>
+                                            <td data-order="{{ row.invoice.label_order }}">{{ row.invoice.label|default:"-" }}</td>
                                             <td class="text-end text-nowrap" data-order="{{ row.invoice.amount|unlocalize }}">{{ row.invoice.amount|isk }} ISK</td>
                                             <td class="text-nowrap">
                                                 {% if row.invoice.reason_hidden %}
@@ -127,7 +127,7 @@
                     </div>
                 </div>
             {% empty %}
-                <div class="alert alert-success">{% translate "Nothing outstanding." %}</div>
+                <div class="alert alert-success">{% translate "Nothing outstanding." context "eos-invoices" %}</div>
             {% endfor %}
         </form>
     {% endif %}

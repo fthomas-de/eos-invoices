@@ -1,24 +1,13 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 from allianceauth.eveonline.models import EveAllianceInfo
 from allianceauth.tests.auth_utils import AuthUtils
 
 from eos_invoices.models import InvoiceConfiguration
-from eos_invoices.overview import build_overview
+from eos_invoices.overview import build_admin_overview, build_overview
 
-from .base import Due, DueTestCase, make_ceo, make_source
-
-
-def configure_alliance(alliance_id=3001):
-    alliance = EveAllianceInfo.objects.create(
-        alliance_id=alliance_id,
-        alliance_name=f"Alliance {alliance_id}",
-        alliance_ticker="A",
-        executor_corp_id=1,
-    )
-    config = InvoiceConfiguration.get_solo()
-    config.alliance = alliance
-    config.save()
+from .base import Due, DueTestCase, configure_alliance, make_ceo, make_corporation, make_source
 
 
 class TestBuildOverview(DueTestCase):
@@ -75,3 +64,87 @@ class TestBuildOverview(DueTestCase):
         make_source(enabled=False)
 
         self.assertEqual(build_overview(make_ceo()).results, [])
+
+    def test_should_say_when_a_source_was_cut_short(self):
+        # "Including paid" keeps the newest rows; an older open one falls off
+        # the list and out of the total, so the page has to say so
+        configure_alliance()
+        make_source()
+
+        with patch("eos_invoices.overview.MAX_ROWS", 1):
+            cut = build_overview(make_ceo(), include_paid=True)
+        whole = build_overview(make_ceo("other"), include_paid=True)
+
+        self.assertTrue(cut.results[0].truncated)
+        self.assertEqual(len(cut.results[0].invoices), 1)
+        self.assertFalse(whole.results[0].truncated)
+        self.assertEqual(len(whole.results[0].invoices), 2)
+
+
+class TestAdminOverview(DueTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        alliance = EveAllianceInfo.objects.create(
+            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
+        )
+        other = EveAllianceInfo.objects.create(
+            alliance_id=3002, alliance_name="B", alliance_ticker="B", executor_corp_id=2
+        )
+        for corporation_id, name, member_of in (
+            (2001, "Alpha", alliance),
+            (2002, "Beta", alliance),
+            (2003, "Gamma", alliance),
+            (2009, "Stranger", other),
+        ):
+            make_corporation(corporation_id, name, member_of)
+        InvoiceConfiguration.objects.create(alliance=alliance)
+        Due.objects.create(corp_id=2001, amount=111)
+        Due.objects.create(corp_id=2002, amount=222)
+        Due.objects.create(corp_id=2002, amount=5, paid=True)
+        Due.objects.create(corp_id=2009, amount=999)
+
+    def test_should_group_open_payments_by_source_across_corporations(self):
+        # two sources: one table each, every Corporation's open rows in it -
+        # not one table per Corporation
+        make_source(name="First")
+        make_source(name="Second")
+
+        overview = build_admin_overview()
+
+        self.assertEqual([s.source.name for s in overview.sources], ["First", "Second"])
+        for result in overview.sources:
+            self.assertEqual(
+                sorted((r.corporation.corporation_name, r.invoice.amount) for r in result.rows),
+                [("Alpha", 111), ("Beta", 222)],
+            )
+        # Gamma has nothing open; Stranger is outside the Alliance
+        self.assertEqual(overview.settled_count, 1)
+        self.assertEqual(overview.open_total, 666)
+
+    def test_should_read_each_source_once_for_all_corporations(self):
+        # one query per Corporation would be 30+ queries in a real Alliance
+        make_source()
+
+        # configuration, Corporations, sources, then one query for the source
+        with self.assertNumQueries(4):
+            build_admin_overview()
+
+    def test_should_say_when_a_source_was_cut_short(self):
+        make_source()
+
+        with patch("eos_invoices.overview.ADMIN_MAX_ROWS", 1):
+            overview = build_admin_overview()
+
+        self.assertEqual(len(overview.problems), 1)
+        # Beta's row fell off the list; it must not count as settled
+        self.assertEqual(overview.settled_count, 0)
+
+    def test_should_not_count_settled_corporations_while_a_source_has_problems(self):
+        # Gamma may owe something in the source that could not be read
+        make_source(name="Working")
+        make_source(name="Broken", amount_field="gone")
+
+        overview = build_admin_overview()
+
+        self.assertEqual(len(overview.problems), 1)
+        self.assertEqual(overview.settled_count, 0)

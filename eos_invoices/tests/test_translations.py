@@ -1,4 +1,5 @@
 import gettext
+import importlib.util
 import os
 from pathlib import Path
 from unittest import skipUnless
@@ -14,6 +15,22 @@ LANGUAGES = {"de": "de", "ru": "ru", "zh_Hans": "zh-hans"}
 
 # set by tools/translate.py
 RELEASE_CHECK = "EOS_INVOICES_CHECK_TRANSLATIONS"
+
+# the repo's tools/, not part of the installed package
+GLOSSARY = Path(eos_invoices.__file__).parent.parent / "tools" / "glossary.py"
+
+
+@skipUnless(GLOSSARY.exists(), "tools/glossary.py only exists in the repo")
+class TestGlossary(EosInvoicesTestCase):
+    """The glossary's shape, checked on every run - unlike the catalogues it
+    changes with the code, and translate.py refuses a malformed one."""
+
+    def test_should_be_well_formed(self):
+        spec = importlib.util.spec_from_file_location("eos_invoices_glossary", GLOSSARY)
+        glossary = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(glossary)
+
+        self.assertEqual(glossary.problems(), [])
 
 
 # The catalogues are only brought up to date at a release, so between releases

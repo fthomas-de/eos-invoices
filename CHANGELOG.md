@@ -5,7 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.13] - 2026-09-25
+
+### Fixed
+
+- Undo refuses an entry once its source reads another model than the one
+  the row was marked in: the same row key there is a different payment, and
+  its paid flag may well hold the very value that was written. The log now
+  stores the model (migration 0007); entries made before keep working as
+  they did.
+- A row whose amount is empty (NULL) is dropped like a 0 ISK row; it used to
+  show as "0 ISK", because excluding 0 on a nullable column keeps NULL rows.
+- The overview says when a source had more rows than one page shows. With
+  "Including paid" the oldest rows fell off silently, open ones included, and
+  the Outstanding total dropped with them.
+- "All Corporations" no longer counts Corporations as having nothing
+  outstanding while a source failed or was cut short - they may owe exactly
+  there.
+- The Description column sorts in time order: by the row's year and month
+  when the source names both fields, else by its date. As text,
+  "01/2027" sorted before "12/2026".
+- The copy confirmation shows a check mark again: Font Awesome Free has no
+  regular "check", so the icon vanished for a moment instead. A failed copy
+  is reported in the browser console, as on Alliance Auth's SRP page.
+- The ISK display no longer fails on a NaN amount (possible in a float field
+  on PostgreSQL); copied amounts round half a cent up, like the display,
+  instead of to the nearest even cent.
+- The source form ignores a field list that arrives after the model was
+  changed again, and empties the dropdowns when the list cannot be loaded
+  instead of keeping the previous model's fields.
+
+### Changed
+
+- The log's Source and Corporation filter runs on the server, across every
+  page of 100 entries, and the page links keep it; the choices list every
+  source and Corporation of the whole log. The browser-side
+  datatables-filterdropdown only ever saw the page it ran on.
+- A row whose Reason is hidden for the month still in progress has no copy
+  button for its amount any more; the row and its amount still show, and the
+  source total keeps its copy button.
+- DataTables on every page get Alliance Auth's translation for the viewer's
+  language, the way Auth's own pages load it.
+- The navigation is written the way Alliance Auth's own apps do it; the
+  theme styles the active tab instead of fixed colours of our own. The page
+  heading uses Auth's page header, with the version below the title.
+- The edit and delete buttons on the sources page are named for screen
+  readers.
+- Help texts: the Reason example is `{corp_id}/{month}/{year}` - the
+  zero-padded month of the old example is exactly what eos-tax does not
+  match. The Date field's help and the README no longer claim it decides the
+  displayed order. The permission names say what they allow, including
+  marking, the log and undo; migration 0007 renames them on installed sites,
+  which Django would not do by itself.
+- The message for skipped rows also names sources that cannot be read or
+  marked.
+- Russian: "Pay to" reads "Получатель", an open payment "Не оплачено".
+  German: the paid field is "Feld Bezahlt" in every message.
+- `tools/translate.py` ran for this release: "Outstanding only", "Including
+  paid" and "Nothing outstanding." now carry the `eos-invoices` context -
+  Alliance Auth's own catalogue translated them differently and won the
+  clash before. All three catalogues (`de`, `ru`, `zh_Hans`) are complete,
+  `msgfmt --check` clean, `.mo` newer than `.po`, and the catalogue tests
+  pass.
+- `tools/translate.py` checks the glossary's shape first (one translation per
+  language, the right number of plural forms, the same placeholders), leaves
+  `tests/` out of makemessages, and names the failing test rather than always
+  blaming a context clash. The normal test suite runs the same glossary
+  check.
+- `runtests.py` and tox run the suite standalone on testauth, which has its
+  own sqlite database now instead of naming the dev instance's `aa_dev`;
+  `.coveragerc` added. `pyproject.toml`: `django-solo` declared (imported
+  directly), a `dev` extra with polib, coverage and tox.
+- Tests: one access test per permission over every page, admin overview
+  tests next to the overview's, UI tests in `test_views.py`, a shared
+  `configure_alliance`; a vacuous assertion in the undo tests and a
+  language-independent "every language" test replaced by real checks.
 
 ## [0.0.12] - 2026-09-24
 

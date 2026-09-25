@@ -24,10 +24,12 @@ app.
   everywhere rather than shown as noise
 - Admin overview of all Corporations of the Alliance, grouped by source with
   Corporation as a column, where payments can be marked as paid, and a log of
-  who marked what, filterable by Source and Corporation
+  who marked what, filterable by Source and Corporation across all its pages
 - Optional: hide the Reason of a row for the month still in progress
-- Every table sorts by Corporation then Description on load; a header click
-  re-sorts by anything else
+- The overview sorts by Description on load, "All Corporations" by
+  Corporation then Description, the log newest first; a header click
+  re-sorts by anything else. Descriptions sort in time order when the source
+  names a Month and Year field or a Date field
 - Sources are checked when they are saved; the source list shows whether each
   one can currently be read
 - Restricted to the Corporations of one Alliance
@@ -59,7 +61,7 @@ app.
 | Permission | Who | What |
 |---|---|---|
 | `eos_invoices.basic_access` | CEOs | See outstanding payments of the Corporation of their main character |
-| `eos_invoices.manage_sources` | Admins | See the open payments of all Corporations of the Alliance, mark them as paid, read the log; maintain payment sources and the Alliance |
+| `eos_invoices.manage_sources` | Admins | See the open payments of all Corporations of the Alliance, mark them as paid, read and undo the log; maintain payment sources and the Alliance |
 
 A Corporation can have several CEOs in Auth terms (directors, alt CEOs): give
 the permission to each of them, via a group or state.
@@ -77,9 +79,9 @@ chosen on the *Alliance* tab; without an Alliance nobody sees anything.
 | Corporation ID field | Field with the EVE Corporation ID. Relations are followed with `__`, e.g. `corporation__corporation_id` |
 | Amount field | Amount owed in ISK |
 | Paid field / Paid when | When a row counts as paid: the field is true, is not empty (e.g. a paid-at date), or equals a given value |
-| Reason | Template for the in-game reason. Field names in braces are replaced: `{corp_id}/{month:02d}/{year}` |
+| Reason | Template for the in-game reason. Field names in braces are replaced, e.g. `{corp_id}/{month}/{year}`; a format may follow a colon, as in `{month:02d}`. Use exactly the form the receiving app matches payments against - eos-tax, for one, expects no leading zero |
 | Description | Template shown next to the amount, e.g. `{month:02d}/{year}` |
-| Date field | Optional, rows are sorted by it |
+| Date field | Optional, shown in the Date column. Without Month and Year fields the Description column sorts by it; a source with more rows than one page shows keeps the newest |
 | Month field | Optional integer field (1-12). Together with Year field, hides the Reason while the row is for the current month - see below |
 | Year field | Optional integer field, e.g. `2026`. Required together with Month field for hiding to take effect |
 | Pay to | The Corporation that collects the ISK, chosen from the Corporations of the configured Alliance |
@@ -121,8 +123,9 @@ refused.
 Setting *both* *Month field* and *Year field* hides the Reason of a row while
 that row's month and year are the current ones - the amount owed for a month
 still in progress can still change, so the code to pay it is withheld until it
-is settled. The row still shows, with its amount; only the Reason is replaced
-by a note. Left unset (the default), or with only one of the two fields set,
+is settled. The row still shows, with its amount; the Reason is replaced by a
+note, and the row's amount has no copy button. The source total above keeps
+its own, and still counts the row. Left unset (the default), or with only one of the two fields set,
 the Reason always shows - a month number alone cannot tell this year's row
 from the same month a year ago, so both are required together.
 

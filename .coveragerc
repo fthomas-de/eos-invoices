@@ -1,0 +1,9 @@
+[run]
+source = eos_invoices
+omit =
+    eos_invoices/migrations/*
+    eos_invoices/tests/*
+
+[report]
+show_missing = True
+skip_covered = True

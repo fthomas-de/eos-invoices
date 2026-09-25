@@ -1,3 +1,4 @@
+from django.contrib.messages import get_messages
 from django.urls import reverse
 from django.utils import timezone
 
@@ -17,6 +18,9 @@ class TestUndoMarking(DueTestCase):
 
     def undo(self, entry):
         return self.client.post(reverse("eos_invoices:undo_marking", args=[entry.pk]))
+
+    def notes(self, response):
+        return [str(m) for m in get_messages(response.wsgi_request)]
 
     def test_should_set_a_boolean_back(self):
         source = make_source()
@@ -91,11 +95,46 @@ class TestUndoMarking(DueTestCase):
             corporation_id=2001, amount=10,
         )
 
-        self.undo(entry)
+        response = self.undo(entry)
 
         row.refresh_from_db()
         self.assertTrue(row.paid)
-        self.assertNotContains(self.client.get(reverse("eos_invoices:log")), ">Undo<")
+        # refused by can_undo itself, not by a later check that happens to fail
+        self.assertIn("This entry cannot be undone.", self.notes(response))
+        self.assertNotContains(
+            self.client.get(reverse("eos_invoices:log")),
+            reverse("eos_invoices:undo_marking", args=[entry.pk]),
+        )
+
+    def test_should_refuse_once_the_source_reads_another_model(self):
+        # the same pk there is another payment, whose flag may well be True
+        source = make_source()
+        row = Due.objects.create(corp_id=2001, amount=10)
+        entry = self.mark(source, row)
+        PaymentLog.objects.filter(pk=entry.pk).update(model_label="otherapp.Tax")
+
+        response = self.undo(entry)
+
+        row.refresh_from_db()
+        entry.refresh_from_db()
+        self.assertTrue(row.paid)
+        self.assertIsNone(entry.reverted_at)
+        self.assertIn(
+            "This source reads another model since this was marked; nothing was changed.",
+            self.notes(response),
+        )
+
+    def test_should_still_undo_an_entry_older_than_the_stored_model(self):
+        # entries from before migration 0007 have no model to compare
+        source = make_source()
+        row = Due.objects.create(corp_id=2001, amount=10)
+        entry = self.mark(source, row)
+        PaymentLog.objects.filter(pk=entry.pk).update(model_label="")
+
+        self.undo(entry)
+
+        row.refresh_from_db()
+        self.assertFalse(row.paid)
 
     def test_should_offer_the_button_and_show_who_undid(self):
         source = make_source()

@@ -12,9 +12,12 @@ def isk(value):
     Fixed rather than localised on purpose - with USE_THOUSAND_SEPARATOR the
     separator followed the viewer's language, so the same sum read 1,500,000
     for one CEO and 1.500.000 for the next.
+
+    What is no finite number comes back unchanged. int() stays inside the
+    try: a NaN quantizes without complaint and only fails there.
     """
     try:
-        amount = Decimal(str(value)).quantize(Decimal(1), rounding=ROUND_HALF_UP)
-    except (InvalidOperation, ValueError, TypeError):
+        amount = int(Decimal(str(value)).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+    except (InvalidOperation, ValueError, TypeError, OverflowError):
         return value
-    return f"{int(amount):,}".replace(",", ".")
+    return f"{amount:,}".replace(",", ".")

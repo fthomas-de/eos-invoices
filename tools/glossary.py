@@ -74,10 +74,10 @@ TRANSLATIONS = {
         "仅用于“字段等于指定值”：表示已付的值。",
     ),
     "Reason": ("Reason", "Reason", "Reason"),
-    "Reason to enter with the payment in game. Field names in braces are replaced by their values, with an optional format: {corp_id}/{month:02d}/{year}": (
-        "Reason, der bei der Zahlung im Spiel angegeben wird. Feldnamen in geschweiften Klammern werden durch ihre Werte ersetzt, optional mit Format: {corp_id}/{month:02d}/{year}",
-        "Reason, который указывается при платеже в игре. Имена полей в фигурных скобках заменяются их значениями, формат необязателен: {corp_id}/{month:02d}/{year}",
-        "游戏内付款时填写的 Reason。花括号中的字段名会被替换为其值，可选格式：{corp_id}/{month:02d}/{year}",
+    "Reason to enter with the payment in game. Field names in braces are replaced by their values, e.g. {corp_id}/{month}/{year}; a format may follow a colon, as in {month:02d}. Use the exact form the receiving app matches payments against.": (
+        "Reason, der bei der Zahlung im Spiel angegeben wird. Feldnamen in geschweiften Klammern werden durch ihre Werte ersetzt, z. B. {corp_id}/{month}/{year}; nach einem Doppelpunkt kann ein Format folgen, wie in {month:02d}. Verwende genau die Form, mit der die empfangende App Zahlungen abgleicht.",
+        "Reason, который указывается при платеже в игре. Имена полей в фигурных скобках заменяются их значениями, например {corp_id}/{month}/{year}; после двоеточия можно указать формат, как в {month:02d}. Используйте ровно ту форму, по которой принимающее приложение сопоставляет платежи.",
+        "游戏内付款时填写的 Reason。花括号中的字段名会被替换为其值，例如 {corp_id}/{month}/{year}；冒号后可跟格式，如 {month:02d}。请使用接收方应用匹配付款时所用的确切格式。",
     ),
     "Description": ("Beschreibung", "Описание", "描述"),
     "What a row is for, shown next to the amount. Same placeholders as the reason, e.g. {month:02d}/{year}": (
@@ -86,10 +86,10 @@ TRANSLATIONS = {
         "该行的用途，显示在金额旁。占位符与 Reason 相同，例如 {month:02d}/{year}",
     ),
     "Date field": ("Feld Datum", "Поле даты", "日期字段"),
-    "Optional date or datetime field; rows are sorted by it, newest first.": (
-        "Optionales Datums- oder Zeitstempelfeld; die Zeilen werden danach sortiert, neueste zuerst.",
-        "Необязательное поле даты или даты-времени; строки сортируются по нему, сначала новые.",
-        "可选的日期或日期时间字段；按其排序，最新的在前。",
+    "Optional date or datetime field, shown in the Date column. Without a Month and Year field, the Description column sorts by it; a source with too many rows for one page keeps its newest ones.": (
+        "Optionales Datums- oder Zeitstempelfeld, angezeigt in der Spalte Datum. Ohne Feld Monat und Jahr sortiert die Spalte Beschreibung danach; hat eine Quelle zu viele Zeilen für eine Seite, bleiben die neuesten.",
+        "Необязательное поле даты или даты-времени, показывается в столбце «Дата». Без полей месяца и года по нему сортируется столбец «Описание»; если у источника слишком много строк для одной страницы, остаются самые новые.",
+        "可选的日期或日期时间字段，显示在“日期”列中。未设置月份和年份字段时，“描述”列按其排序；来源的行数超过一页时，保留最新的行。",
     ),
     "Month field": ("Feld Monat", "Поле месяца", "月份字段"),
     "Optional integer field (1-12) holding the row's month. Together with the Year field below, hides the Reason while the row is for the month still in progress - the amount owed for it can still change. Both fields are required for this; set alone, this one does nothing.": (
@@ -118,7 +118,7 @@ TRANSLATIONS = {
         "Не показывается за текущий месяц",
         "本月不显示",
     ),
-    "Pay to": ("Zahlen an", "Платить", "付款给"),
+    "Pay to": ("Zahlen an", "Получатель", "付款给"),
     "The Corporation that receives the ISK. Lists the Corporations of the Alliance chosen on the Alliance tab.": (
         "Die Corporation, die die ISK erhält. Zur Auswahl stehen die Corporations der Alliance, die im Tab Alliance gewählt ist.",
         "Corporation, получающая ISK. В списке — Corporation из Alliance, выбранной на вкладке Alliance.",
@@ -197,7 +197,7 @@ TRANSLATIONS = {
         "此条目无法撤销。",
     ),
     "The paid field of this source has changed since.": (
-        "Das Bezahlt-Feld dieser Quelle wurde inzwischen geändert.",
+        "Das Feld Bezahlt dieser Quelle wurde inzwischen geändert.",
         "Поле оплаты этого источника с тех пор изменилось.",
         "此来源的已付字段已被更改。",
     ),
@@ -206,6 +206,23 @@ TRANSLATIONS = {
         "Платёж изменился после отметки; он оставлен без изменений.",
         "该款项在标记后已被更改；保持不变。",
     ),
+    "This source reads another model since this was marked; nothing was changed.": (
+        "Diese Quelle liest seit dem Markieren ein anderes Modell; es wurde nichts geändert.",
+        "С момента отметки этот источник читает другую модель; ничего не изменено.",
+        "标记后此来源已改为读取另一个模型；未做任何更改。",
+    ),
+    "Only the newest %(limit)s payments are shown; the total counts only those.": (
+        "Nur die neuesten %(limit)s Zahlungen werden angezeigt; die Summe zählt nur diese.",
+        "Показаны только %(limit)s самых новых платежей; сумма учитывает только их.",
+        "仅显示最新的 %(limit)s 笔款项；合计只包含这些。",
+    ),
+    "No entries match this filter.": (
+        "Keine Einträge passen zu diesem Filter.",
+        "Нет записей, соответствующих этому фильтру.",
+        "没有符合此筛选条件的条目。",
+    ),
+    "Edit": ("Bearbeiten", "Изменить", "编辑"),
+    "Delete": ("Löschen", "Удалить", "删除"),
     "Select all": ("Alle auswählen", "Выбрать все", "全选"),
     "Mark selected as paid": ("Auswahl als bezahlt markieren", "Отметить выбранные как оплаченные", "将所选标记为已付"),
     "Mark the selected payments as paid?": (
@@ -318,7 +335,7 @@ TRANSLATIONS = {
     "Status": ("Status", "Статус", "状态"),
     "Copy": ("Kopieren", "Копировать", "复制"),
     "Paid": ("Bezahlt", "Оплачено", "已付"),
-    "Open": ("Offen", "Открыто", "未付"),
+    "Open": ("Offen", "Не оплачено", "未付"),
     "No payment sources are configured.": (
         "Es sind keine Zahlungsquellen eingerichtet.",
         "Источники платежей не настроены.",
@@ -356,17 +373,17 @@ PLURALS = {
         ],
         ["已将 %(count)s 笔款项标记为已付。"],
     ),
-    "%(count)s payment was skipped: already paid, gone or of another Corporation.": (
+    "%(count)s payment was skipped: already paid, gone, of another Corporation, or its source cannot be read or marked here.": (
         [
-            "%(count)s Zahlung übersprungen: bereits bezahlt, nicht mehr vorhanden oder von einer anderen Corporation.",
-            "%(count)s Zahlungen übersprungen: bereits bezahlt, nicht mehr vorhanden oder von einer anderen Corporation.",
+            "%(count)s Zahlung übersprungen: bereits bezahlt, nicht mehr vorhanden, von einer anderen Corporation, oder ihre Quelle kann hier nicht gelesen oder markiert werden.",
+            "%(count)s Zahlungen übersprungen: bereits bezahlt, nicht mehr vorhanden, von einer anderen Corporation, oder ihre Quelle kann hier nicht gelesen oder markiert werden.",
         ],
         [
-            "%(count)s платёж пропущен: уже оплачен, удалён или принадлежит другой Corporation.",
-            "%(count)s платежа пропущены: уже оплачены, удалены или принадлежат другой Corporation.",
-            "%(count)s платежей пропущены: уже оплачены, удалены или принадлежат другой Corporation.",
+            "%(count)s платёж пропущен: уже оплачен, удалён, принадлежит другой Corporation или его источник нельзя здесь прочитать или отметить.",
+            "%(count)s платежа пропущены: уже оплачены, удалены, принадлежат другой Corporation или их источник нельзя здесь прочитать или отметить.",
+            "%(count)s платежей пропущены: уже оплачены, удалены, принадлежат другой Corporation или их источник нельзя здесь прочитать или отметить.",
         ],
-        ["已跳过 %(count)s 笔款项：已付、已不存在或属于其他 Corporation。"],
+        ["已跳过 %(count)s 笔款项：已付、已不存在、属于其他 Corporation，或其来源在此无法读取或标记。"],
     ),
     "%(counter)s Corporation with nothing outstanding": (
         ["%(counter)s Corporation ohne offene Zahlungen", "%(counter)s Corporations ohne offene Zahlungen"],
@@ -383,3 +400,45 @@ PLURALS = {
         ["%(counter)s 行"],
     ),
 }
+
+
+def problems():
+    """What is malformed in the entries above, as readable lines.
+
+    tools/translate.py stops on any of these before it touches a catalogue,
+    and the normal test suite runs the same check: a tuple one language short
+    would otherwise end in an IndexError deep inside the fill, and a plural
+    with the wrong number of forms or a lost placeholder would only show when
+    a page renders it.
+    """
+    import re
+
+    placeholder = re.compile(r"%\([a-z_]+\)s|\{[^}]*\}")
+    found = []
+
+    def check(msgid, text, where):
+        if not isinstance(text, str) or not text:
+            found.append(f"{where}: {msgid!r} has an empty or non-text translation")
+        elif sorted(placeholder.findall(text)) != sorted(placeholder.findall(msgid)):
+            found.append(f"{where}: {msgid!r} has other placeholders than the English")
+
+    for msgid, values in TRANSLATIONS.items():
+        if not isinstance(values, tuple) or len(values) != len(LANGUAGES):
+            found.append(f"{msgid!r} needs one translation per language {LANGUAGES}")
+            continue
+        for language, text in zip(LANGUAGES, values):
+            check(msgid, text, language)
+
+    for msgid, values in PLURALS.items():
+        if not isinstance(values, tuple) or len(values) != len(LANGUAGES):
+            found.append(f"{msgid!r} needs one list of plural forms per language {LANGUAGES}")
+            continue
+        for language, forms in zip(LANGUAGES, values):
+            wanted = int(re.search(r"nplurals=(\d+)", PLURAL_FORMS[language]).group(1))
+            if not isinstance(forms, list) or len(forms) != wanted:
+                found.append(f"{language}: {msgid!r} needs {wanted} plural forms")
+                continue
+            for text in forms:
+                check(msgid, text, language)
+
+    return found

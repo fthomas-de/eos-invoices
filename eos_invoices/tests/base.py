@@ -12,10 +12,10 @@ it would commit every fixture of the class along with it.
 from django.db import connection, models
 from django.test import TestCase, override_settings
 
-from allianceauth.eveonline.models import EveCorporationInfo
+from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
 from allianceauth.tests.auth_utils import AuthUtils
 
-from eos_invoices.models import PaymentSource
+from eos_invoices.models import InvoiceConfiguration, PaymentSource
 
 
 class Due(models.Model):
@@ -24,6 +24,8 @@ class Due(models.Model):
     )
     corp_id = models.IntegerField(default=0)
     amount = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    # an amount another app may leave empty
+    maybe_amount = models.DecimalField(max_digits=20, decimal_places=2, null=True)
     paid = models.BooleanField(default=False)
     paid_at = models.DateTimeField(null=True)
     state = models.CharField(max_length=10, blank=True)
@@ -68,6 +70,30 @@ def make_source(**kwargs):
     }
     values.update(kwargs)
     return PaymentSource.objects.create(**values)
+
+
+def configure_alliance(alliance_id=3001):
+    """The Alliance the app works for, saved in its configuration."""
+    alliance = EveAllianceInfo.objects.create(
+        alliance_id=alliance_id,
+        alliance_name=f"Alliance {alliance_id}",
+        alliance_ticker="A",
+        executor_corp_id=1,
+    )
+    config = InvoiceConfiguration.get_solo()
+    config.alliance = alliance
+    config.save()
+    return alliance
+
+
+def make_corporation(corporation_id, name, alliance=None):
+    return EveCorporationInfo.objects.create(
+        corporation_id=corporation_id,
+        corporation_name=name,
+        corporation_ticker=name[:4].upper(),
+        member_count=1,
+        alliance=alliance,
+    )
 
 
 def make_ceo(username="ceo", corp_id=2001, alliance_id=3001, perms=("basic_access",)):

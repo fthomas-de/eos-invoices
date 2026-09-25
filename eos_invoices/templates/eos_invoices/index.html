@@ -19,10 +19,10 @@
 
             <div class="btn-group btn-group-sm" role="group">
                 <a href="?" class="btn {% if include_paid %}btn-outline-primary{% else %}btn-primary{% endif %}">
-                    {% translate "Outstanding only" %}
+                    {% translate "Outstanding only" context "eos-invoices" %}
                 </a>
                 <a href="?paid=1" class="btn {% if include_paid %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                    {% translate "Including paid" %}
+                    {% translate "Including paid" context "eos-invoices" %}
                 </a>
             </div>
         </div>
@@ -59,8 +59,15 @@
                             {% endif %}
                         </div>
                     {% elif not result.invoices %}
-                        <p class="text-body-secondary mb-0">{% translate "Nothing outstanding." %}</p>
+                        <p class="text-body-secondary mb-0">{% translate "Nothing outstanding." context "eos-invoices" %}</p>
                     {% else %}
+                        {% if result.truncated %}
+                            <div class="alert alert-warning">
+                                {% blocktranslate with limit=overview.row_limit trimmed %}
+                                    Only the newest {{ limit }} payments are shown; the total counts only those.
+                                {% endblocktranslate %}
+                            </div>
+                        {% endif %}
                         <div class="table-responsive">
                             <table class="table table-sm table-striped align-middle mb-0 eos-invoices-sortable">
                                 <thead>
@@ -76,10 +83,14 @@
                                     {% for invoice in result.invoices %}
                                         <tr>
                                             <td class="text-nowrap" data-order="{{ invoice.date|date:"Y-m-d" }}">{{ invoice.date|date:"Y-m-d"|default:"-" }}</td>
-                                            <td>{{ invoice.label|default:"-" }}</td>
+                                            <td data-order="{{ invoice.label_order }}">{{ invoice.label|default:"-" }}</td>
                                             <td class="text-end text-nowrap" data-order="{{ invoice.amount|unlocalize }}">
                                                 {{ invoice.amount|isk }} ISK
-                                                {% if not invoice.paid %}
+                                                {% comment %}
+                                                    no copy for a month still in progress: its amount can
+                                                    still change, and its Reason is withheld as well
+                                                {% endcomment %}
+                                                {% if not invoice.paid and not invoice.reason_hidden %}
                                                     {% include "eos_invoices/partials/copy-button.html" with text=invoice.amount_plain %}
                                                 {% endif %}
                                             </td>

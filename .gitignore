@@ -11,3 +11,5 @@ venv/
 .coverage
 coverage.xml
 .tox
+# testauth's own database (runtests.py, tox)
+*.sqlite3

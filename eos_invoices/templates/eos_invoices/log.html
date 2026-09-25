@@ -11,8 +11,33 @@
         </div>
 
         <div class="card-body">
+            {% if source_names %}
+                {% comment %}
+                    Filtered in the query, across every page - a filter in the browser
+                    would only see the 100 entries of the page it runs on. Laid out
+                    like Alliance Auth's datatables-filterdropdown; log.js sends the
+                    form when a choice changes.
+                {% endcomment %}
+                <form method="get" action="" id="eos-invoices-log-filter" class="mb-3">
+                    <p class="mb-1 fw-bold">{% translate "Filter by" %}:</p>
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <select name="source" class="form-select form-select-sm w-auto" aria-label="{% translate "Source" %}">
+                            <option value="">{% translate "All sources" %}</option>
+                            {% for name in source_names %}
+                                <option value="{{ name }}"{% if name == selected_source %} selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="corporation" class="form-select form-select-sm w-auto" aria-label="{% translate "Corporation" context "EVE jargon" %}">
+                            <option value="">{% translate "All Corporations" %}</option>
+                            {% for corporation_id, corporation_name in corporations %}
+                                <option value="{{ corporation_id|unlocalize }}"{% if corporation_id == selected_corporation %} selected{% endif %}>{{ corporation_name|default:corporation_id }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            {% endif %}
+
             {% if page.object_list %}
-                {{ filter_labels|json_script:"eos-invoices-log-labels" }}
                 <div class="table-responsive">
                     <table id="eos-invoices-log-table" class="table table-sm table-striped align-middle mb-0">
                         <thead>
@@ -67,15 +92,17 @@
                     <nav class="mt-3">
                         <ul class="pagination pagination-sm mb-0">
                             {% if page.has_previous %}
-                                <li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}">&laquo;</a></li>
+                                <li class="page-item"><a class="page-link" href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page.previous_page_number }}">&laquo;</a></li>
                             {% endif %}
                             <li class="page-item disabled"><span class="page-link">{{ page.number }} / {{ page.paginator.num_pages }}</span></li>
                             {% if page.has_next %}
-                                <li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}">&raquo;</a></li>
+                                <li class="page-item"><a class="page-link" href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page.next_page_number }}">&raquo;</a></li>
                             {% endif %}
                         </ul>
                     </nav>
                 {% endif %}
+            {% elif filter_query %}
+                <p class="mb-0">{% translate "No entries match this filter." %}</p>
             {% else %}
                 <p class="mb-0">{% translate "Nothing has been marked as paid yet." %}</p>
             {% endif %}
@@ -89,7 +116,6 @@
 
 {% block extra_javascript %}
     {% include "bundles/datatables-2-js-bs5.html" %}
-    {% include "bundles/filterdropdown-js.html" %}
     {% sri_static "eos_invoices/js/log.js" %}
     {% sri_static "eos_invoices/js/confirm.js" %}
 {% endblock %}

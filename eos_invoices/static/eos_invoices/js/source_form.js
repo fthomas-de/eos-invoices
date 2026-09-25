@@ -71,15 +71,30 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     };
 
+    // counts model changes, so an answer that arrives after a newer request
+    // was sent cannot overwrite the fields of the model chosen since
+    let request = 0;
+
     modelSelect.addEventListener("change", async () => {
-        options = [];
+        const own = ++request;
+        let fields = [];
         if (modelSelect.value) {
             const url = `${form.dataset.fieldsUrl}?model=${encodeURIComponent(modelSelect.value)}`;
-            const response = await fetch(url, { headers: { Accept: "application/json" } });
-            if (response.ok) {
-                options = (await response.json()).fields;
+            try {
+                const response = await fetch(url, { headers: { Accept: "application/json" } });
+                if (response.ok) {
+                    fields = (await response.json()).fields;
+                }
+            } catch (error) {
+                // offline or not JSON: empty dropdowns rather than the old
+                // model's fields; the server checks everything on save anyway
+                console.error("eos_invoices: loading the fields failed", error);
             }
         }
+        if (own !== request) {
+            return;
+        }
+        options = fields;
         pathSelects.forEach(fillSelect);
         fillChips();
     });

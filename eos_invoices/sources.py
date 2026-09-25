@@ -10,7 +10,7 @@ import re
 import string
 from dataclasses import dataclass, field
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist, ValidationError
@@ -46,8 +46,10 @@ def plain_isk(value):
 
     Whole amounts lose the ".00" - ISK transfers are nearly always whole, and
     a trailing fraction is one more thing to delete by hand after pasting.
+    Half a cent rounds up, like the displayed amount: the context's default
+    (half even) would round 0.125 down to 0.12 but 0.135 up to 0.14.
     """
-    value = Decimal(value).quantize(Decimal("0.01"))
+    value = Decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     if value == value.to_integral_value():
         return str(int(value))
     return f"{value:f}"
@@ -64,6 +66,9 @@ class Invoice:
     reason_hidden: bool
     label: str
     date: date | None
+    # what the Description column sorts by: the row's year and month, or its
+    # date, ahead of the text - as text alone "01/2027" sorts before "12/2026"
+    label_order: str = ""
 
     @property
     def amount_plain(self):
@@ -76,6 +81,8 @@ class SourceResult:
     invoices: list = field(default_factory=list)
     error: str = ""
     can_mark_paid: bool = False
+    # the source had more rows than one page shows; the page has to say so
+    truncated: bool = False
 
     @property
     def open_total(self):
@@ -399,15 +406,34 @@ def _to_invoice(source, row):
         and row.get(source.year_field) == today.year
     )
 
+    label = render_template(source.label_template, row)
+
     return Invoice(
         pk=row["pk"],
         amount=Decimal(str(row[source.amount_field] or 0)),
         paid=row[PAID_ALIAS],
         reason=render_template(source.reason_template, row),
         reason_hidden=reason_hidden,
-        label=render_template(source.label_template, row),
+        label=label,
         date=when,
+        label_order=_label_order(source, row, when, label),
     )
+
+
+def _label_order(source, row, when, label):
+    """A sort key for the Description column that runs in time order.
+
+    A description such as "07/2026" sorts as text, so January of next year
+    would come before December of this one. Year and month fields, or else
+    the date, go first; the text only decides between rows of the same period.
+    """
+    year = row.get(source.year_field) if source.year_field else None
+    month = row.get(source.month_field) if source.month_field else None
+    if isinstance(year, int) and isinstance(month, int):
+        return f"{year:04d}-{month:02d} {label}"
+    if when is not None:
+        return f"{when.isoformat()} {label}"
+    return label
 
 
 def get_invoices_by_corporation(source, corporation_ids, *, include_paid=False, limit=MAX_ROWS):
@@ -423,8 +449,11 @@ def get_invoices_by_corporation(source, corporation_ids, *, include_paid=False, 
     )
     # a row worth exactly nothing - a corp exempted that month, say - tells a
     # CEO or admin nothing either way, paid or not; drop it rather than make
-    # them skip past it
-    rows = rows.exclude(**{source.amount_field: 0})
+    # them skip past it. An empty amount goes too: it would show as 0 ISK, and
+    # exclude() on a nullable column keeps NULL rows unless told otherwise
+    rows = rows.exclude(
+        Q(**{source.amount_field: 0}) | Q(**{f"{source.amount_field}__isnull": True})
+    )
     if not include_paid:
         rows = rows.exclude(paid_q)
 
@@ -450,12 +479,16 @@ def get_invoice(source, pk):
     return row[CORPORATION_ALIAS], _to_invoice(source, row)
 
 
-def get_invoices(source, corporation_id, *, include_paid=False):
-    """Payments of one Corporation in one source, newest first."""
-    by_corporation, _truncated = get_invoices_by_corporation(
-        source, [corporation_id], include_paid=include_paid
+def get_invoices(source, corporation_id, *, include_paid=False, limit=MAX_ROWS):
+    """Payments of one Corporation in one source, newest first.
+
+    Returns ``([Invoice, ...], truncated)``; ``truncated`` as in
+    get_invoices_by_corporation - the caller has to say so.
+    """
+    by_corporation, truncated = get_invoices_by_corporation(
+        source, [corporation_id], include_paid=include_paid, limit=limit
     )
-    return by_corporation.get(corporation_id, [])
+    return by_corporation.get(corporation_id, []), truncated
 
 
 def paid_marker(source):
@@ -505,6 +538,9 @@ class Marking:
     paid_field: str
     previous: object
     written: object
+    # the model the row belongs to: a source can be pointed at another model
+    # later, and undo must not write the same pk of that one
+    model_label: str = ""
 
     @property
     def previous_json(self):
@@ -543,10 +579,12 @@ def mark_paid(source, pk, *, corporation_id=None):
     written = marker()
     setattr(row, source.paid_field, written)
     row.save(update_fields=[source.paid_field])
-    return Marking(row_corporation_id, invoice, source.paid_field, previous, written)
+    return Marking(
+        row_corporation_id, invoice, source.paid_field, previous, written, source.model_label
+    )
 
 
-def undo_mark_paid(source, pk, paid_field, previous, written):
+def undo_mark_paid(source, pk, paid_field, previous, written, *, model_label=""):
     """Put back the value mark_paid replaced, through the model's own save().
 
     Refused when the field no longer holds what was written: then the owning
@@ -554,7 +592,17 @@ def undo_mark_paid(source, pk, paid_field, previous, written):
     back would overwrite that - an automatic payment check, for instance.
     ``previous`` and ``written`` may come back from JSON as strings; the
     field turns them into its own type before anything is compared.
+
+    Refused as well when the source reads another model than ``model_label``,
+    the one the row was marked in: the same pk there is a different payment,
+    and its paid flag may well hold the very value that was written. Entries
+    made before the log kept the model have none and are not checked.
     """
+    if model_label and model_label != source.model_label:
+        raise SourceError(
+            _("This source reads another model since this was marked; nothing was changed.")
+        )
+
     model = resolve_model(source.model_label)
     try:
         model_field = resolve_field(model, paid_field)

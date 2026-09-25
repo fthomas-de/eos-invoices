@@ -3,15 +3,12 @@ from datetime import date, datetime
 from django.contrib.messages import get_messages
 from django.urls import reverse
 
-from unittest.mock import patch
-
-from allianceauth.eveonline.models import EveAllianceInfo, EveCorporationInfo
+from allianceauth.eveonline.models import EveAllianceInfo
 
 from eos_invoices.models import InvoiceConfiguration, PaymentLog
-from eos_invoices.overview import build_admin_overview
 from eos_invoices.sources import SourceError, mark_paid, paid_marker
 
-from .base import Due, DueTestCase, make_ceo, make_source
+from .base import Due, DueTestCase, make_ceo, make_corporation, make_source
 
 
 class TestPaidMarker(DueTestCase):
@@ -55,6 +52,14 @@ class TestMarkPaid(DueTestCase):
         with self.assertRaises(SourceError):
             mark_paid(make_source(), 999999)
 
+    def test_should_name_the_model_it_wrote_to(self):
+        # undo needs it: the source may be pointed at another model later
+        row = Due.objects.create(corp_id=2001, amount=10)
+
+        marking = mark_paid(make_source(), row.pk)
+
+        self.assertEqual(marking.model_label, "eos_invoices.Due")
+
 
 class TestMarkPaidView(DueTestCase):
     def setUp(self):
@@ -73,7 +78,7 @@ class TestMarkPaidView(DueTestCase):
 
     def test_should_mark_and_return_to_the_page(self):
         self.client.force_login(make_ceo(perms=("manage_sources",)))
-        back = reverse("eos_invoices:index") + "?corp=2001"
+        back = reverse("eos_invoices:admin") + "?page=2"
 
         response = self.client.post(self.url, {"row": self.row.pk, "next": back})
 
@@ -94,88 +99,23 @@ class TestMarkPaidView(DueTestCase):
         self.assertEqual(self.client.get(self.url).status_code, 405)
 
 
-class TestAdminOverview(DueTestCase):
+class TestMarkButtons(DueTestCase):
+    """Marking is offered on "All Corporations" only, never on the overview."""
+
     @classmethod
     def setUpTestData(cls):
         alliance = EveAllianceInfo.objects.create(
             alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
         )
-        other = EveAllianceInfo.objects.create(
-            alliance_id=3002, alliance_name="B", alliance_ticker="B", executor_corp_id=2
-        )
-        for corporation_id, name, member_of in (
-            (2001, "Alpha", alliance),
-            (2002, "Beta", alliance),
-            (2003, "Gamma", alliance),
-            (2009, "Stranger", other),
-        ):
-            EveCorporationInfo.objects.create(
-                corporation_id=corporation_id, corporation_name=name,
-                corporation_ticker=name[:3].upper(), member_count=1, alliance=member_of,
-            )
+        make_corporation(2001, "Alpha", alliance)
         InvoiceConfiguration.objects.create(alliance=alliance)
         Due.objects.create(corp_id=2001, amount=111)
-        Due.objects.create(corp_id=2002, amount=222)
-        Due.objects.create(corp_id=2002, amount=5, paid=True)
-        Due.objects.create(corp_id=2009, amount=999)
 
-    def test_should_group_open_payments_by_source_across_corporations(self):
-        make_source()
-        self.client.force_login(make_ceo(perms=("manage_sources",)))
-
-        overview = self.client.get(reverse("eos_invoices:admin")).context["overview"]
-
-        # one table for the one source, every Corporation's rows in it
-        self.assertEqual(len(overview.sources), 1)
-        self.assertEqual(
-            sorted((r.corporation.corporation_name, r.invoice.amount) for r in overview.sources[0].rows),
-            [("Alpha", 111), ("Beta", 222)],
-        )
-        # Gamma has nothing open; Stranger is outside the Alliance
-        self.assertEqual(overview.settled_count, 1)
-        self.assertEqual(overview.open_total, 333)
-
-    def test_should_offer_the_mark_button_there(self):
+    def test_should_offer_the_mark_button_on_all_corporations(self):
         make_source()
         self.client.force_login(make_ceo(perms=("manage_sources",)))
 
         self.assertContains(self.client.get(reverse("eos_invoices:admin")), "Mark as paid")
-
-    def test_should_read_each_source_once_for_all_corporations(self):
-        # one query per Corporation would be 30+ queries in a real Alliance
-        make_source()
-
-        # configuration, Corporations, sources, then one query for the source
-        with self.assertNumQueries(4):
-            build_admin_overview()
-
-    def test_should_say_when_a_source_was_cut_short(self):
-        make_source()
-        self.client.force_login(make_ceo(perms=("manage_sources",)))
-
-        with patch("eos_invoices.overview.ADMIN_MAX_ROWS", 1):
-            overview = self.client.get(reverse("eos_invoices:admin")).context["overview"]
-
-        self.assertEqual(len(overview.problems), 1)
-
-    def test_should_keep_ceos_out(self):
-        self.client.force_login(make_ceo())
-
-        self.assertEqual(self.client.get(reverse("eos_invoices:admin")).status_code, 302)
-
-    def test_should_group_by_source_rather_than_by_corporation(self):
-        # two sources: proves the grouping is by source, not by Corporation -
-        # the old layout needed one card per Corporation instead
-        make_source(name="First")
-        make_source(name="Second")
-        self.client.force_login(make_ceo(perms=("manage_sources",)))
-
-        overview = self.client.get(reverse("eos_invoices:admin")).context["overview"]
-
-        self.assertEqual([s.source.name for s in overview.sources], ["First", "Second"])
-        self.assertEqual(
-            {r.corporation.corporation_name for r in overview.sources[0].rows}, {"Alpha", "Beta"}
-        )
 
     def test_should_not_offer_mark_buttons_on_the_normal_overview(self):
         make_source()
@@ -204,6 +144,7 @@ class TestPaymentLog(DueTestCase):
         self.assertEqual(entry.corporation_id, 2001)
         self.assertEqual(entry.amount, 1500000)
         self.assertEqual(entry.reason, "2001/07/2026")
+        self.assertEqual(entry.model_label, "eos_invoices.Due")
 
     def test_should_refuse_a_row_that_is_already_paid(self):
         # a second click must not leave a second entry for nothing
@@ -222,52 +163,11 @@ class TestPaymentLog(DueTestCase):
 
         self.assertEqual(PaymentLog.objects.get().source_name, "PvE Tax")
 
-    def test_should_show_the_log_to_admins_only(self):
+    def test_should_show_the_entries_in_the_log(self):
         self.client.force_login(self.admin)
         self.client.post(self.url, {"row": self.row.pk})
 
         self.assertContains(self.client.get(reverse("eos_invoices:log")), "2001/07/2026")
-
-        self.client.force_login(make_ceo("other"))
-        self.assertEqual(self.client.get(reverse("eos_invoices:log")).status_code, 302)
-
-    def test_should_wire_up_the_filter_dropdown(self):
-        self.client.force_login(self.admin)
-        self.client.post(self.url, {"row": self.row.pk})  # the table needs a row to render
-
-        response = self.client.get(reverse("eos_invoices:log"))
-
-        self.assertContains(response, 'id="eos-invoices-log-table"')
-        # the static manifest puts a hash before .js; no version number here,
-        # Alliance Auth's own bundle picks the version
-        self.assertContains(response, "datatables-filterdropdown.min")
-        self.assertContains(response, "eos_invoices/js/log")
-        self.assertContains(response, 'id="eos-invoices-log-labels"')
-        self.assertContains(response, "All sources")
-        # the log defaults to chronological order, not the Corporation/
-        # Description convention the other tables use
-        self.assertNotContains(response, 'class="eos-invoices-sort-1"')
-        self.assertNotContains(response, 'class="eos-invoices-sort-2"')
-
-
-class TestSearchableDropdowns(DueTestCase):
-    def test_should_make_alliance_and_pay_to_searchable(self):
-        self.client.force_login(make_ceo(perms=("manage_sources",)))
-
-        for url in (reverse("eos_invoices:settings"), reverse("eos_invoices:source_add")):
-            with self.subTest(url):
-                response = self.client.get(url)
-                self.assertContains(response, "data-eos-invoices-search")
-                self.assertContains(response, "tom-select.complete.min.js")
-                # the library alone is unreadable on a dark theme
-                self.assertContains(response, "eos_invoices/css/tom-select-theme")
-
-    def test_should_make_the_model_dropdown_searchable(self):
-        self.client.force_login(make_ceo(perms=("manage_sources",)))
-
-        form = self.client.get(reverse("eos_invoices:source_add")).context["form"]
-
-        self.assertIn("data-eos-invoices-search", form.fields["model_label"].widget.attrs)
 
 
 class TestMarkSelectedPaid(DueTestCase):
@@ -276,10 +176,7 @@ class TestMarkSelectedPaid(DueTestCase):
             alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
         )
         for corporation_id, name in ((2001, "Alpha"), (2002, "Beta")):
-            EveCorporationInfo.objects.create(
-                corporation_id=corporation_id, corporation_name=name,
-                corporation_ticker=name[:3].upper(), member_count=1, alliance=alliance,
-            )
+            make_corporation(corporation_id, name, alliance)
         InvoiceConfiguration.objects.create(alliance=alliance)
         self.source = make_source()
         self.alpha = Due.objects.create(corp_id=2001, amount=100)
@@ -322,7 +219,9 @@ class TestMarkSelectedPaid(DueTestCase):
         self.assertEqual(self.paid(), set())
         notes = [str(m) for m in get_messages(response.wsgi_request)]
         self.assertIn(
-            "2 payments were skipped: already paid, gone or of another Corporation.", notes
+            "2 payments were skipped: already paid, gone, of another Corporation, "
+            "or their source cannot be read or marked here.",
+            notes,
         )
 
     def test_should_skip_rows_that_are_already_paid(self):
@@ -351,8 +250,8 @@ class TestMarkSelectedPaid(DueTestCase):
         self.assertContains(response, f'value="{self.box(self.alpha)}"')
         self.assertContains(response, f'value="{self.box(self.beta)}"')
         self.assertContains(response, 'data-eos-invoices-select-all="all"')
-        # one table per source now, spanning every Corporation, so its own
-        # select-all covers the whole source rather than one Corporation of it
+        # one table per source, spanning every Corporation, so its own
+        # select-all covers the whole source
         self.assertContains(response, f'data-eos-invoices-select-all="{self.source.pk}"')
         self.assertContains(response, "Mark selected as paid")
 
@@ -367,55 +266,3 @@ class TestMarkSelectedPaid(DueTestCase):
         )
 
         self.assertEqual(self.paid(), {self.alpha.pk})
-
-
-class TestSortableTables(DueTestCase):
-    def test_should_make_every_table_page_sortable(self):
-        self.client.force_login(make_ceo(perms=("basic_access", "manage_sources")))
-
-        for name in ("index", "admin", "log", "sources"):
-            with self.subTest(name):
-                response = self.client.get(reverse(f"eos_invoices:{name}"))
-                # log sorts through its own log.js, which also wires up its
-                # filterDropDown - the others through the shared tables.js
-                self.assertContains(response, "eos_invoices/js/log" if name == "log" else "eos_invoices/js/tables")
-                # the static manifest puts a hash before .js
-                self.assertContains(response, "DataTables/2.3.8/js/dataTables.min")
-
-    def test_should_sort_amounts_by_their_raw_value(self):
-        # "1.500.000 ISK" would sort as text; the cell carries the number
-        alliance = EveAllianceInfo.objects.create(
-            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
-        )
-        InvoiceConfiguration.objects.create(alliance=alliance)
-        make_source()
-        Due.objects.create(corp_id=2001, amount=1500000)
-        self.client.force_login(make_ceo())
-
-        self.assertContains(
-            self.client.get(reverse("eos_invoices:index")), 'data-order="1500000.00"'
-        )
-
-    def test_should_default_sort_by_corporation_then_description(self):
-        alliance = EveAllianceInfo.objects.create(
-            alliance_id=3001, alliance_name="A", alliance_ticker="A", executor_corp_id=1
-        )
-        # the admin overview reads Corporations of the Alliance, not the character
-        EveCorporationInfo.objects.create(
-            corporation_id=2001, corporation_name="Corp", corporation_ticker="C",
-            member_count=1, alliance=alliance,
-        )
-        InvoiceConfiguration.objects.create(alliance=alliance)
-        make_source()
-        Due.objects.create(corp_id=2001, amount=10)
-        self.client.force_login(make_ceo(perms=("basic_access", "manage_sources")))
-
-        index = self.client.get(reverse("eos_invoices:index"))
-        admin = self.client.get(reverse("eos_invoices:admin"))
-
-        # the CEO overview has no Corporation column - one Corporation only
-        self.assertNotContains(index, 'class="eos-invoices-sort-1"')
-        self.assertContains(index, 'class="eos-invoices-sort-2"')
-        # "All Corporations" spans several - Corporation first, then Description
-        self.assertContains(admin, 'class="eos-invoices-sort-1"')
-        self.assertContains(admin, 'class="eos-invoices-sort-2"')
