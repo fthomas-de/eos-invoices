@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- A row for the current month stays out of the outstanding total through
+  the 1st of the following month too, not just up to the last day of its
+  own month - a full day's grace before the total picks it up, instead of
+  the instant the calendar flips.
+- The overview's totals - the Outstanding line and each source's total -
+  count only rows whose Reason is shown. A row still in progress (Reason
+  hidden for the current month) still appears with its amount, but stays
+  out of every total, like on the dashboard: its amount can still change,
+  and the source total is what gets copied out to pay.
+- The dashboard widget no longer hides itself when there is nothing
+  outstanding (or only a row still in progress) - it now shows a "Nothing
+  outstanding." state with a check icon instead, so a CEO sees that at a
+  glance rather than wondering whether the widget failed to load. Still
+  hidden without the permission or when the full overview would only
+  explain itself (no main character, no Alliance configured, Corporation
+  outside it).
+- The catalogue tests are selected by the tag `translations` instead of the
+  environment variable `EOS_INVOICES_CHECK_TRANSLATIONS`: the suite runs with
+  `--exclude-tag translations`, `tools/translate.py` with `--tag
+  translations`. It is the same switch as in the sister apps, so one command
+  works for all of them. A plain `eos-test eos_invoices` without the flag now
+  runs the catalogue tests too.
+
 ## [0.0.13] - 2026-09-25
 
 ### Fixed

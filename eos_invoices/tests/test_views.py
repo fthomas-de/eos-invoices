@@ -121,9 +121,14 @@ class TestDashboardWidget(DueTestCase):
         # page explains it - a widget would only show an empty box
         self.assertEqual(self.render(make_ceo()), "")
 
-    def test_should_hide_with_nothing_outstanding(self):
-        # configured, permitted, but no source or nothing owed
-        self.assertEqual(self.render(self.alliance_ceo()), "")
+    def test_should_show_a_nothing_outstanding_state_instead_of_hiding(self):
+        # configured, permitted, but no source or nothing owed - the widget
+        # still shows, so a CEO sees at a glance that nothing is missing
+        # rather than wondering whether it failed to load
+        html = self.render(self.alliance_ceo())
+
+        self.assertIn("eos-invoices-dashboard-overview", html)
+        self.assertIn("Nothing outstanding.", html)
 
     def test_should_show_the_total_and_link_to_the_full_overview(self):
         make_source(name="PvE Tax")
@@ -137,9 +142,11 @@ class TestDashboardWidget(DueTestCase):
         self.assertIn("1.500.000 ISK", html)
         self.assertIn(reverse("eos_invoices:index"), html)
 
-    def test_should_hide_a_row_still_in_progress_from_the_total(self):
+    def test_should_show_nothing_outstanding_when_the_only_row_is_still_in_progress(self):
         # the amount owed for the current month can still change; the
-        # compact widget only sums what is actually settled
+        # compact widget only sums what is actually settled - with nothing
+        # else settled, that leaves the "nothing outstanding" state rather
+        # than the row's own (still changing) amount
         make_source(month_field="month", year_field="year")
         Due.objects.create(corp_id=2001, amount=1500000, month=7, year=2026)
         user = self.alliance_ceo(corp_id=2001)
@@ -147,7 +154,8 @@ class TestDashboardWidget(DueTestCase):
         with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
             html = self.render(user)
 
-        self.assertEqual(html, "")
+        self.assertIn("Nothing outstanding.", html)
+        self.assertNotIn("1.500.000", html)
 
     def test_should_sum_only_the_settled_rows(self):
         make_source(month_field="month", year_field="year")
@@ -215,7 +223,7 @@ class TestIndex(DueTestCase):
 
     def test_should_not_offer_the_amount_of_a_month_in_progress_for_copying(self):
         # its amount can still change; the row and its amount still show,
-        # and the source total keeps its copy button
+        # but nothing about it is offered for copying yet
         make_source(month_field="month", year_field="year")
         Due.objects.create(corp_id=2001, amount=100, month=7)
         Due.objects.create(corp_id=2001, amount=50, month=6)
@@ -226,6 +234,31 @@ class TestIndex(DueTestCase):
         self.assertContains(response, "100 ISK")
         self.assertNotContains(response, 'data-clipboard-text="100"')
         self.assertContains(response, 'data-clipboard-text="50"')
+
+    def test_should_leave_a_row_in_progress_out_of_every_total(self):
+        # a total only counts rows whose Reason is shown - the rest can still
+        # change, and the source total is what gets copied out to pay
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=100, month=7)
+        Due.objects.create(corp_id=2001, amount=30, month=6)
+        Due.objects.create(corp_id=2001, amount=20, month=5)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            response = self.index()
+
+        self.assertContains(response, "<strong>50 ISK</strong>", html=True)
+        self.assertContains(response, 'data-clipboard-text="50"')
+        self.assertNotContains(response, "150 ISK")
+        self.assertNotContains(response, 'data-clipboard-text="150"')
+
+    def test_should_offer_the_source_total_for_copying_once_nothing_is_in_progress(self):
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=100, month=6)
+        Due.objects.create(corp_id=2001, amount=50, month=6)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            response = self.index()
+
         self.assertContains(response, 'data-clipboard-text="150"')
 
     def test_should_say_when_a_source_was_cut_short(self):

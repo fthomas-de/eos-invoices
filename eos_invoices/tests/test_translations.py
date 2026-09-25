@@ -1,9 +1,9 @@
 import gettext
 import importlib.util
-import os
 from pathlib import Path
 from unittest import skipUnless
 
+from django.test import tag
 from django.utils import translation
 
 import eos_invoices
@@ -12,9 +12,6 @@ from .base import EosInvoicesTestCase
 
 LOCALE = Path(eos_invoices.__file__).parent / "locale"
 LANGUAGES = {"de": "de", "ru": "ru", "zh_Hans": "zh-hans"}
-
-# set by tools/translate.py
-RELEASE_CHECK = "EOS_INVOICES_CHECK_TRANSLATIONS"
 
 # the repo's tools/, not part of the installed package
 GLOSSARY = Path(eos_invoices.__file__).parent.parent / "tools" / "glossary.py"
@@ -33,11 +30,12 @@ class TestGlossary(EosInvoicesTestCase):
         self.assertEqual(glossary.problems(), [])
 
 
-# The catalogues are only brought up to date at a release, so between releases
-# these checks describe the last release, not the code - red for a known
-# reason, which only teaches everybody to ignore a red suite. tools/translate.py
-# runs them after it has filled and compiled the catalogues.
-@skipUnless(os.environ.get(RELEASE_CHECK) == "1", "catalogue check, run by tools/translate.py")
+# The catalogues are only brought up to date at a commit, so between commits
+# these checks describe the last commit, not the code - red for a known
+# reason, which only teaches everybody to ignore a red suite. The suite runs
+# with --exclude-tag translations; tools/translate.py runs them with
+# --tag translations after it has filled and compiled the catalogues.
+@tag("translations")
 class TestTranslations(EosInvoicesTestCase):
     def test_should_load_every_compiled_catalogue(self):
         # a catalogue that was not compiled falls back to English silently

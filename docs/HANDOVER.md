@@ -41,7 +41,7 @@ and writes go through the ORM and the owning model's `save()`.
 | Page | Permission | What |
 |---|---|---|
 | Overview | `basic_access` (CEOs) | Payments of the main's Corporation, read only; copy buttons for recipient, amount, reason |
-| Dashboard widget | `basic_access` | Compact version of Overview on Alliance Auth's own dashboard, hidden unless something is settled and outstanding - a current-month row still in progress does not count towards its total |
+| Dashboard widget | `basic_access` | Compact version of Overview on Alliance Auth's own dashboard, always shown once permitted and configured; a "Nothing outstanding." state with a check icon when there is nothing settled - a current-month row still in progress does not count towards its total |
 | All Corporations | `manage_sources` | Open payments of every Corporation in the configured Alliance, **grouped by source** (not by Corporation) with a Corporation column; mark one row or the ticked rows as paid |
 | Log | `manage_sources` | Every marking, with undo for a misclick; filterable by Source and Corporation on the server, across all pages |
 | Sources | `manage_sources` | Payment sources; field dropdowns read from the chosen model |
@@ -99,12 +99,27 @@ otherwise:
   together across every Corporation.
 - A provider hook for apps that keep balances instead of rows is postponed
   until an app needs it (see README, "Possible extensions").
-- The **dashboard widget's total** excludes rows still in progress
-  (`reason_hidden`, the current-month Month/Year rows): the amount owed for
-  them can still change, so a compact number shown outside the full overview
-  should not include it. The full overview still shows those rows and their
-  amount still counts toward its own total - the row itself explains why the
-  Reason is hidden, a bare number on the dashboard would not.
+- **Every total leaves out rows still in progress** (`reason_hidden`, the
+  current-month Month/Year rows) - the dashboard widget, the overview's
+  Outstanding line and each source's total (`open_total_settled`): a total
+  counts only rows whose Reason is shown, since the amount owed for the rest
+  can still change. The overview still lists those rows with their amount.
+  Asked on 2026-09-25; before that the full overview's totals counted them.
+  "All Corporations" (`admin.html`) still sums every open row - not asked.
+- The **dashboard widget always shows** once the viewer is permitted and the
+  overview itself has something to show (main character, Alliance
+  configured, Corporation inside it) - it no longer hides itself just
+  because nothing is currently settled and outstanding. With nothing
+  settled it shows a "Nothing outstanding." state with a check icon
+  instead, so the widget reads as "checked, nothing owed" rather than being
+  indistinguishable from not having loaded. This reverses part of the
+  original "hidden unless settled and outstanding" decision above; the
+  "hidden without the permission or a notice" half still stands.
+- A row stays "in progress" (`reason_hidden`) through the **1st of the month
+  after** its own Month/Year, not just up to its own last day - the user
+  wants a full day's grace before the total picks it up, not the instant the
+  calendar flips at midnight. `_to_invoice` rewinds "today" by one day only
+  when `today.day == 1`, so nothing changes on any other day.
 - The **log's default sort is chronological**, not the Corporation/
   Description convention the other tables use - the user wants a log to read
   as a log. A header click still re-sorts the current page by anything else;
@@ -112,8 +127,8 @@ otherwise:
   server-side sorting is needed even once the log spans several pages.
 - A row whose Reason is hidden for the month still in progress gets **no
   copy button for its amount**; the row and its amount still show. The
-  **source total and its copy button stay as they are** (they still count
-  that row) - asked and decided explicitly.
+  source total keeps its copy button, since it no longer counts such a row
+  (see "Every total" above).
 - The **log filter runs on the server** (query parameters `source`,
   `corporation`; paging stays at 100 and keeps the filter), replacing
   datatables-filterdropdown, which only saw one page.

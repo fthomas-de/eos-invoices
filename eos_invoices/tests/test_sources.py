@@ -275,10 +275,20 @@ class TestGetInvoices(DueTestCase):
         # only display is expected to check reason_hidden
         self.assertEqual(invoice.reason, "2001/7/2026")
 
-    def test_should_show_the_reason_once_the_month_is_over(self):
+    def test_should_still_hide_the_reason_on_the_first_of_the_following_month(self):
+        # a full day's grace before the total picks the row up - not the
+        # instant the calendar flips to the new month
         source = make_source(month_field="month", year_field="year")
 
         with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 8, 1)):
+            invoice = get_invoices(source, 2001)[0]
+
+        self.assertTrue(invoice.reason_hidden)
+
+    def test_should_show_the_reason_from_the_second_of_the_following_month(self):
+        source = make_source(month_field="month", year_field="year")
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 8, 2)):
             invoice = get_invoices(source, 2001)[0]
 
         self.assertFalse(invoice.reason_hidden)

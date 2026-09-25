@@ -20,13 +20,14 @@ Read both before changing anything.
 Run from `~/aa-dev/working/myauth`:
 
 ```bash
-eos-test eos_invoices --parallel 2
+eos-test eos_invoices --parallel 2 --exclude-tag translations
 ```
 
-The catalogue tests (`tests/test_translations.py`) are skipped in this run;
-`tools/translate.py` runs them at a release, on fresh catalogues. A failing
-subtest hangs `--parallel` - the runner cannot pickle it - so drop the flag
-to see which one.
+The catalogue tests (`tests/test_translations.py`) carry
+`@tag("translations")` and are left out of this run; `tools/translate.py`
+runs them with `--tag translations`, on fresh catalogues. A failing subtest
+hangs `--parallel` - the runner cannot pickle it - so drop the flag to see
+which one.
 
 ```bash
 ~/aa-dev/venv/bin/python manage.py makemigrations eos_invoices
@@ -35,6 +36,21 @@ to see which one.
 ```bash
 ~/aa-dev/venv/bin/python manage.py collectstatic --noinput
 ```
+
+## Release
+
+Read by the personal skills `/commit` and `/push`; the same shape in every
+app. Commands run from `~/aa-dev/working/myauth`.
+
+- App: `eos_invoices`
+- Version file: `eos_invoices/__init__.py`
+- Changelog section: `[Unreleased]`
+- Tests while working: `eos-test eos_invoices.tests.<module>`
+- Suite without translation tests: `eos-test eos_invoices --parallel 2 --exclude-tag translations`
+- Checks: `~/aa-dev/venv/bin/python manage.py makemigrations eos_invoices --check --dry-run`
+- Translations: new messages into `tools/glossary.py`, then
+  `~/aa-dev/venv/bin/python tools/translate.py` from the repo root
+- Translation tests: run by `tools/translate.py` (`--tag translations`)
 
 ## Rules
 
@@ -58,12 +74,14 @@ words AA translates differently (`pgettext_lazy`, `{% translate ... context %}`)
 `test_should_show_our_translation_for_every_message` asks Django what it shows
 for each entry and names every clash; give a clashing word the `eos-invoices`
 context. It runs only inside `tools/translate.py`, like the other catalogue
-tests: between releases the catalogues describe the last release, not the code.
+tests: between commits the catalogues describe the last commit, not the code.
 
-English only between releases. On the user's release call:
+Commits and pushes only go through the user's personal skills `/commit`
+and `/push`, never unasked; both read `## Release` above. While working on
+a feature, run only the affected test modules - the full suite runs at
+`/commit`. English only between commits. Translating at `/commit`:
 
-1. Raise the version in `eos_invoices/__init__.py`.
-2. Add every new message to `tools/glossary.py` (de, ru, zh_Hans; EVE jargon
+1. Add every new message to `tools/glossary.py` (de, ru, zh_Hans; EVE jargon
    stays English), then run from the repo root:
 
    ```bash
@@ -76,8 +94,6 @@ English only between releases. On the user's release call:
    its `.po`, and finally runs the catalogue tests. It also lists glossary
    entries the code no longer uses - remove them. A message missing from the glossary stops it with a list; that
    entry is left empty, never with gettext's fuzzy guess.
-3. Split `[Unreleased]` in `CHANGELOG.md` into the new version.
-4. Commit and push - asking before the commit.
 
 The glossary is the source of truth: never edit a `.po` file by hand, the next
 run overwrites it. The tool needs `polib` in the venv (`pip install polib`).

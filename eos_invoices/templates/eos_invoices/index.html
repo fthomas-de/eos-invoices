@@ -13,7 +13,7 @@
                 <span class="fs-5">{{ overview.corporation_name }}</span>
                 <span class="text-body-secondary ms-2">
                     {% translate "Outstanding" %}:
-                    <strong>{{ overview.open_total|isk }} ISK</strong>
+                    <strong>{{ overview.open_total_settled|isk }} ISK</strong>
                 </span>
             </div>
 
@@ -33,9 +33,9 @@
                     <div class="card-title mb-0">{{ result.source.name }}</div>
                     {% if not result.error %}
                         <span class="text-nowrap">
-                            {{ result.open_total|isk }} ISK
-                            {% if result.open_total %}
-                                {% include "eos_invoices/partials/copy-button.html" with text=result.open_total_plain %}
+                            {{ result.open_total_settled|isk }} ISK
+                            {% if result.open_total_settled %}
+                                {% include "eos_invoices/partials/copy-button.html" with text=result.open_total_settled_plain %}
                             {% endif %}
                         </span>
                     {% endif %}

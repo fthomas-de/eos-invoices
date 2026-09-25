@@ -61,12 +61,10 @@ def django_admin(*args):
 
 def run_catalogue_tests():
     """The translation tests, which only make sense on fresh catalogues."""
-    env = django_env()
-    env["EOS_INVOICES_CHECK_TRANSLATIONS"] = "1"
     result = subprocess.run(
-        [sys.executable, "manage.py", "test", "eos_invoices.tests.test_translations", "--noinput"],
+        [sys.executable, "manage.py", "test", "eos_invoices", "--tag", "translations", "--noinput"],
         cwd=REPO.parent / "myauth",
-        env=env,
+        env=django_env(),
         capture_output=True,
         text=True,
     )

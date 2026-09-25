@@ -9,7 +9,7 @@ lookup, never change the query.
 import re
 import string
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.apps import apps
@@ -89,19 +89,19 @@ class SourceResult:
         return sum((i.amount for i in self.invoices if not i.paid), Decimal(0))
 
     @property
-    def open_total_plain(self):
-        return plain_isk(self.open_total)
-
-    @property
     def open_total_settled(self):
         """open_total without a row still in progress (``reason_hidden``) -
-        the amount owed for the current month can still change, so the
-        dashboard widget's total leaves it out rather than show a number
-        that moves under the viewer."""
+        the amount owed for the current month can still change, so every
+        displayed total leaves it out rather than show a number that moves
+        under the viewer."""
         return sum(
             (i.amount for i in self.invoices if not i.paid and not i.reason_hidden),
             Decimal(0),
         )
+
+    @property
+    def open_total_settled_plain(self):
+        return plain_isk(self.open_total_settled)
 
 
 def resolve_model(label):
@@ -399,11 +399,15 @@ def _to_invoice(source, row):
     # both sides (the field's value, timezone.localdate()'s month/year), so
     # a stored "07" vs a formatted "7" never comes up, whichever direction
     today = timezone.localdate()
+    # the row stays "in progress" through the 1st of the following month too -
+    # the user wants a full day's grace before the total picks it up, not the
+    # instant the calendar flips
+    in_progress_as_of = today - timedelta(days=1) if today.day == 1 else today
     reason_hidden = bool(
         source.month_field
         and source.year_field
-        and row.get(source.month_field) == today.month
-        and row.get(source.year_field) == today.year
+        and row.get(source.month_field) == in_progress_as_of.month
+        and row.get(source.year_field) == in_progress_as_of.year
     )
 
     label = render_template(source.label_template, row)

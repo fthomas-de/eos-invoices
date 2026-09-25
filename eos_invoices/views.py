@@ -54,18 +54,19 @@ def dashboard_overview(request):
 
     Not a URL - Alliance Auth's dashboard_hook calls this directly and drops
     an empty string, the same way timerboard hides its widget without
-    upcoming timers. Hidden without the permission, without anything
-    outstanding, and in every case build_overview itself has nothing to show
-    (no main character, no Alliance configured, Corporation outside it) - the
-    full overview explains those, a dashboard widget only would not.
+    upcoming timers. Hidden without the permission, and in every case
+    build_overview itself has nothing to show (no main character, no
+    Alliance configured, Corporation outside it) - the full overview
+    explains those, a dashboard widget only would not. With nothing
+    outstanding it still shows, with a "nothing owed" state instead of a
+    table - a CEO checking the dashboard should see that at a glance rather
+    than wonder whether the widget loaded at all.
     """
     if not request.user.has_perm("eos_invoices.basic_access"):
         return ""
 
     overview = build_overview(request.user)
-    # a notice comes without results today, so the total alone would hide the
-    # widget too; the notice check keeps it hidden should that ever change
-    if overview.notice or not overview.open_total_settled:
+    if overview.notice:
         return ""
 
     return render_to_string(

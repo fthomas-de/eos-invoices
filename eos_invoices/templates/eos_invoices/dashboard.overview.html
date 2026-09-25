@@ -7,22 +7,29 @@
             {% translate "Invoices" as widget_title %}
             {% include "framework/dashboard/widget-title.html" with title=widget_title %}
 
-            <table class="table mb-2">
-                <tbody>
-                    {% for result in overview.results %}
-                        {% if result.open_total_settled %}
-                            <tr>
-                                <td>{{ result.source.name }}</td>
-                                <td class="text-end text-nowrap">{{ result.open_total_settled|isk }} ISK</td>
-                            </tr>
-                        {% endif %}
-                    {% endfor %}
-                    <tr class="fw-bold border-top">
-                        <td>{% translate "Outstanding" %}</td>
-                        <td class="text-end text-nowrap">{{ overview.open_total_settled|isk }} ISK</td>
-                    </tr>
-                </tbody>
-            </table>
+            {% if overview.open_total_settled %}
+                <table class="table mb-2">
+                    <tbody>
+                        {% for result in overview.results %}
+                            {% if result.open_total_settled %}
+                                <tr>
+                                    <td>{{ result.source.name }}</td>
+                                    <td class="text-end text-nowrap">{{ result.open_total_settled|isk }} ISK</td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                        <tr class="fw-bold border-top">
+                            <td>{% translate "Outstanding" %}</td>
+                            <td class="text-end text-nowrap">{{ overview.open_total_settled|isk }} ISK</td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="text-center text-success my-3">
+                    <i class="fas fa-circle-check fa-2x mb-2"></i>
+                    <p class="mb-0">{% translate "Nothing outstanding." context "eos-invoices" %}</p>
+                </div>
+            {% endif %}
 
             <div class="text-center mt-auto">
                 <a href="{% url "eos_invoices:index" %}" class="btn btn-sm btn-primary">
