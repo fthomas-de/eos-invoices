@@ -164,16 +164,7 @@ the next one does not go looking for that env var.
 
 ## Open
 
-1. **"PvE Tax" source in `aa_dev` uses the wrong month format.** Its reason
-   template is `{corp_id}/{month:02d}/{year}`, but eos-tax matches payments
-   against `{corp_id}/{month}/{year}` - no leading zero (`eos_tax/util.py`).
-   With eos-tax's `use_reason` on, a payment made with the copied reason for
-   January to September would not be recognised. Not changed: it is the
-   user's configuration - ask. The README example is correct, and the form's
-   help text no longer suggests `{month:02d}` as its example. The same
-   source has no Month/Year field configured, so the new hide-Reason feature
-   does nothing for it yet.
-2. aa-miningtax is not installed in the dev instance; its README example was
+1. aa-miningtax is not installed in the dev instance; its README example was
    taken from its source (`miningtax.AllianceBillingRecord`), not tried live.
 
 ## Dev instance
@@ -182,8 +173,10 @@ the next one does not go looking for that env var.
   installed editable into `~/aa-dev/venv`; `polib` is in the venv for the
   translation tool.
 - Configured: Alliance "Invidia Gloriae Comes"; one source "PvE Tax" on
-  `eos_tax.MonthlyTax`, pay to "Invidia Administrative"; 14 log entries from
-  the user's own testing.
+  `eos_tax.MonthlyTax`, pay to "Invidia Administrative", `reason_template`
+  `{corp_id}/{month}/{year}` (no leading zero, matching eos-tax), `month_field`
+  and `year_field` both set to hide the Reason while a row is in progress;
+  14 log entries from the user's own testing.
 - The dev server needs a login, so pages were never checked in the browser by
   the assistant. Visual checks were done on local test pages with the real
   theme CSS (Darkly, Flatly, Bootstrap light and dark) instead.
