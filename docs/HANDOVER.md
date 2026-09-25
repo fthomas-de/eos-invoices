@@ -4,31 +4,31 @@ Where the work stands and what is still open. `CLAUDE.md` holds the durable
 rules for working on this app; this file holds the moment, and goes stale on
 purpose - if a statement here contradicts the code, the code is right.
 
-Last updated 2026-09-24.
+Last updated 2026-09-25.
 
 ## Release
 
-- Version **0.0.13** in `eos_invoices/__init__.py`, **not committed** - the
-  review of 2026-09-25 sits in the working tree, under `[0.0.13]` in
-  `CHANGELOG.md`. `e73411a` (0.0.12) is still the last commit; 0.0.11 is the
-  last version pushed to `fthomas-de/eos-invoices` (private)
-- Migrations **0001-0007** applied in `aa_dev`, including **0007**
-  (`0007_log_model_label_and_texts`: `PaymentLog.model_label`, new help
-  texts, new permission names plus a RunPython that renames the two existing
-  `auth.Permission` rows - Django never renames one by itself).
-- Catalogues (`de`, `ru`, `zh_Hans`) are caught up: `tools/translate.py` ran
-  for 0.0.13 and reported "Catalogues complete, checked, compiled and
-  tested". "Outstanding only", "Including paid" and "Nothing outstanding."
-  needed the `eos-invoices` context - Alliance Auth's own catalogue had
-  already claimed those words and was winning the clash.
-- 148 tests green (3 catalogue tests skipped in the normal run - they run
-  inside `tools/translate.py`, where they also passed), `makemigrations
-  --check` clean, `collectstatic` run
-- A personal, cross-project skill for this ritual exists now:
-  `C:\Users\flt\.claude\skills\push\SKILL.md` - bumps the version, runs the
-  project's translation tool, splits the changelog, runs the checks, commits
-  via a message file (never a heredoc), but never pushes. Invoke it by saying
-  "push"; it stops at a ready commit and shows the `git push` command.
+- Version **0.0.14** in `eos_invoices/__init__.py`, about to become the
+  `Release 0.0.14` commit and get pushed. `origin/master`'s last commit is
+  `4437298` ("opus rework"), which already carried the version to 0.0.13
+  outside the normal release flow - there never was its own "Release 0.0.13"
+  commit, so 0.0.13 is the last version actually in `fthomas-de/eos-invoices`
+  (private) until this push lands.
+- Migrations **0001-0007** applied in `aa_dev`, unchanged this session (no
+  model changes). **0007** (`0007_log_model_label_and_texts`) added
+  `PaymentLog.model_label`, new help texts, new permission names plus a
+  RunPython that renames the two existing `auth.Permission` rows.
+- Catalogues unchanged this session: the two `{% translate %}` calls touched
+  ("Outstanding", "Nothing outstanding." with the `eos-invoices` context)
+  reuse existing msgids at a new place (the dashboard widget's empty state),
+  so no glossary or `tools/translate.py` run was needed.
+- 148 tests green (translation tests excluded, as they are for every
+  `/commit`), `makemigrations --check` clean.
+- The release ritual is now three skills, read by every AA sister app's
+  `CLAUDE.md` under `## Release`: `/commit` (tests, checks, local commit,
+  never pushes), `/push` (version, CHANGELOG split, this file, release
+  commit, confirm, push), `/projekt-setup` for a project with none of this
+  yet.
 
 ## What the app is
 
@@ -145,28 +145,22 @@ otherwise:
 - Permission names were reworded; `manage_sources` names marking, the log
   and undo.
 
-## Since 0.0.12 (in 0.0.13, not committed)
+## Since 0.0.13 (now in 0.0.14)
 
-Everything under `[0.0.13]` in `CHANGELOG.md`, working tree only. The
-glossary entries below are already in the compiled catalogues now - written
-by the assistant, like the rest, not checked by a native speaker; worth a
-look before this ships:
-
-- the Reason and Date field help texts, the skip message (plural), the undo
-  refusal "This source reads another model since this was marked; nothing
-  was changed.", "Only the newest %(limit)s payments are shown; the total
-  counts only those.", "No entries match this filter.", "Edit" and "Delete"
-  (context `eos-invoices` in the code)
-- ru "Pay to", ru "Open", de "The paid field of this source has changed
-  since."
-- "Outstanding only", "Including paid" and "Nothing outstanding." now carry
-  the `eos-invoices` context too (added while running `tools/translate.py`
-  for this release, after the catalogue test named the clash).
-
-`pyproject.toml` keeps `allianceauth>=5.1.4`: raising it to 5.3.0 was only
-needed for datatables-filterdropdown's camelCase options, and the log no
-longer uses that plugin. Everything the templates use now exists in 5.1.4
-(checked in the AA git tags).
+Everything under `[0.0.14]` in `CHANGELOG.md`. Short version: every
+outstanding total - the dashboard widget, the overview's Outstanding line,
+and each source's card total - now leaves out a row still in progress for
+the current month, not just the dashboard's total as before. That
+"in progress" window itself was widened to run through the 1st of the
+following month, not just to the end of its own month, so a total does not
+pick a row up the instant the calendar flips. The dashboard widget no
+longer hides itself when there is nothing outstanding; it shows a "Nothing
+outstanding." state with a check icon instead. Also: the catalogue tests
+switched from the `EOS_INVOICES_CHECK_TRANSLATIONS` environment variable to
+the `translations` tag, the same switch as the sister apps use, done by a
+concurrent session working the same working tree (its commit is `4437298`,
+already on `origin/master`) - not this session's work, noted here only so
+the next one does not go looking for that env var.
 
 ## Open
 
