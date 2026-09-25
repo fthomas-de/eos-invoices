@@ -59,7 +59,13 @@
             {% for result in overview.sources %}
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <div class="card-title mb-0">{{ result.source.name }}</div>
+                        <div class="card-title mb-0">
+                            {% if result.source.url %}
+                                <a href="{{ result.source.url }}" target="_blank" rel="noopener">{{ result.source.name }}</a>
+                            {% else %}
+                                {{ result.source.name }}
+                            {% endif %}
+                        </div>
                         <span class="text-nowrap">{{ result.open_total|isk }} ISK</span>
                     </div>
 

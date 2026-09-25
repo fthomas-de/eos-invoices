@@ -48,6 +48,7 @@
                         {% bootstrap_field form.label_template %}
                         <div class="eos-invoices-chips d-flex flex-wrap gap-1 mb-3 mt-n2" data-target="{{ form.label_template.id_for_label }}"></div>
                         {% bootstrap_field form.pay_to %}
+                        {% bootstrap_field form.url %}
 
                         <div class="d-flex gap-2 mt-3">
                             <button type="submit" class="btn btn-primary">{% translate "Save" context "eos-invoices" %}</button>

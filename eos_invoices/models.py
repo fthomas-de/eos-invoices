@@ -164,6 +164,14 @@ class PaymentSource(models.Model):
             "Alliance chosen on the Alliance tab."
         ),
     )
+    url = models.URLField(
+        _("URL"),
+        blank=True,
+        help_text=_(
+            "Optional link to the app that manages these payments, shown on the "
+            "source's name."
+        ),
+    )
 
     class Meta:
         default_permissions = ()

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A payment source can carry a URL to the app it belongs to. When set, the
+  source's name becomes a link to it wherever it heads a card - the CEO
+  overview and "All Corporations".
+
 ## [0.0.14] - 2026-09-25
 
 ### Changed

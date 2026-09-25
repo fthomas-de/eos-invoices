@@ -68,6 +68,7 @@ class PaymentSourceForm(forms.ModelForm):
             "month_field",
             "year_field",
             "pay_to",
+            "url",
         ]
 
     def __init__(self, *args, **kwargs):

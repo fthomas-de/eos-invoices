@@ -124,6 +124,12 @@ TRANSLATIONS = {
         "Corporation, получающая ISK. В списке — Corporation из Alliance, выбранной на вкладке Alliance.",
         "接收 ISK 的 Corporation。列表为 Alliance 标签页中所选 Alliance 的各个 Corporation。",
     ),
+    "URL": ("URL", "URL", "URL"),
+    "Optional link to the app that manages these payments, shown on the source's name.": (
+        "Optionaler Link zur zugehörigen App, angezeigt am Namen der Quelle.",
+        "Необязательная ссылка на соответствующее приложение, отображается на названии источника.",
+        "可选的关联应用链接，显示在来源名称上。",
+    ),
     "Rows of this source cannot be marked as paid here.": (
         "Zeilen dieser Quelle können hier nicht als bezahlt markiert werden.",
         "Строки этого источника нельзя отметить здесь как оплаченные.",

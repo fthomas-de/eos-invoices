@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-25 09:37+0000\n"
-"PO-Revision-Date: 2026-09-25 09:37+0000\n"
+"POT-Creation-Date: 2026-09-25 12:41+0000\n"
+"PO-Revision-Date: 2026-09-25 12:41+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: zh_Hans\n"
 "Language: zh_Hans\n"
@@ -22,11 +22,11 @@ msgstr ""
 msgid "Invoices"
 msgstr "账单"
 
-#: forms.py:82
+#: forms.py:83
 msgid "Not installed"
 msgstr "未安装"
 
-#: forms.py:165 models.py:31 templates/eos_invoices/base.html:29
+#: forms.py:166 models.py:31 templates/eos_invoices/base.html:29
 #: templates/eos_invoices/settings.html:8
 msgctxt "EVE jargon"
 msgid "Alliance"
@@ -111,8 +111,8 @@ msgstr "已付值"
 msgid "Only for \"Field equals value\": the value that means paid."
 msgstr "仅用于“字段等于指定值”：表示已付的值。"
 
-#: models.py:103 models.py:201 templates/eos_invoices/admin.html:83
-#: templates/eos_invoices/index.html:78 templates/eos_invoices/log.html:52
+#: models.py:103 models.py:209 templates/eos_invoices/admin.html:89
+#: templates/eos_invoices/index.html:84 templates/eos_invoices/log.html:52
 msgctxt "EVE jargon"
 msgid "Reason"
 msgstr "Reason"
@@ -128,8 +128,8 @@ msgstr ""
 "游戏内付款时填写的 Reason。花括号中的字段名会被替换为其值，例如 {corp_id}/{month}/{year}；冒号后可跟格式，如 "
 "{month:02d}。请使用接收方应用匹配付款时所用的确切格式。"
 
-#: models.py:114 models.py:202 templates/eos_invoices/admin.html:81
-#: templates/eos_invoices/index.html:76 templates/eos_invoices/log.html:50
+#: models.py:114 models.py:210 templates/eos_invoices/admin.html:87
+#: templates/eos_invoices/index.html:82 templates/eos_invoices/log.html:50
 msgid "Description"
 msgstr "描述"
 
@@ -176,7 +176,7 @@ msgid ""
 "from the same month a year ago."
 msgstr "可选的整数字段，存放该行的年份，例如 2026。需与上方的月份字段配合使用 —— 仅凭月份数字无法区分本年度的行与去年同月的行。"
 
-#: models.py:156 templates/eos_invoices/index.html:47
+#: models.py:156 templates/eos_invoices/index.html:53
 msgid "Pay to"
 msgstr "付款给"
 
@@ -186,61 +186,71 @@ msgid ""
 "Alliance chosen on the Alliance tab."
 msgstr "接收 ISK 的 Corporation。列表为 Alliance 标签页中所选 Alliance 的各个 Corporation。"
 
+#: models.py:168
+msgid "URL"
+msgstr "URL"
+
 #: models.py:171
+msgid ""
+"Optional link to the app that manages these payments, shown on the source's "
+"name."
+msgstr "可选的关联应用链接，显示在来源名称上。"
+
+#: models.py:179
 msgid "Payment source"
 msgstr "款项来源"
 
-#: models.py:172 templates/eos_invoices/sources.html:8
+#: models.py:180 templates/eos_invoices/sources.html:8
 msgid "Payment sources"
 msgstr "款项来源"
 
-#: models.py:186 templates/eos_invoices/admin.html:80
-#: templates/eos_invoices/index.html:75 templates/eos_invoices/log.html:46
+#: models.py:194 templates/eos_invoices/admin.html:86
+#: templates/eos_invoices/index.html:81 templates/eos_invoices/log.html:46
 msgid "Date"
 msgstr "日期"
 
-#: models.py:190 templates/eos_invoices/log.html:47
+#: models.py:198 templates/eos_invoices/log.html:47
 msgid "Marked by"
 msgstr "标记人"
 
-#: models.py:194 templates/eos_invoices/log.html:25
+#: models.py:202 templates/eos_invoices/log.html:25
 #: templates/eos_invoices/log.html:48
 msgid "Source"
 msgstr "来源"
 
-#: models.py:195 templates/eos_invoices/log.html:53
+#: models.py:203 templates/eos_invoices/log.html:53
 msgid "Row"
 msgstr "行"
 
-#: models.py:196
+#: models.py:204
 msgid "Corporation ID"
 msgstr "Corporation ID"
 
-#: models.py:198 templates/eos_invoices/admin.html:79
+#: models.py:206 templates/eos_invoices/admin.html:85
 #: templates/eos_invoices/log.html:31 templates/eos_invoices/log.html:49
 msgctxt "EVE jargon"
 msgid "Corporation"
 msgstr "Corporation"
 
-#: models.py:200 templates/eos_invoices/admin.html:82
-#: templates/eos_invoices/index.html:77 templates/eos_invoices/log.html:51
+#: models.py:208 templates/eos_invoices/admin.html:88
+#: templates/eos_invoices/index.html:83 templates/eos_invoices/log.html:51
 msgctxt "eos-invoices"
 msgid "Amount"
 msgstr "金额"
 
-#: models.py:216
+#: models.py:224
 msgid "Undone"
 msgstr "已撤销"
 
-#: models.py:220
+#: models.py:228
 msgid "Undone by"
 msgstr "撤销人"
 
-#: models.py:225
+#: models.py:233
 msgid "Payment log entry"
 msgstr "日志条目"
 
-#: models.py:226
+#: models.py:234
 msgid "Payment log"
 msgstr "款项日志"
 
@@ -332,37 +342,37 @@ msgstr "年份字段必须是整数字段。"
 msgid "Enter the value that means paid."
 msgstr "请输入表示已付的值。"
 
-#: sources.py:476 sources.py:478 sources.py:617
+#: sources.py:480 sources.py:482 sources.py:621
 msgid "The payment no longer exists."
 msgstr "该款项已不存在。"
 
-#: sources.py:568
+#: sources.py:572
 msgid "Rows of this source cannot be marked as paid here."
 msgstr "此来源的行无法在此标记为已付。"
 
-#: sources.py:572
+#: sources.py:576
 msgid "This payment belongs to another Corporation."
 msgstr "此款项属于其他 Corporation。"
 
-#: sources.py:574
+#: sources.py:578
 msgid "This payment is already marked as paid."
 msgstr "此款项已标记为已付。"
 
-#: sources.py:603
+#: sources.py:607
 msgid ""
 "This source reads another model since this was marked; nothing was changed."
 msgstr "标记后此来源已改为读取另一个模型；未做任何更改。"
 
-#: sources.py:610 sources.py:612
+#: sources.py:614 sources.py:616
 msgid "The paid field of this source has changed since."
 msgstr "此来源的已付字段已被更改。"
 
-#: sources.py:621
+#: sources.py:625
 msgid ""
 "The payment has been changed since it was marked; it was left as it is."
 msgstr "该款项在标记后已被更改；保持不变。"
 
-#: templates/eos_invoices/admin.html:34 templates/eos_invoices/admin.html:76
+#: templates/eos_invoices/admin.html:34 templates/eos_invoices/admin.html:82
 msgid "Select all"
 msgstr "全选"
 
@@ -375,7 +385,7 @@ msgid "Mark selected as paid"
 msgstr "将所选标记为已付"
 
 #: templates/eos_invoices/admin.html:45
-#: templates/eos_invoices/dashboard.overview.html:21
+#: templates/eos_invoices/dashboard.overview.html:22
 #: templates/eos_invoices/index.html:15
 msgid "Outstanding"
 msgstr "未付"
@@ -386,19 +396,21 @@ msgid "%(counter)s Corporation with nothing outstanding"
 msgid_plural "%(counter)s Corporations with nothing outstanding"
 msgstr[0] "%(counter)s 个 Corporation 没有未付款项"
 
-#: templates/eos_invoices/admin.html:106 templates/eos_invoices/index.html:100
+#: templates/eos_invoices/admin.html:112 templates/eos_invoices/index.html:106
 msgid "Not shown for the current month"
 msgstr "本月不显示"
 
-#: templates/eos_invoices/admin.html:118
+#: templates/eos_invoices/admin.html:124
 msgid "Mark this payment as paid?"
 msgstr "将此款项标记为已付？"
 
-#: templates/eos_invoices/admin.html:119
+#: templates/eos_invoices/admin.html:125
 msgid "Mark as paid"
 msgstr "标记为已付"
 
-#: templates/eos_invoices/admin.html:131 templates/eos_invoices/index.html:62
+#: templates/eos_invoices/admin.html:137
+#: templates/eos_invoices/dashboard.overview.html:30
+#: templates/eos_invoices/index.html:68
 msgctxt "eos-invoices"
 msgid "Nothing outstanding."
 msgstr "没有未付款项。"
@@ -423,7 +435,7 @@ msgstr "来源"
 msgid "The texts of this app are machine-generated and may be inaccurate."
 msgstr "本应用的文本由机器生成，可能不准确。"
 
-#: templates/eos_invoices/dashboard.overview.html:29
+#: templates/eos_invoices/dashboard.overview.html:36
 msgid "View overview"
 msgstr "查看概览"
 
@@ -437,30 +449,30 @@ msgctxt "eos-invoices"
 msgid "Including paid"
 msgstr "包括已付"
 
-#: templates/eos_invoices/index.html:56
+#: templates/eos_invoices/index.html:62
 msgid "This source cannot be read at the moment."
 msgstr "此来源暂时无法读取。"
 
-#: templates/eos_invoices/index.html:66
+#: templates/eos_invoices/index.html:72
 #, python-format
 msgid ""
 "Only the newest %(limit)s payments are shown; the total counts only those."
 msgstr "仅显示最新的 %(limit)s 笔款项；合计只包含这些。"
 
-#: templates/eos_invoices/index.html:79 templates/eos_invoices/sources.html:30
+#: templates/eos_invoices/index.html:85 templates/eos_invoices/sources.html:30
 msgid "Status"
 msgstr "状态"
 
-#: templates/eos_invoices/index.html:110
+#: templates/eos_invoices/index.html:116
 msgid "Paid"
 msgstr "已付"
 
-#: templates/eos_invoices/index.html:112
+#: templates/eos_invoices/index.html:118
 msgctxt "eos-invoices"
 msgid "Open"
 msgstr "未付"
 
-#: templates/eos_invoices/index.html:124
+#: templates/eos_invoices/index.html:130
 #: templates/eos_invoices/sources.html:80
 msgid "No payment sources are configured."
 msgstr "尚未配置款项来源。"
@@ -503,7 +515,7 @@ msgid "Copy"
 msgstr "复制"
 
 #: templates/eos_invoices/settings.html:19
-#: templates/eos_invoices/source_form.html:53
+#: templates/eos_invoices/source_form.html:54
 msgctxt "eos-invoices"
 msgid "Save"
 msgstr "保存"
@@ -528,7 +540,7 @@ msgctxt "eos-invoices"
 msgid "Display"
 msgstr "显示"
 
-#: templates/eos_invoices/source_form.html:54
+#: templates/eos_invoices/source_form.html:55
 msgid "Cancel"
 msgstr "取消"
 
@@ -567,17 +579,17 @@ msgstr "删除"
 msgid "Delete %(name)s?"
 msgstr "删除 %(name)s？"
 
-#: views.py:152
+#: views.py:153
 msgid "Marked as paid."
 msgstr "已标记为已付。"
 
-#: views.py:202
+#: views.py:203
 #, python-format
 msgid "Marked %(count)s payment as paid."
 msgid_plural "Marked %(count)s payments as paid."
 msgstr[0] "已将 %(count)s 笔款项标记为已付。"
 
-#: views.py:212
+#: views.py:213
 #, python-format
 msgid ""
 "%(count)s payment was skipped: already paid, gone, of another Corporation, "
@@ -587,28 +599,28 @@ msgid_plural ""
 " or their source cannot be read or marked here."
 msgstr[0] "已跳过 %(count)s 笔款项：已付、已不存在、属于其他 Corporation，或其来源在此无法读取或标记。"
 
-#: views.py:221
+#: views.py:222
 msgid "Nothing was selected."
 msgstr "未选择任何内容。"
 
-#: views.py:266
+#: views.py:267
 msgid "This entry cannot be undone."
 msgstr "此条目无法撤销。"
 
-#: views.py:292
+#: views.py:293
 msgid "Undone: the payment is open again."
 msgstr "已撤销：该款项重新变为未付。"
 
-#: views.py:329
+#: views.py:330
 #, python-format
 msgid "Saved %(name)s."
 msgstr "已保存 %(name)s。"
 
-#: views.py:366
+#: views.py:367
 #, python-format
 msgid "Deleted %(name)s."
 msgstr "已删除 %(name)s。"
 
-#: views.py:379
+#: views.py:380
 msgid "Settings saved."
 msgstr "设置已保存。"
