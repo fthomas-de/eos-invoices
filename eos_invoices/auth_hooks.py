@@ -42,7 +42,7 @@ def register_urls():
 
 class InvoicesDashboardHook(hooks.DashboardItemHook):
     def __init__(self):
-        hooks.DashboardItemHook.__init__(self, dashboard_overview)
+        hooks.DashboardItemHook.__init__(self, dashboard_overview, 4)
 
 
 @hooks.register("dashboard_hook")
