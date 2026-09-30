@@ -2,7 +2,7 @@
 {% load eos_invoices %}
 
 <div id="eos-invoices-dashboard-overview" class="col-12 col-xl-4 mb-3">
-    <div class="card h-100">
+    <div class="card h-100 {% if overview.open_total_settled %}border-danger{% else %}border-success{% endif %}">
         <div class="card-body d-flex flex-column">
             {% translate "Invoices" as widget_title %}
             {% include "framework/dashboard/widget-title.html" with title=widget_title %}

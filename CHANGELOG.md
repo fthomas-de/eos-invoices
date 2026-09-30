@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The dashboard widget has a red frame while payments are outstanding and a
+  green one when nothing is, like the Auth Monitor's tiles.
+
 ## [0.0.16] - 2026-09-25
 
 ### Changed

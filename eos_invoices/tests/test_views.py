@@ -156,6 +156,22 @@ class TestDashboardWidget(DueTestCase):
 
         self.assertIn("Nothing outstanding.", html)
         self.assertNotIn("1.500.000", html)
+        self.assertIn("border-success", html)
+
+    def test_should_frame_the_widget_green_with_nothing_outstanding(self):
+        html = self.render(self.alliance_ceo())
+
+        self.assertIn("border-success", html)
+        self.assertNotIn("border-danger", html)
+
+    def test_should_frame_the_widget_red_with_payments_outstanding(self):
+        make_source()
+        Due.objects.create(corp_id=2001, amount=10)
+
+        html = self.render(self.alliance_ceo(corp_id=2001))
+
+        self.assertIn("border-danger", html)
+        self.assertNotIn("border-success", html)
 
     def test_should_sum_only_the_settled_rows(self):
         make_source(month_field="month", year_field="year")
