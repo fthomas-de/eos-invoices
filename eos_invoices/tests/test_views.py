@@ -590,6 +590,38 @@ class TestPayTo(DueTestCase):
         self.assertNotContains(response, 'data-clipboard-text="999"')
 
 
+class TestAllCorporationsCopy(DueTestCase):
+    def setUp(self):
+        make_corporation(2001, "Alpha", configure_alliance())
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+
+    def admin(self):
+        return self.client.get(reverse("eos_invoices:admin"))
+
+    def test_should_offer_amount_and_reason_for_copying(self):
+        make_source(reason_template="{corp_id}/{month:02d}/{year}")
+        Due.objects.create(corp_id=2001, amount=250000.5, month=3)
+
+        response = self.admin()
+
+        self.assertContains(response, 'data-clipboard-text="250000.50"')
+        self.assertContains(response, 'data-clipboard-text="2001/03/2026"')
+        self.assertContains(response, "eos_invoices/js/copy")
+
+    def test_should_not_offer_a_month_in_progress_for_copying(self):
+        # as on the overview: its amount can still change
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=100, month=7)
+        Due.objects.create(corp_id=2001, amount=50, month=6)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            response = self.admin()
+
+        self.assertContains(response, "100 ISK")
+        self.assertNotContains(response, 'data-clipboard-text="100"')
+        self.assertContains(response, 'data-clipboard-text="50"')
+
+
 class TestPermissionNames(DueTestCase):
     def ours(self, codename):
         # other apps have a basic_access too

@@ -105,12 +105,22 @@
                                             </td>
                                             <td class="text-nowrap" data-order="{{ row.invoice.date|date:"Y-m-d" }}">{{ row.invoice.date|date:"Y-m-d"|default:"-" }}</td>
                                             <td data-order="{{ row.invoice.label_order }}">{{ row.invoice.label|default:"-" }}</td>
-                                            <td class="text-end text-nowrap" data-order="{{ row.invoice.amount|unlocalize }}">{{ row.invoice.amount|isk }} ISK</td>
+                                            <td class="text-end text-nowrap" data-order="{{ row.invoice.amount|unlocalize }}">
+                                                {{ row.invoice.amount|isk }} ISK
+                                                {% comment %}
+                                                    no copy for a month still in progress: its amount can
+                                                    still change, and its Reason is withheld as well
+                                                {% endcomment %}
+                                                {% if not row.invoice.reason_hidden %}
+                                                    {% include "eos_invoices/partials/copy-button.html" with text=row.invoice.amount_plain %}
+                                                {% endif %}
+                                            </td>
                                             <td class="text-nowrap">
                                                 {% if row.invoice.reason_hidden %}
                                                     <span class="text-body-secondary small">{% translate "Not shown for the current month" %}</span>
                                                 {% elif row.invoice.reason %}
                                                     <code>{{ row.invoice.reason }}</code>
+                                                    {% include "eos_invoices/partials/copy-button.html" with text=row.invoice.reason %}
                                                 {% else %}
                                                     -
                                                 {% endif %}
@@ -148,4 +158,6 @@
     {% sri_static "eos_invoices/js/tables.js" %}
     {% sri_static "eos_invoices/js/confirm.js" %}
     {% sri_static "eos_invoices/js/select.js" %}
+    {% include "bundles/clipboard-js.html" %}
+    {% sri_static "eos_invoices/js/copy.js" %}
 {% endblock %}

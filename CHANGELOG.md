@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- "All Corporations" gets copy buttons for each row's amount and Reason, as
+  the overview has. A row whose month is still in progress offers neither.
+
 ## [0.0.17] - 2026-09-30
 
 ### Changed
