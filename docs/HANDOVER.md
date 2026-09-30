@@ -8,13 +8,13 @@ Last updated 2026-09-30.
 
 ## Release
 
-- Version **0.0.17** in `eos_invoices/__init__.py`, about to become the
-  `Release 0.0.17` commit and get pushed.
+- Version **0.0.18** in `eos_invoices/__init__.py`, about to become the
+  `Release 0.0.18` commit and get pushed.
 - Migrations **0001-0008** applied in `aa_dev`, unchanged this release - no
   new migration.
 - No catalogue changes this session; nothing to run through
   `tools/translate.py`.
-- 150 tests green (translation tests excluded, as they are for every
+- 152 tests green (translation tests excluded, as they are for every
   `/commit`), `makemigrations --check` clean.
 - The release ritual is three skills, read by every AA sister app's
   `CLAUDE.md` under `## Release`: `/commit` (tests, checks, local commit,
@@ -35,7 +35,7 @@ owning model's `save()`.
 |---|---|---|
 | Overview | `basic_access` (CEOs) | Payments of the main's Corporation, read only; copy buttons for recipient, amount, reason |
 | Dashboard widget | `basic_access` | Compact version of Overview on Alliance Auth's own dashboard, always shown once permitted and configured; a "Nothing outstanding." state with a check icon when there is nothing settled - a current-month row still in progress does not count towards its total; red card frame while something settled is outstanding, green otherwise |
-| All Corporations | `manage_sources` | Open payments of every Corporation in the configured Alliance, **grouped by source** (not by Corporation) with a Corporation column; mark one row or the ticked rows as paid |
+| All Corporations | `manage_sources` | Open payments of every Corporation in the configured Alliance, **grouped by source** (not by Corporation) with a Corporation column; copy buttons for amount and reason per row; mark one row or the ticked rows as paid |
 | Log | `manage_sources` | Every marking, with undo for a misclick; filterable by Source and Corporation on the server, across all pages |
 | Sources | `manage_sources` | Payment sources; field dropdowns read from the chosen model |
 | Alliance | `manage_sources` | The Alliance the app works for; outside it nobody sees anything |
@@ -126,7 +126,14 @@ otherwise:
 - A row whose Reason is hidden for the month still in progress gets **no
   copy button for its amount**; the row and its amount still show. The
   source total keeps its copy button, since it no longer counts such a row
-  (see "Every total" above).
+  (see "Every total" above). This holds on "All Corporations" too.
+- A **paid row gets no copy button** on the overview - nothing is left to
+  transfer. The user was not aware of this at first and, once told, was
+  happy with it (2026-09-30).
+- "All Corporations" has copy buttons for each row's **amount and Reason**
+  (asked 2026-09-30), but **none on a source's header total**: that total
+  still counts rows in progress, so it is not a number to pay. Not asked;
+  add it only together with switching that total to `open_total_settled`.
 - The **log filter runs on the server** (query parameters `source`,
   `corporation`; paging stays at 100 and keeps the filter), replacing
   datatables-filterdropdown, which only saw one page.
@@ -148,12 +155,13 @@ otherwise:
   plain name. Not offered on the plain "Payment sources" management table
   or the dashboard widget, since neither shows the name as a card heading.
 
-## Since 0.0.16 (now in 0.0.17)
+## Since 0.0.17 (now in 0.0.18)
 
-Everything under `[0.0.17]` in `CHANGELOG.md`. Short version: the dashboard
-widget (`dashboard.overview.html`) gets a red card frame while something
-settled is outstanding and a green one otherwise; two tests in
-`TestDashboardWidget` pin both colours.
+Everything under `[0.0.18]` in `CHANGELOG.md`. Short version: "All
+Corporations" (`admin.html`) gets copy buttons for each row's amount and
+Reason, loading `clipboard-js` and `copy.js` like the overview; a row still
+in progress offers neither. `TestAllCorporationsCopy` in `test_views.py`
+pins both.
 
 ## Open
 
