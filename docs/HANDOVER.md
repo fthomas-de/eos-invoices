@@ -4,17 +4,17 @@ Where the work stands and what is still open. `CLAUDE.md` holds the durable
 rules for working on this app; this file holds the moment, and goes stale on
 purpose - if a statement here contradicts the code, the code is right.
 
-Last updated 2026-09-25.
+Last updated 2026-09-30.
 
 ## Release
 
-- Version **0.0.16** in `eos_invoices/__init__.py`, about to become the
-  `Release 0.0.16` commit and get pushed.
+- Version **0.0.17** in `eos_invoices/__init__.py`, about to become the
+  `Release 0.0.17` commit and get pushed.
 - Migrations **0001-0008** applied in `aa_dev`, unchanged this release - no
   new migration.
 - No catalogue changes this session; nothing to run through
   `tools/translate.py`.
-- 148 tests green (translation tests excluded, as they are for every
+- 150 tests green (translation tests excluded, as they are for every
   `/commit`), `makemigrations --check` clean.
 - The release ritual is three skills, read by every AA sister app's
   `CLAUDE.md` under `## Release`: `/commit` (tests, checks, local commit,
@@ -34,7 +34,7 @@ owning model's `save()`.
 | Page | Permission | What |
 |---|---|---|
 | Overview | `basic_access` (CEOs) | Payments of the main's Corporation, read only; copy buttons for recipient, amount, reason |
-| Dashboard widget | `basic_access` | Compact version of Overview on Alliance Auth's own dashboard, always shown once permitted and configured; a "Nothing outstanding." state with a check icon when there is nothing settled - a current-month row still in progress does not count towards its total |
+| Dashboard widget | `basic_access` | Compact version of Overview on Alliance Auth's own dashboard, always shown once permitted and configured; a "Nothing outstanding." state with a check icon when there is nothing settled - a current-month row still in progress does not count towards its total; red card frame while something settled is outstanding, green otherwise |
 | All Corporations | `manage_sources` | Open payments of every Corporation in the configured Alliance, **grouped by source** (not by Corporation) with a Corporation column; mark one row or the ticked rows as paid |
 | Log | `manage_sources` | Every marking, with undo for a misclick; filterable by Source and Corporation on the server, across all pages |
 | Sources | `manage_sources` | Payment sources; field dropdowns read from the chosen model |
@@ -108,6 +108,11 @@ otherwise:
   indistinguishable from not having loaded. This reverses part of the
   original "hidden unless settled and outstanding" decision above; the
   "hidden without the permission or a notice" half still stands.
+- The dashboard widget's **card frame is red or green**, like the Auth
+  Monitor's Corporation tiles (`border-danger` / `border-success`): red while
+  `open_total_settled` is non-zero, green otherwise. It follows the same total
+  the widget shows, so a row still in progress alone keeps it green. Asked on
+  2026-09-30.
 - A row stays "in progress" (`reason_hidden`) through the **1st of the month
   after** its own Month/Year, not just up to its own last day - the user
   wants a full day's grace before the total picks it up, not the instant the
@@ -143,13 +148,12 @@ otherwise:
   plain name. Not offered on the plain "Payment sources" management table
   or the dashboard widget, since neither shows the name as a card heading.
 
-## Since 0.0.15 (now in 0.0.16)
+## Since 0.0.16 (now in 0.0.17)
 
-Everything under `[0.0.16]` in `CHANGELOG.md`. Short version: the dashboard
-widget's `order` (`InvoicesDashboardHook` in `auth_hooks.py`) went from the
-default `10` to `4`, so it now renders above Alliance Auth's own character
-and group widgets (order `5`) instead of below them; still below the
-admin-status widget (order `1`).
+Everything under `[0.0.17]` in `CHANGELOG.md`. Short version: the dashboard
+widget (`dashboard.overview.html`) gets a red card frame while something
+settled is outstanding and a green one otherwise; two tests in
+`TestDashboardWidget` pin both colours.
 
 ## Open
 
