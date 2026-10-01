@@ -102,7 +102,7 @@
                                             </td>
                                             <td class="text-nowrap">
                                                 {% if invoice.reason_hidden %}
-                                                    <span class="text-body-secondary small">{% translate "Not shown for the current month" %}</span>
+                                                    <span class="text-body-secondary small">{% translate "Not shown while in progress" %}</span>
                                                 {% elif invoice.reason %}
                                                     <code>{{ invoice.reason }}</code>
                                                     {% include "eos_invoices/partials/copy-button.html" with text=invoice.reason %}
@@ -110,9 +110,14 @@
                                                     -
                                                 {% endif %}
                                             </td>
-                                            <td data-order="{% if invoice.paid %}1{% else %}0{% endif %}">
+                                            <td data-order="{% if invoice.paid %}2{% elif invoice.reason_hidden %}1{% else %}0{% endif %}">
                                                 {% if invoice.paid %}
                                                     <span class="badge text-bg-success">{% translate "Paid" %}</span>
+                                                {% elif invoice.reason_hidden %}
+                                                    {% comment %}
+                                                        neutral, not red: a month still in progress is not owed yet
+                                                    {% endcomment %}
+                                                    <span class="badge text-bg-secondary">{% translate "In progress" context "eos-invoices" %}</span>
                                                 {% else %}
                                                     <span class="badge text-bg-danger">{% translate "Open" context "eos-invoices" %}</span>
                                                 {% endif %}

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-25 12:41+0000\n"
-"PO-Revision-Date: 2026-09-25 12:41+0000\n"
+"POT-Creation-Date: 2026-10-01 07:03+0000\n"
+"PO-Revision-Date: 2026-10-01 07:03+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: zh_Hans\n"
 "Language: zh_Hans\n"
@@ -342,32 +342,32 @@ msgstr "年份字段必须是整数字段。"
 msgid "Enter the value that means paid."
 msgstr "请输入表示已付的值。"
 
-#: sources.py:480 sources.py:482 sources.py:621
+#: sources.py:482 sources.py:484 sources.py:623
 msgid "The payment no longer exists."
 msgstr "该款项已不存在。"
 
-#: sources.py:572
+#: sources.py:574
 msgid "Rows of this source cannot be marked as paid here."
 msgstr "此来源的行无法在此标记为已付。"
 
-#: sources.py:576
+#: sources.py:578
 msgid "This payment belongs to another Corporation."
 msgstr "此款项属于其他 Corporation。"
 
-#: sources.py:578
+#: sources.py:580
 msgid "This payment is already marked as paid."
 msgstr "此款项已标记为已付。"
 
-#: sources.py:607
+#: sources.py:609
 msgid ""
 "This source reads another model since this was marked; nothing was changed."
 msgstr "标记后此来源已改为读取另一个模型；未做任何更改。"
 
-#: sources.py:614 sources.py:616
+#: sources.py:616 sources.py:618
 msgid "The paid field of this source has changed since."
 msgstr "此来源的已付字段已被更改。"
 
-#: sources.py:625
+#: sources.py:627
 msgid ""
 "The payment has been changed since it was marked; it was left as it is."
 msgstr "该款项在标记后已被更改；保持不变。"
@@ -396,19 +396,19 @@ msgid "%(counter)s Corporation with nothing outstanding"
 msgid_plural "%(counter)s Corporations with nothing outstanding"
 msgstr[0] "%(counter)s 个 Corporation 没有未付款项"
 
-#: templates/eos_invoices/admin.html:112 templates/eos_invoices/index.html:106
-msgid "Not shown for the current month"
-msgstr "本月不显示"
+#: templates/eos_invoices/admin.html:122 templates/eos_invoices/index.html:106
+msgid "Not shown while in progress"
+msgstr "进行中，暂不显示"
 
-#: templates/eos_invoices/admin.html:124
+#: templates/eos_invoices/admin.html:135
 msgid "Mark this payment as paid?"
 msgstr "将此款项标记为已付？"
 
-#: templates/eos_invoices/admin.html:125
+#: templates/eos_invoices/admin.html:136
 msgid "Mark as paid"
 msgstr "标记为已付"
 
-#: templates/eos_invoices/admin.html:137
+#: templates/eos_invoices/admin.html:148
 #: templates/eos_invoices/dashboard.overview.html:30
 #: templates/eos_invoices/index.html:68
 msgctxt "eos-invoices"
@@ -467,12 +467,17 @@ msgstr "状态"
 msgid "Paid"
 msgstr "已付"
 
-#: templates/eos_invoices/index.html:118
+#: templates/eos_invoices/index.html:122
+msgctxt "eos-invoices"
+msgid "In progress"
+msgstr "进行中"
+
+#: templates/eos_invoices/index.html:124
 msgctxt "eos-invoices"
 msgid "Open"
 msgstr "未付"
 
-#: templates/eos_invoices/index.html:130
+#: templates/eos_invoices/index.html:136
 #: templates/eos_invoices/sources.html:80
 msgid "No payment sources are configured."
 msgstr "尚未配置款项来源。"

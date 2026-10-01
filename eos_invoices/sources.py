@@ -399,15 +399,17 @@ def _to_invoice(source, row):
     # both sides (the field's value, timezone.localdate()'s month/year), so
     # a stored "07" vs a formatted "7" never comes up, whichever direction
     today = timezone.localdate()
-    # the row stays "in progress" through the 1st of the following month too -
-    # the user wants a full day's grace before the total picks it up, not the
-    # instant the calendar flips
+    # a month becomes payable on the 2nd of the following month at the
+    # earliest: on the 1st the month just ended still counts as running, and
+    # so does every month after it - the new current month above all, whose
+    # row the owning app may already have created
     in_progress_as_of = today - timedelta(days=1) if today.day == 1 else today
-    reason_hidden = bool(
-        source.month_field
-        and source.year_field
-        and row.get(source.month_field) == in_progress_as_of.month
-        and row.get(source.year_field) == in_progress_as_of.year
+    month = row.get(source.month_field) if source.month_field else None
+    year = row.get(source.year_field) if source.year_field else None
+    reason_hidden = (
+        isinstance(month, int)
+        and isinstance(year, int)
+        and (year, month) >= (in_progress_as_of.year, in_progress_as_of.month)
     )
 
     label = render_template(source.label_template, row)

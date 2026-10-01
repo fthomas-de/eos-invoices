@@ -118,6 +118,21 @@ otherwise:
   wants a full day's grace before the total picks it up, not the instant the
   calendar flips at midnight. `_to_invoice` rewinds "today" by one day only
   when `today.day == 1`, so nothing changes on any other day.
+  **No payment is offered before the 2nd of the following month** (user's
+  rule, 2026-10-01): every row from the in-progress month onward is hidden,
+  `(year, month) >= ...`, not just that one month. The equality check before
+  let the new month's row (already there in eos-tax on the 1st) through as payable
+  on the 1st while September was still held back. On the 1st that means the
+  month just ended and the new one; older open months stay payable (asked).
+- A row in progress shows a **grey "In progress" badge** (`text-bg-secondary`,
+  context `eos-invoices`) instead of the red "Open", on every day it is in
+  progress, not only on the 1st (asked 2026-10-01). Only the overview
+  (`index.html`) has a status column. The message still needs its glossary
+  entry at `/commit`.
+- The hidden Reason reads **"Not shown while in progress"** (overview and
+  "All Corporations"), replacing "Not shown for the current month" - on the
+  1st it also stands for the month just ended. At `/commit` the new message
+  goes into `tools/glossary.py` and the old entry comes out.
 - The **log's default sort is chronological**, not the Corporation/
   Description convention the other tables use - the user wants a log to read
   as a log. A header click still re-sorts the current page by anything else;

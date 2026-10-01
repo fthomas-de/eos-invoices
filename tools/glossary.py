@@ -113,10 +113,10 @@ TRANSLATIONS = {
         "Поле года должно быть целочисленным.",
         "年份字段必须是整数字段。",
     ),
-    "Not shown for the current month": (
-        "Für den aktuellen Monat nicht angezeigt",
-        "Не показывается за текущий месяц",
-        "本月不显示",
+    "Not shown while in progress": (
+        "Nicht angezeigt, solange der Monat läuft",
+        "Не показывается, пока месяц не завершён",
+        "进行中，暂不显示",
     ),
     "Pay to": ("Zahlen an", "Получатель", "付款给"),
     "The Corporation that receives the ISK. Lists the Corporations of the Alliance chosen on the Alliance tab.": (
@@ -342,6 +342,7 @@ TRANSLATIONS = {
     "Copy": ("Kopieren", "Копировать", "复制"),
     "Paid": ("Bezahlt", "Оплачено", "已付"),
     "Open": ("Offen", "Не оплачено", "未付"),
+    "In progress": ("Läuft noch", "Ещё идёт", "进行中"),
     "No payment sources are configured.": (
         "Es sind keine Zahlungsquellen eingerichtet.",
         "Источники платежей не настроены.",

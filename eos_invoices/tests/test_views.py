@@ -235,7 +235,7 @@ class TestIndex(DueTestCase):
             response = self.index()
 
         self.assertNotContains(response, "2001/7/2026")
-        self.assertContains(response, "Not shown for the current month")
+        self.assertContains(response, "Not shown while in progress")
 
     def test_should_not_offer_the_amount_of_a_month_in_progress_for_copying(self):
         # its amount can still change; the row and its amount still show,
@@ -250,6 +250,42 @@ class TestIndex(DueTestCase):
         self.assertContains(response, "100 ISK")
         self.assertNotContains(response, 'data-clipboard-text="100"')
         self.assertContains(response, 'data-clipboard-text="50"')
+
+    def test_should_show_a_neutral_status_for_a_month_in_progress(self):
+        # not owed yet, so not red - a settled month next to it still is
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=100, month=7)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            response = self.index()
+
+        self.assertContains(response, '<span class="badge text-bg-secondary">In progress</span>', html=True)
+        self.assertNotContains(response, "text-bg-danger")
+
+    def test_should_show_both_months_as_in_progress_on_the_first(self):
+        # on the 1st the month just ended is not payable yet either, and the
+        # new month's row must not slip through as open meanwhile
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=100, month=7)
+        Due.objects.create(corp_id=2001, amount=50, month=6)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 1)):
+            response = self.index()
+
+        self.assertContains(response, '<span class="badge text-bg-secondary">In progress</span>', count=2, html=True)
+        self.assertNotContains(response, "text-bg-danger")
+        self.assertNotContains(response, 'data-clipboard-text="100"')
+        self.assertNotContains(response, 'data-clipboard-text="50"')
+
+    def test_should_show_a_settled_month_as_open(self):
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=50, month=6)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 2)):
+            response = self.index()
+
+        self.assertContains(response, "text-bg-danger")
+        self.assertNotContains(response, "In progress")
 
     def test_should_leave_a_row_in_progress_out_of_every_total(self):
         # a total only counts rows whose Reason is shown - the rest can still

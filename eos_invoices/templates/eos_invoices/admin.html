@@ -117,7 +117,7 @@
                                             </td>
                                             <td class="text-nowrap">
                                                 {% if row.invoice.reason_hidden %}
-                                                    <span class="text-body-secondary small">{% translate "Not shown for the current month" %}</span>
+                                                    <span class="text-body-secondary small">{% translate "Not shown while in progress" %}</span>
                                                 {% elif row.invoice.reason %}
                                                     <code>{{ row.invoice.reason }}</code>
                                                     {% include "eos_invoices/partials/copy-button.html" with text=row.invoice.reason %}

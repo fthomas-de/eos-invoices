@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A row whose month is still in progress shows a grey "In progress" status
+  on the overview instead of a red "Open" - it is not owed yet.
+- Its Reason column reads "Not shown while in progress" instead of "Not shown
+  for the current month", which was wrong on the 1st for the month just ended.
+
+### Fixed
+
+- On the 1st of a month the new month's row was offered as payable while the
+  month just ended was still held back. No month is payable before the 2nd
+  of the following month now, and neither is any later month.
+
 ## [0.0.18] - 2026-09-30
 
 ### Added

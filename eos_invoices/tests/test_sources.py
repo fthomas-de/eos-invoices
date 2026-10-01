@@ -285,6 +285,24 @@ class TestGetInvoices(DueTestCase):
 
         self.assertTrue(invoice.reason_hidden)
 
+    def test_should_hide_the_new_current_month_on_its_first_day(self):
+        # on the 1st the month just ended is still in progress - the new
+        # current month must not slip through as payable meanwhile
+        source = make_source(month_field="month", year_field="year")
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 1)):
+            invoice = get_invoices(source, 2001)[0]
+
+        self.assertTrue(invoice.reason_hidden)
+
+    def test_should_hide_a_month_that_has_not_started_yet(self):
+        source = make_source(month_field="month", year_field="year")
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 6, 15)):
+            invoice = get_invoices(source, 2001)[0]
+
+        self.assertTrue(invoice.reason_hidden)
+
     def test_should_show_the_reason_from_the_second_of_the_following_month(self):
         source = make_source(month_field="month", year_field="year")
 
