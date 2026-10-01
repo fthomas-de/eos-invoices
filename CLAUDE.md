@@ -20,14 +20,19 @@ Read both before changing anything.
 Run from `~/aa-dev/working/myauth`:
 
 ```bash
-eos-test eos_invoices --parallel 2 --exclude-tag translations
+eos-test eos_invoices --exclude-tag translations
 ```
 
 The catalogue tests (`tests/test_translations.py`) carry
 `@tag("translations")` and are left out of this run; `tools/translate.py`
-runs them with `--tag translations`, on fresh catalogues. A failing subtest
-hangs `--parallel` - the runner cannot pickle it - so drop the flag to see
-which one.
+runs them with `--tag translations`, on fresh catalogues.
+
+`eos-test` keeps the test database between runs (`--keepdb`): building it
+runs every migration of the instance on MySQL, about 70 seconds against 7
+for this suite. A migration rewritten after it was applied, or another
+branch's schema, needs `eos-test ... --fresh`; the suite at `/commit` always
+runs fresh. No `--parallel`: a failing subtest hangs it - the runner cannot
+pickle it - and the suite is done in seconds without.
 
 ```bash
 ~/aa-dev/venv/bin/python manage.py makemigrations eos_invoices
@@ -46,7 +51,7 @@ app. Commands run from `~/aa-dev/working/myauth`.
 - Version file: `eos_invoices/__init__.py`
 - Changelog section: `[Unreleased]`
 - Tests while working: `eos-test eos_invoices.tests.<module>`
-- Suite without translation tests: `eos-test eos_invoices --parallel 2 --exclude-tag translations`
+- Suite without translation tests: `eos-test eos_invoices --fresh --exclude-tag translations`
 - Checks: `~/aa-dev/venv/bin/python manage.py makemigrations eos_invoices --check --dry-run`
 - Translations: new messages into `tools/glossary.py`, then
   `~/aa-dev/venv/bin/python tools/translate.py` from the repo root
