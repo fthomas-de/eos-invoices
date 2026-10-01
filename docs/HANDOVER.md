@@ -4,18 +4,19 @@ Where the work stands and what is still open. `CLAUDE.md` holds the durable
 rules for working on this app; this file holds the moment, and goes stale on
 purpose - if a statement here contradicts the code, the code is right.
 
-Last updated 2026-09-30.
+Last updated 2026-10-01.
 
 ## Release
 
-- Version **0.0.18** in `eos_invoices/__init__.py`, about to become the
-  `Release 0.0.18` commit and get pushed.
+- Version **0.0.19** in `eos_invoices/__init__.py`, about to become the
+  `Release 0.0.19` commit and get pushed.
 - Migrations **0001-0008** applied in `aa_dev`, unchanged this release - no
   new migration.
-- No catalogue changes this session; nothing to run through
-  `tools/translate.py`.
-- 152 tests green (translation tests excluded, as they are for every
-  `/commit`), `makemigrations --check` clean.
+- Catalogues updated through `tools/translate.py`: "In progress" and "Not
+  shown while in progress" are new, "Not shown for the current month" is
+  gone.
+- 157 tests green (translation tests excluded, as they are for every
+  `/commit`), translation tests green, `makemigrations --check` clean.
 - The release ritual is three skills, read by every AA sister app's
   `CLAUDE.md` under `## Release`: `/commit` (tests, checks, local commit,
   never pushes), `/push` (version, CHANGELOG split, this file, release
@@ -113,26 +114,23 @@ otherwise:
   `open_total_settled` is non-zero, green otherwise. It follows the same total
   the widget shows, so a row still in progress alone keeps it green. Asked on
   2026-09-30.
-- A row stays "in progress" (`reason_hidden`) through the **1st of the month
-  after** its own Month/Year, not just up to its own last day - the user
-  wants a full day's grace before the total picks it up, not the instant the
-  calendar flips at midnight. `_to_invoice` rewinds "today" by one day only
-  when `today.day == 1`, so nothing changes on any other day.
-  **No payment is offered before the 2nd of the following month** (user's
-  rule, 2026-10-01): every row from the in-progress month onward is hidden,
-  `(year, month) >= ...`, not just that one month. The equality check before
-  let the new month's row (already there in eos-tax on the 1st) through as payable
-  on the 1st while September was still held back. On the 1st that means the
-  month just ended and the new one; older open months stay payable (asked).
+- **No payment is offered before the 2nd of the following month** (user's
+  rule, 2026-10-01). A row stays "in progress" (`reason_hidden`) through the
+  1st of the month after its own Month/Year: `_to_invoice` rewinds "today"
+  by one day only when `today.day == 1`, then hides every row from that
+  month onward, `(year, month) >= ...`. So on the 1st both the month just
+  ended and the new month are held back; older open months stay payable
+  (asked). Before 0.0.19 the check was an equality, which on the 1st let the
+  new month's row (already there in eos-tax) through as payable.
 - A row in progress shows a **grey "In progress" badge** (`text-bg-secondary`,
   context `eos-invoices`) instead of the red "Open", on every day it is in
   progress, not only on the 1st (asked 2026-10-01). Only the overview
-  (`index.html`) has a status column. The message still needs its glossary
-  entry at `/commit`.
+  (`index.html`) has a status column. German: "Läuft noch".
 - The hidden Reason reads **"Not shown while in progress"** (overview and
-  "All Corporations"), replacing "Not shown for the current month" - on the
-  1st it also stands for the month just ended. At `/commit` the new message
-  goes into `tools/glossary.py` and the old entry comes out.
+  "All Corporations"), replacing "Not shown for the current month", which
+  was wrong on the 1st for the month just ended.
+- The user **declined `--keepdb`** for faster test runs (2026-10-01) - leave
+  the test commands as they are.
 - The **log's default sort is chronological**, not the Corporation/
   Description convention the other tables use - the user wants a log to read
   as a log. A header click still re-sorts the current page by anything else;
@@ -170,13 +168,15 @@ otherwise:
   plain name. Not offered on the plain "Payment sources" management table
   or the dashboard widget, since neither shows the name as a card heading.
 
-## Since 0.0.17 (now in 0.0.18)
+## Since 0.0.18 (now in 0.0.19)
 
-Everything under `[0.0.18]` in `CHANGELOG.md`. Short version: "All
-Corporations" (`admin.html`) gets copy buttons for each row's amount and
-Reason, loading `clipboard-js` and `copy.js` like the overview; a row still
-in progress offers neither. `TestAllCorporationsCopy` in `test_views.py`
-pins both.
+Everything under `[0.0.19]` in `CHANGELOG.md`. Short version: on the 1st
+the new month's row was offered as payable - fixed in `sources._to_invoice`
+(see the first decision above about the 2nd of the following month). A row in progress gets a grey "In
+progress" status and the Reason text "Not shown while in progress". Pinned
+by `test_should_hide_the_new_current_month_on_its_first_day` and
+`test_should_hide_a_month_that_has_not_started_yet` (`test_sources.py`) and
+the three status tests in `TestIndex` (`test_views.py`).
 
 ## Open
 
@@ -243,3 +243,13 @@ pins both.
   turn grows with the conversation, not with what that turn actually does.
   One session carried the entire 0.0.1-0.0.11 history; see the user's own
   memory note "Eine Sitzung je Thema". Start a fresh session per topic.
+- `eos-test` takes **one** test label; a second one ends up as an
+  unrecognised argument to `manage.py test`. Run modules one after another.
+- A test run takes about two minutes even though the tests themselves need
+  about ten seconds - most of the rest is building the MySQL test database
+  for every installed app. Plan sabotage checks so they don't double that
+  more often than needed.
+- Called from PowerShell, `wsl.exe ... bash -lic '...'` breaks on double
+  quotes, `^` and parentheses inside the command. Anything beyond a plain
+  command goes into a script file in the scratchpad, run as
+  `bash <(tr -d '\r' < /mnt/c/.../script.sh)`.
