@@ -4,18 +4,18 @@ Where the work stands and what is still open. `CLAUDE.md` holds the durable
 rules for working on this app; this file holds the moment, and goes stale on
 purpose - if a statement here contradicts the code, the code is right.
 
-Last updated 2026-10-01.
+Last updated 2026-10-08.
 
 ## Release
 
-- Version **0.0.19** in `eos_invoices/__init__.py`, about to become the
-  `Release 0.0.19` commit and get pushed.
+- Version **0.0.20** in `eos_invoices/__init__.py`, about to become the
+  `Release 0.0.20` commit and get pushed.
 - Migrations **0001-0008** applied in `aa_dev`, unchanged this release - no
   new migration.
-- Catalogues updated through `tools/translate.py`: "In progress" and "Not
-  shown while in progress" are new, "Not shown for the current month" is
-  gone.
-- 157 tests green (translation tests excluded, as they are for every
+- Catalogues updated through `tools/translate.py`: "Both", "Show",
+  "Nothing in progress.", "Nothing paid yet." and "More than %(limit)s paid
+  payments; only the newest are shown." are new.
+- 169 tests green (translation tests excluded, as they are for every
   `/commit`), translation tests green, `makemigrations --check` clean.
 - The release ritual is three skills, read by every AA sister app's
   `CLAUDE.md` under `## Release`: `/commit` (tests, checks, local commit,
@@ -36,7 +36,7 @@ owning model's `save()`.
 |---|---|---|
 | Overview | `basic_access` (CEOs) | Payments of the main's Corporation, read only; copy buttons for recipient, amount, reason |
 | Dashboard widget | `basic_access` | Compact version of Overview on Alliance Auth's own dashboard, always shown once permitted and configured; a "Nothing outstanding." state with a check icon when there is nothing settled - a current-month row still in progress does not count towards its total; red card frame while something settled is outstanding, green otherwise |
-| All Corporations | `manage_sources` | Open payments of every Corporation in the configured Alliance, **grouped by source** (not by Corporation) with a Corporation column; copy buttons for amount and reason per row; mark one row or the ticked rows as paid |
+| All Corporations | `manage_sources` | Payments of every Corporation in the configured Alliance, **grouped by source** (not by Corporation) with a Corporation column; filter Open (default) / In progress / Paid / Both; copy buttons for amount and reason per open row; mark one row or the ticked rows as paid |
 | Log | `manage_sources` | Every marking, with undo for a misclick; filterable by Source and Corporation on the server, across all pages |
 | Sources | `manage_sources` | Payment sources; field dropdowns read from the chosen model |
 | Alliance | `manage_sources` | The Alliance the app works for; outside it nobody sees anything |
@@ -145,8 +145,6 @@ otherwise:
 - The hidden Reason reads **"Not shown while in progress"** (overview and
   "All Corporations"), replacing "Not shown for the current month", which
   was wrong on the 1st for the month just ended.
-- The user **declined `--keepdb`** for faster test runs (2026-10-01) - leave
-  the test commands as they are.
 - The **log's default sort is chronological**, not the Corporation/
   Description convention the other tables use - the user wants a log to read
   as a log. A header click still re-sorts the current page by anything else;
@@ -160,9 +158,9 @@ otherwise:
   transfer. The user was not aware of this at first and, once told, was
   happy with it (2026-09-30).
 - "All Corporations" has copy buttons for each row's **amount and Reason**
-  (asked 2026-09-30), but **none on a source's header total**: that total
-  still counts rows in progress, so it is not a number to pay. Not asked;
-  add it only together with switching that total to `open_total_settled`.
+  (asked 2026-09-30), but **none on a source's header total**: under "Both"
+  that total counts rows in progress, so it is not always a number to pay.
+  Not asked; under "Open" it would be safe now, if the user wants it.
 - The **log filter runs on the server** (query parameters `source`,
   `corporation`; paging stays at 100 and keeps the filter), replacing
   datatables-filterdropdown, which only saw one page.
@@ -184,20 +182,22 @@ otherwise:
   plain name. Not offered on the plain "Payment sources" management table
   or the dashboard widget, since neither shows the name as a card heading.
 
-## Since 0.0.18 (now in 0.0.19)
+## Since 0.0.19 (now in 0.0.20)
 
-Everything under `[0.0.19]` in `CHANGELOG.md`. Short version: on the 1st
-the new month's row was offered as payable - fixed in `sources._to_invoice`
-(see the first decision above about the 2nd of the following month). A row in progress gets a grey "In
-progress" status and the Reason text "Not shown while in progress". Pinned
-by `test_should_hide_the_new_current_month_on_its_first_day` and
-`test_should_hide_a_month_that_has_not_started_yet` (`test_sources.py`) and
-the three status tests in `TestIndex` (`test_views.py`).
+Everything under `[0.0.20]` in `CHANGELOG.md`. Short version: "All
+Corporations" got the filter Open / In progress / Paid / Both (see the
+decisions above). The code is `SHOW_*` and `_shown` in `overview.py`,
+`paid_only` in `sources.get_invoices_by_corporation`, the `show` parameter
+in `views.admin_overview`. Pinned by `TestAllCorporationsFilter`
+(`test_views.py`) and the `SHOW_*` tests in `TestAdminOverview`
+(`test_overview.py`).
 
 ## Open
 
 1. aa-miningtax is not installed in the dev instance; its README example was
    taken from its source (`miningtax.AllianceBillingRecord`), not tried live.
+2. The filter buttons were not looked at in the browser (the dev server needs
+   a login); worth a glance in Darkly and Flatly.
 
 ## Dev instance
 
@@ -259,6 +259,17 @@ the three status tests in `TestIndex` (`test_views.py`).
   turn grows with the conversation, not with what that turn actually does.
   One session carried the entire 0.0.1-0.0.11 history; see the user's own
   memory note "Eine Sitzung je Thema". Start a fresh session per topic.
+- With another session testing at the same time, `eos-test ... --fresh` on
+  the shared `test_aa_dev` broke mid-build with "Table
+  'test_aa_dev.eos_tax_taxconfiguration' doesn't exist" (2026-10-08); the
+  same run with `EOS_TEST_DB=test_eos_invoices` was green.
+- The Edit tool replaced the **first** of two identical assertion blocks
+  (TestIndex and TestAllCorporationsCopy end the same way), so a new test
+  class landed in the middle of `TestIndex`. Anchor an insertion on
+  something unique, such as the next `class` line.
+- A stale `.git/CLAUDE_COMMIT_MSG` from an earlier commit stays in place; a
+  failed Write left it there and `git commit -F` used the old message. Read
+  the file before overwriting it, and check `git log -1` right after.
 - `eos-test` takes **one** test label; a second one ends up as an
   unrecognised argument to `manage.py test`. Run modules one after another.
 - A test run takes about two minutes even though the tests themselves need
