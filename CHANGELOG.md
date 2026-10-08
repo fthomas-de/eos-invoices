@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- "All Corporations" has a filter: "Open" (payable rows only, the default),
+  "In progress" (rows whose month is still running), "Paid" (rows already
+  paid, with their total) or "Both" (open and in progress). The totals and
+  "Select all" cover only the rows shown, and marking a row as paid returns
+  to the same filter. Paid rows offer nothing to mark or copy.
+
 ## [0.0.19] - 2026-10-01
 
 ### Changed

@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -5,7 +6,14 @@ from allianceauth.eveonline.models import EveAllianceInfo
 from allianceauth.tests.auth_utils import AuthUtils
 
 from eos_invoices.models import InvoiceConfiguration
-from eos_invoices.overview import build_admin_overview, build_overview
+from eos_invoices.overview import (
+    SHOW_ALL,
+    SHOW_IN_PROGRESS,
+    SHOW_OPEN,
+    SHOW_PAID,
+    build_admin_overview,
+    build_overview,
+)
 
 from .base import Due, DueTestCase, configure_alliance, make_ceo, make_corporation, make_source
 
@@ -138,6 +146,58 @@ class TestAdminOverview(DueTestCase):
         self.assertEqual(len(overview.problems), 1)
         # Beta's row fell off the list; it must not count as settled
         self.assertEqual(overview.settled_count, 0)
+
+    def test_should_narrow_rows_to_open_or_in_progress(self):
+        make_source(month_field="month", year_field="year")
+        # every row of setUpTestData is January 2026, still in progress
+        Due.objects.create(corp_id=2001, amount=40, month=12, year=2025)
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 1, 15)):
+            shown = {
+                show: build_admin_overview(show)
+                for show in (SHOW_OPEN, SHOW_IN_PROGRESS, SHOW_ALL)
+            }
+
+        def amounts(overview):
+            return sorted(r.invoice.amount for s in overview.sources for r in s.rows)
+
+        self.assertEqual(amounts(shown[SHOW_OPEN]), [40])
+        self.assertEqual(amounts(shown[SHOW_IN_PROGRESS]), [111, 222])
+        self.assertEqual(amounts(shown[SHOW_ALL]), [40, 111, 222])
+        # Beta owes only a row in progress - still owed, so never settled
+        for overview in shown.values():
+            self.assertEqual(overview.settled_count, 1)
+
+    def test_should_show_only_paid_rows_under_paid(self):
+        make_source()
+
+        overview = build_admin_overview(SHOW_PAID)
+
+        [result] = overview.sources
+        self.assertEqual([r.invoice.amount for r in result.rows], [5])
+        self.assertEqual(overview.total, 5)
+        # nothing left to mark, and no open rows read to tell who is settled
+        self.assertFalse(result.can_mark_paid)
+        self.assertEqual(overview.settled_count, 0)
+
+    def test_should_not_let_open_rows_use_up_the_limit_of_paid_rows(self):
+        # filtered in the query: the two open rows must not crowd out the
+        # one paid row nor count towards cutting the list short
+        make_source()
+
+        with patch("eos_invoices.overview.ADMIN_MAX_ROWS", 1):
+            overview = build_admin_overview(SHOW_PAID)
+
+        self.assertEqual(overview.problems, [])
+        self.assertEqual(overview.total, 5)
+
+    def test_should_drop_a_source_the_filter_leaves_empty(self):
+        make_source(month_field="month", year_field="year")
+
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 1, 15)):
+            overview = build_admin_overview(SHOW_OPEN)
+
+        self.assertEqual(overview.sources, [])
 
     def test_should_not_count_settled_corporations_while_a_source_has_problems(self):
         # Gamma may owe something in the source that could not be read

@@ -94,6 +94,23 @@ def build_overview(user, *, include_paid=False):
 # the page
 ADMIN_MAX_ROWS = 2000
 
+# what "All Corporations" shows: of the open rows the payable ones (Reason
+# shown), the ones still in progress (Reason withheld) or both - or the rows
+# already paid instead
+SHOW_OPEN = "open"
+SHOW_IN_PROGRESS = "progress"
+SHOW_PAID = "paid"
+SHOW_ALL = "all"
+SHOW_CHOICES = (SHOW_OPEN, SHOW_IN_PROGRESS, SHOW_PAID, SHOW_ALL)
+
+
+def _shown(invoice, show):
+    if show == SHOW_OPEN:
+        return not invoice.reason_hidden
+    if show == SHOW_IN_PROGRESS:
+        return invoice.reason_hidden
+    return True
+
 
 @dataclass(frozen=True)
 class CorporationInvoice:
@@ -114,6 +131,11 @@ class SourceInvoices:
     def open_total(self):
         return sum((r.invoice.amount for r in self.rows if not r.invoice.paid), Decimal(0))
 
+    @property
+    def total(self):
+        """Every row shown - what is owed, or under "Paid" what came in."""
+        return sum((r.invoice.amount for r in self.rows), Decimal(0))
+
 
 @dataclass
 class AdminOverview:
@@ -127,15 +149,25 @@ class AdminOverview:
     def open_total(self):
         return sum((s.open_total for s in self.sources), Decimal(0))
 
+    @property
+    def total(self):
+        return sum((s.total for s in self.sources), Decimal(0))
 
-def build_admin_overview():
+
+def build_admin_overview(show=SHOW_ALL):
     """Open payments of every Corporation in the Alliance, grouped by source.
 
     One table per source rather than one per Corporation: an admin working a
     given app's payments (mining tax, say) wants that app's rows together,
     across every Corporation, not split into as many tables as there are
     Corporations that owe it something.
+
+    `show` narrows the rows to the payable ones or the ones still in
+    progress, or reads the paid rows instead. The count of Corporations with
+    nothing outstanding ignores the open filters - a row in progress is
+    still owed - and is left out under "Paid", which reads no open rows.
     """
+    paid = show == SHOW_PAID
     # the key is enough; loading the Alliance itself would cost a query for nothing
     alliance_pk = InvoiceConfiguration.get_solo().alliance_id
     if alliance_pk is None:
@@ -154,7 +186,7 @@ def build_admin_overview():
     for source in PaymentSource.objects.filter(enabled=True).select_related("pay_to"):
         try:
             by_corporation, truncated = get_invoices_by_corporation(
-                source, corporation_ids, limit=ADMIN_MAX_ROWS
+                source, corporation_ids, paid_only=paid, limit=ADMIN_MAX_ROWS
             )
         except SourceError as exc:
             overview.problems.append((source, str(exc)))
@@ -165,29 +197,33 @@ def build_admin_overview():
             continue
 
         if truncated:
-            overview.problems.append(
-                (
-                    source,
-                    _("More than %(limit)s open payments; only the newest are shown.")
-                    % {"limit": ADMIN_MAX_ROWS},
-                )
-            )
+            if paid:
+                message = _("More than %(limit)s paid payments; only the newest are shown.")
+            else:
+                message = _("More than %(limit)s open payments; only the newest are shown.")
+            overview.problems.append((source, message % {"limit": ADMIN_MAX_ROWS}))
 
         rows = []
         for corporation_id, invoices in by_corporation.items():
             has_open.add(corporation_id)
             corporation = corporations[corporation_id]
-            rows.extend(CorporationInvoice(corporation, invoice) for invoice in invoices)
+            rows.extend(
+                CorporationInvoice(corporation, invoice)
+                for invoice in invoices
+                if _shown(invoice, show)
+            )
 
         if rows:
             overview.sources.append(
                 SourceInvoices(
-                    source=source, rows=rows, can_mark_paid=paid_marker(source) is not None
+                    source=source,
+                    rows=rows,
+                    can_mark_paid=not paid and paid_marker(source) is not None,
                 )
             )
 
     # a source that failed or was cut short may hold what a Corporation owes;
     # counting that Corporation as settled would be a claim nobody checked
-    if not overview.problems:
+    if not overview.problems and not paid:
         overview.settled_count = len(corporation_ids) - len(has_open)
     return overview

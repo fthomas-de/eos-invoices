@@ -17,7 +17,7 @@ from allianceauth.services.hooks import get_extension_logger
 from eos_invoices import VERSION
 from eos_invoices.forms import InvoiceConfigurationForm, PaymentSourceForm
 from eos_invoices.models import InvoiceConfiguration, PaymentLog, PaymentSource
-from eos_invoices.overview import build_admin_overview, build_overview
+from eos_invoices.overview import SHOW_CHOICES, SHOW_OPEN, build_admin_overview, build_overview
 from eos_invoices.sources import (
     ACCEPTED_KINDS,
     SourceError,
@@ -77,8 +77,19 @@ def dashboard_overview(request):
 @login_required
 @permission_required("eos_invoices.manage_sources")
 def admin_overview(request):
+    """Open payments of every Corporation; the payable ones unless asked otherwise.
+
+    The filter is a query parameter rather than rows hidden in the browser:
+    "Select all" and the totals then cover exactly what is on the page, and
+    the form's "next" brings the admin back to the same filter after marking.
+    """
+    show = request.GET.get("show", SHOW_OPEN)
+    if show not in SHOW_CHOICES:
+        show = SHOW_OPEN
     return _render(
-        request, "eos_invoices/admin.html", {"overview": build_admin_overview()}
+        request,
+        "eos_invoices/admin.html",
+        {"overview": build_admin_overview(show), "show": show},
     )
 
 

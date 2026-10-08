@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-01 07:03+0000\n"
-"PO-Revision-Date: 2026-10-01 07:03+0000\n"
+"POT-Creation-Date: 2026-10-08 15:10+0000\n"
+"PO-Revision-Date: 2026-10-08 15:10+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: de\n"
 "Language: de\n"
@@ -115,7 +115,7 @@ msgstr "Wert für bezahlt"
 msgid "Only for \"Field equals value\": the value that means paid."
 msgstr "Nur für „Feld entspricht Wert“: der Wert, der bezahlt bedeutet."
 
-#: models.py:103 models.py:209 templates/eos_invoices/admin.html:89
+#: models.py:103 models.py:209 templates/eos_invoices/admin.html:109
 #: templates/eos_invoices/index.html:84 templates/eos_invoices/log.html:52
 msgctxt "EVE jargon"
 msgid "Reason"
@@ -135,7 +135,7 @@ msgstr ""
 " in {month:02d}. Verwende genau die Form, mit der die empfangende App "
 "Zahlungen abgleicht."
 
-#: models.py:114 models.py:210 templates/eos_invoices/admin.html:87
+#: models.py:114 models.py:210 templates/eos_invoices/admin.html:107
 #: templates/eos_invoices/index.html:82 templates/eos_invoices/log.html:50
 msgid "Description"
 msgstr "Beschreibung"
@@ -224,7 +224,7 @@ msgstr "Zahlungsquelle"
 msgid "Payment sources"
 msgstr "Zahlungsquellen"
 
-#: models.py:194 templates/eos_invoices/admin.html:86
+#: models.py:194 templates/eos_invoices/admin.html:106
 #: templates/eos_invoices/index.html:81 templates/eos_invoices/log.html:46
 msgid "Date"
 msgstr "Datum"
@@ -246,13 +246,13 @@ msgstr "Zeile"
 msgid "Corporation ID"
 msgstr "Corporation-ID"
 
-#: models.py:206 templates/eos_invoices/admin.html:85
+#: models.py:206 templates/eos_invoices/admin.html:105
 #: templates/eos_invoices/log.html:31 templates/eos_invoices/log.html:49
 msgctxt "EVE jargon"
 msgid "Corporation"
 msgstr "Corporation"
 
-#: models.py:208 templates/eos_invoices/admin.html:88
+#: models.py:208 templates/eos_invoices/admin.html:108
 #: templates/eos_invoices/index.html:83 templates/eos_invoices/log.html:51
 msgctxt "eos-invoices"
 msgid "Amount"
@@ -278,7 +278,7 @@ msgstr "Zahlungsprotokoll"
 msgid "You have no main character."
 msgstr "Du hast keinen Main Character."
 
-#: overview.py:62 overview.py:142
+#: overview.py:62 overview.py:174
 msgid "No Alliance has been configured for this app yet."
 msgstr "Für diese App wurde noch keine Alliance eingerichtet."
 
@@ -287,7 +287,13 @@ msgstr "Für diese App wurde noch keine Alliance eingerichtet."
 msgid "%(corporation)s is not a member of %(alliance)s."
 msgstr "%(corporation)s ist kein Mitglied von %(alliance)s."
 
-#: overview.py:171
+#: overview.py:201
+#, python-format
+msgid "More than %(limit)s paid payments; only the newest are shown."
+msgstr ""
+"Mehr als %(limit)s bezahlte Zahlungen; nur die neuesten werden angezeigt."
+
+#: overview.py:203
 #, python-format
 msgid "More than %(limit)s open payments; only the newest are shown."
 msgstr ""
@@ -369,77 +375,112 @@ msgstr "Das Feld Jahr muss ein Ganzzahlfeld sein."
 msgid "Enter the value that means paid."
 msgstr "Gib den Wert an, der bezahlt bedeutet."
 
-#: sources.py:482 sources.py:484 sources.py:623
+#: sources.py:487 sources.py:489 sources.py:628
 msgid "The payment no longer exists."
 msgstr "Die Zahlung existiert nicht mehr."
 
-#: sources.py:574
+#: sources.py:579
 msgid "Rows of this source cannot be marked as paid here."
 msgstr "Zeilen dieser Quelle können hier nicht als bezahlt markiert werden."
 
-#: sources.py:578
+#: sources.py:583
 msgid "This payment belongs to another Corporation."
 msgstr "Diese Zahlung gehört zu einer anderen Corporation."
 
-#: sources.py:580
+#: sources.py:585
 msgid "This payment is already marked as paid."
 msgstr "Diese Zahlung ist bereits als bezahlt markiert."
 
-#: sources.py:609
+#: sources.py:614
 msgid ""
 "This source reads another model since this was marked; nothing was changed."
 msgstr ""
 "Diese Quelle liest seit dem Markieren ein anderes Modell; es wurde nichts "
 "geändert."
 
-#: sources.py:616 sources.py:618
+#: sources.py:621 sources.py:623
 msgid "The paid field of this source has changed since."
 msgstr "Das Feld Bezahlt dieser Quelle wurde inzwischen geändert."
 
-#: sources.py:627
+#: sources.py:632
 msgid ""
 "The payment has been changed since it was marked; it was left as it is."
 msgstr ""
 "Die Zahlung wurde seit dem Markieren geändert; sie bleibt unverändert."
 
-#: templates/eos_invoices/admin.html:34 templates/eos_invoices/admin.html:82
+#: templates/eos_invoices/admin.html:12
+msgctxt "eos-invoices"
+msgid "Show"
+msgstr "Anzeigen"
+
+#: templates/eos_invoices/admin.html:15 templates/eos_invoices/index.html:124
+msgctxt "eos-invoices"
+msgid "Open"
+msgstr "Offen"
+
+#: templates/eos_invoices/admin.html:19 templates/eos_invoices/index.html:122
+msgctxt "eos-invoices"
+msgid "In progress"
+msgstr "Läuft noch"
+
+#: templates/eos_invoices/admin.html:23 templates/eos_invoices/admin.html:65
+#: templates/eos_invoices/admin.html:162 templates/eos_invoices/index.html:116
+msgid "Paid"
+msgstr "Bezahlt"
+
+#: templates/eos_invoices/admin.html:27
+msgctxt "eos-invoices"
+msgid "Both"
+msgstr "Beides"
+
+#: templates/eos_invoices/admin.html:54 templates/eos_invoices/admin.html:102
 msgid "Select all"
 msgstr "Alle auswählen"
 
-#: templates/eos_invoices/admin.html:39
+#: templates/eos_invoices/admin.html:59
 msgid "Mark the selected payments as paid?"
 msgstr "Die ausgewählten Zahlungen als bezahlt markieren?"
 
-#: templates/eos_invoices/admin.html:40
+#: templates/eos_invoices/admin.html:60
 msgid "Mark selected as paid"
 msgstr "Auswahl als bezahlt markieren"
 
-#: templates/eos_invoices/admin.html:45
+#: templates/eos_invoices/admin.html:65
 #: templates/eos_invoices/dashboard.overview.html:22
 #: templates/eos_invoices/index.html:15
 msgid "Outstanding"
 msgstr "Offen"
 
-#: templates/eos_invoices/admin.html:51
+#: templates/eos_invoices/admin.html:71
 #, python-format
 msgid "%(counter)s Corporation with nothing outstanding"
 msgid_plural "%(counter)s Corporations with nothing outstanding"
 msgstr[0] "%(counter)s Corporation ohne offene Zahlungen"
 msgstr[1] "%(counter)s Corporations ohne offene Zahlungen"
 
-#: templates/eos_invoices/admin.html:122 templates/eos_invoices/index.html:106
+#: templates/eos_invoices/admin.html:143 templates/eos_invoices/index.html:106
 msgid "Not shown while in progress"
 msgstr "Nicht angezeigt, solange der Monat läuft"
 
-#: templates/eos_invoices/admin.html:135
+#: templates/eos_invoices/admin.html:158
 msgid "Mark this payment as paid?"
 msgstr "Diese Zahlung als bezahlt markieren?"
 
-#: templates/eos_invoices/admin.html:136
+#: templates/eos_invoices/admin.html:159
 msgid "Mark as paid"
 msgstr "Als bezahlt markieren"
 
-#: templates/eos_invoices/admin.html:148
+#: templates/eos_invoices/admin.html:174
+msgctxt "eos-invoices"
+msgid "Nothing in progress."
+msgstr "Nichts läuft noch."
+
+#: templates/eos_invoices/admin.html:176
+msgctxt "eos-invoices"
+msgid "Nothing paid yet."
+msgstr "Noch nichts bezahlt."
+
+#: templates/eos_invoices/admin.html:178
 #: templates/eos_invoices/dashboard.overview.html:30
 #: templates/eos_invoices/index.html:68
 msgctxt "eos-invoices"
@@ -495,20 +536,6 @@ msgstr ""
 #: templates/eos_invoices/index.html:85 templates/eos_invoices/sources.html:30
 msgid "Status"
 msgstr "Status"
-
-#: templates/eos_invoices/index.html:116
-msgid "Paid"
-msgstr "Bezahlt"
-
-#: templates/eos_invoices/index.html:122
-msgctxt "eos-invoices"
-msgid "In progress"
-msgstr "Läuft noch"
-
-#: templates/eos_invoices/index.html:124
-msgctxt "eos-invoices"
-msgid "Open"
-msgstr "Offen"
 
 #: templates/eos_invoices/index.html:136
 #: templates/eos_invoices/sources.html:80
@@ -621,18 +648,18 @@ msgstr "Löschen"
 msgid "Delete %(name)s?"
 msgstr "%(name)s löschen?"
 
-#: views.py:153
+#: views.py:164
 msgid "Marked as paid."
 msgstr "Als bezahlt markiert."
 
-#: views.py:203
+#: views.py:214
 #, python-format
 msgid "Marked %(count)s payment as paid."
 msgid_plural "Marked %(count)s payments as paid."
 msgstr[0] "%(count)s Zahlung als bezahlt markiert."
 msgstr[1] "%(count)s Zahlungen als bezahlt markiert."
 
-#: views.py:213
+#: views.py:224
 #, python-format
 msgid ""
 "%(count)s payment was skipped: already paid, gone, of another Corporation, "
@@ -649,28 +676,28 @@ msgstr[1] ""
 " einer anderen Corporation, oder ihre Quelle kann hier nicht gelesen oder "
 "markiert werden."
 
-#: views.py:222
+#: views.py:233
 msgid "Nothing was selected."
 msgstr "Es wurde nichts ausgewählt."
 
-#: views.py:267
+#: views.py:278
 msgid "This entry cannot be undone."
 msgstr "Dieser Eintrag kann nicht zurückgenommen werden."
 
-#: views.py:293
+#: views.py:304
 msgid "Undone: the payment is open again."
 msgstr "Zurückgenommen: Die Zahlung ist wieder offen."
 
-#: views.py:330
+#: views.py:341
 #, python-format
 msgid "Saved %(name)s."
 msgstr "%(name)s gespeichert."
 
-#: views.py:367
+#: views.py:378
 #, python-format
 msgid "Deleted %(name)s."
 msgstr "%(name)s gelöscht."
 
-#: views.py:380
+#: views.py:391
 msgid "Settings saved."
 msgstr "Einstellungen gespeichert."

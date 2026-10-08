@@ -91,6 +91,21 @@ otherwise:
   a column) rather than by Corporation (one card per Corporation) - the user
   asked for this explicitly; an admin working one app's payments wants them
   together across every Corporation.
+- "All Corporations" has a **filter Open / In progress / Paid / Both**
+  (asked 2026-10-08, like eos-tax's quick filters), **"Open" by default**.
+  "Both" means open and in progress, never paid - the user chose a separate
+  "Paid" button over an "All" that includes paid rows. It runs on the server
+  (`?show=open|progress|paid|all`, unknown values fall back to `open`)
+  rather than hiding rows in the browser, so totals, "Select all" and the
+  selected count only see what is shown, and the form's `next` keeps the
+  filter after marking. A source the filter leaves empty drops out;
+  "N Corporations with nothing outstanding" ignores the open filters, since
+  a row in progress is still owed, and is left out under "Paid".
+- Under **"Paid"** the paid rows are read in the query (`paid_only` in
+  `get_invoices_by_corporation`), so open rows never use up
+  `ADMIN_MAX_ROWS`. Rows show a green "Paid" badge and their Reason, but no
+  checkbox, no "Mark as paid" and no copy buttons; the total line reads
+  "Paid". Undo stays on the log page.
 - A provider hook for apps that keep balances instead of rows is postponed
   until an app needs it (see README, "Possible extensions").
 - **Every total leaves out rows still in progress** (`reason_hidden`, the
@@ -99,7 +114,8 @@ otherwise:
   counts only rows whose Reason is shown, since the amount owed for the rest
   can still change. The overview still lists those rows with their amount.
   Asked on 2026-09-25; before that the full overview's totals counted them.
-  "All Corporations" (`admin.html`) still sums every open row - not asked.
+  "All Corporations" (`admin.html`) sums every row it shows - by default
+  (filter "Open") that is the payable rows only.
 - The **dashboard widget always shows** once the viewer is permitted and the
   overview itself has something to show (main character, Alliance
   configured, Corporation inside it) - it no longer hides itself just

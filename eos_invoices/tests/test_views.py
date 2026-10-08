@@ -631,8 +631,8 @@ class TestAllCorporationsCopy(DueTestCase):
         make_corporation(2001, "Alpha", configure_alliance())
         self.client.force_login(make_ceo(perms=("manage_sources",)))
 
-    def admin(self):
-        return self.client.get(reverse("eos_invoices:admin"))
+    def admin(self, show="all"):
+        return self.client.get(reverse("eos_invoices:admin"), {"show": show})
 
     def test_should_offer_amount_and_reason_for_copying(self):
         make_source(reason_template="{corp_id}/{month:02d}/{year}")
@@ -656,6 +656,82 @@ class TestAllCorporationsCopy(DueTestCase):
         self.assertContains(response, "100 ISK")
         self.assertNotContains(response, 'data-clipboard-text="100"')
         self.assertContains(response, 'data-clipboard-text="50"')
+
+
+class TestAllCorporationsFilter(DueTestCase):
+    def setUp(self):
+        make_corporation(2001, "Alpha", configure_alliance())
+        self.client.force_login(make_ceo(perms=("manage_sources",)))
+        make_source(month_field="month", year_field="year")
+        Due.objects.create(corp_id=2001, amount=100, month=7)  # in progress
+        Due.objects.create(corp_id=2001, amount=50, month=6)  # payable
+
+    def admin(self, **params):
+        with patch("eos_invoices.sources.timezone.localdate", return_value=date(2026, 7, 15)):
+            return self.client.get(reverse("eos_invoices:admin"), params)
+
+    def test_should_show_only_payable_rows_by_default(self):
+        response = self.admin()
+
+        self.assertContains(response, "50 ISK")
+        self.assertNotContains(response, "100 ISK")
+        self.assertContains(response, 'href="?show=open" class="btn btn-primary"')
+
+    def test_should_show_only_rows_in_progress(self):
+        response = self.admin(show="progress")
+
+        self.assertContains(response, "100 ISK")
+        self.assertNotContains(response, "50 ISK")
+        self.assertContains(response, 'href="?show=progress" class="btn btn-primary"')
+
+    def test_should_show_both(self):
+        response = self.admin(show="all")
+
+        self.assertContains(response, "100 ISK")
+        self.assertContains(response, "50 ISK")
+        self.assertContains(response, 'href="?show=all" class="btn btn-primary"')
+
+    def test_should_show_only_paid_rows_without_anything_to_mark_or_copy(self):
+        PaymentSource.objects.update(reason_template="{corp_id}/{month}/{year}")
+        Due.objects.create(corp_id=2001, amount=75, month=5, paid=True)
+
+        response = self.admin(show="paid")
+
+        self.assertContains(response, "75 ISK")
+        self.assertNotContains(response, "100 ISK")
+        self.assertNotContains(response, "50 ISK")
+        self.assertContains(response, 'href="?show=paid" class="btn btn-primary"')
+        # the Reason still shows, so a payment can be looked up - but
+        # nothing is offered for copying, nothing is left to transfer
+        self.assertContains(response, "2001/5/2026")
+        self.assertNotContains(response, "data-clipboard-text")
+        self.assertNotContains(response, 'name="selected"')
+        self.assertNotContains(response, "Mark selected as paid")
+
+    def test_should_say_when_nothing_is_paid(self):
+        response = self.admin(show="paid")
+
+        self.assertContains(response, "Nothing paid yet.")
+
+    def test_should_fall_back_to_payable_rows_on_an_unknown_filter(self):
+        response = self.admin(show="unpaid")
+
+        self.assertNotContains(response, "100 ISK")
+        self.assertContains(response, 'href="?show=open" class="btn btn-primary"')
+
+    def test_should_say_when_nothing_is_in_progress(self):
+        Due.objects.filter(amount=100).update(paid=True)
+
+        response = self.admin(show="progress")
+
+        self.assertContains(response, "Nothing in progress.")
+
+    def test_should_return_to_the_same_filter_after_marking(self):
+        response = self.admin(show="progress")
+
+        # marking redirects to "next", so the filter survives a click
+        url = reverse("eos_invoices:admin")
+        self.assertContains(response, f'name="next" value="{url}?show=progress"')
 
 
 class TestPermissionNames(DueTestCase):

@@ -442,13 +442,16 @@ def _label_order(source, row, when, label):
     return label
 
 
-def get_invoices_by_corporation(source, corporation_ids, *, include_paid=False, limit=MAX_ROWS):
+def get_invoices_by_corporation(
+    source, corporation_ids, *, include_paid=False, paid_only=False, limit=MAX_ROWS
+):
     """Payments of several Corporations in one source, in one query.
 
     Returns ``({corporation_id: [Invoice, ...]}, truncated)``, newest first
     within each Corporation. ``truncated`` says the source had more rows than
     ``limit``; the caller has to say so rather than show a short list as if it
-    were complete.
+    were complete. ``paid_only`` reads the paid rows alone - filtered in the
+    query, so open rows cannot use up ``limit``.
     """
     rows, paid_q = _invoice_rows(
         source, **{f"{source.corporation_field}__in": list(corporation_ids)}
@@ -460,7 +463,9 @@ def get_invoices_by_corporation(source, corporation_ids, *, include_paid=False, 
     rows = rows.exclude(
         Q(**{source.amount_field: 0}) | Q(**{f"{source.amount_field}__isnull": True})
     )
-    if not include_paid:
+    if paid_only:
+        rows = rows.filter(paid_q)
+    elif not include_paid:
         rows = rows.exclude(paid_q)
 
     rows = list(rows[: limit + 1])
