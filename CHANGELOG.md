@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.21] - 2026-10-08
+
 ### Changed
 
 - The "Both" filter on "All Corporations" is now "All" and shows every row:

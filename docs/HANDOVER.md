@@ -8,14 +8,15 @@ Last updated 2026-10-08.
 
 ## Release
 
-- Version **0.0.20** in `eos_invoices/__init__.py`, about to become the
-  `Release 0.0.20` commit and get pushed.
+- Version **0.0.21** in `eos_invoices/__init__.py`, about to become the
+  `Release 0.0.21` commit and get pushed.
 - Migrations **0001-0008** applied in `aa_dev`, unchanged this release - no
   new migration.
-- Catalogues updated through `tools/translate.py`: "Both", "Show",
-  "Nothing in progress.", "Nothing paid yet." and "More than %(limit)s paid
-  payments; only the newest are shown." are new.
-- 169 tests green (translation tests excluded, as they are for every
+- Catalogues updated through `tools/translate.py`: "All" (context
+  `eos-invoices`) and "More than %(limit)s payments; only the newest are
+  shown." are new, "Both" is gone; "Outstanding" moved into the
+  `eos-invoices` context.
+- 170 tests green (translation tests excluded, as they are for every
   `/commit`), translation tests green, `makemigrations --check` clean.
 - The release ritual is three skills, read by every AA sister app's
   `CLAUDE.md` under `## Release`: `/commit` (tests, checks, local commit,
@@ -185,14 +186,18 @@ otherwise:
   plain name. Not offered on the plain "Payment sources" management table
   or the dashboard widget, since neither shows the name as a card heading.
 
-## Since 0.0.19 (now in 0.0.20)
+## Since 0.0.20 (now in 0.0.21)
 
-Everything under `[0.0.20]` in `CHANGELOG.md`. Short version: "All
-Corporations" got the filter Open / In progress / Paid / Both (see the
-decisions above). The code is `SHOW_*` and `_shown` in `overview.py`,
-`paid_only` in `sources.get_invoices_by_corporation`, the `show` parameter
-in `views.admin_overview`. Pinned by `TestAllCorporationsFilter`
-(`test_views.py`) and the `SHOW_*` tests in `TestAdminOverview`
+Everything under `[0.0.21]` in `CHANGELOG.md`. Short version: the "Both"
+filter became "All" and reads paid rows too (`include_paid` in
+`build_admin_overview`); totals under "All" are `open_total`, paid rows get
+the badge instead of checkbox/button (`admin.html`), and `has_open` counts
+only unpaid rows. `build_admin_overview()` now defaults to `SHOW_OPEN`, like
+the view. "Outstanding" got the `eos-invoices` context because eos-tax
+translates it differently. Pinned by
+`test_should_show_all_rows_including_paid` (`test_views.py`),
+`test_should_count_a_corporation_with_paid_rows_alone_as_settled_under_all`
+and the `SHOW_ALL` amounts in `test_should_narrow_rows_to_open_or_in_progress`
 (`test_overview.py`).
 
 ## Open
@@ -200,7 +205,16 @@ in `views.admin_overview`. Pinned by `TestAllCorporationsFilter`
 1. aa-miningtax is not installed in the dev instance; its README example was
    taken from its source (`miningtax.AllianceBillingRecord`), not tried live.
 2. The filter buttons were not looked at in the browser (the dev server needs
-   a login); worth a glance in Darkly and Flatly.
+   a login); worth a glance in Darkly and Flatly - "All" with its paid rows
+   too.
+3. The new 0.0.21 tests were not run against the broken code: the auto-mode
+   classifier blocked the temporary sabotage script. Worth doing by hand
+   (drop the `any(not invoice.paid ...)` guard in `overview.py` and the
+   `and not row.invoice.paid` in `admin.html`, run, restore).
+4. Under "All", paid rows count towards `ADMIN_MAX_ROWS` (2000 per source);
+   after years of paid rows the oldest open ones could fall off that view
+   (the page says so; "Open" is unaffected). Filter in the query only if it
+   ever happens.
 
 ## Dev instance
 
@@ -279,6 +293,10 @@ in `views.admin_overview`. Pinned by `TestAllCorporationsFilter`
   about ten seconds - most of the rest is building the MySQL test database
   for every installed app. Plan sabotage checks so they don't double that
   more often than needed.
+- A sister app adding its own translation of a word we use plain (eos-tax's
+  "Outstanding", 2026-10-08) breaks the catalogue tests at the next
+  `/commit` though nothing of ours changed. Give the word the
+  `eos-invoices` context, as the test's message says.
 - Called from PowerShell, `wsl.exe ... bash -lic '...'` breaks on double
   quotes, `^` and parentheses inside the command. Anything beyond a plain
   command goes into a script file in the scratchpad, run as
