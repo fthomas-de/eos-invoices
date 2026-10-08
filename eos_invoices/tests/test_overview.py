@@ -163,7 +163,9 @@ class TestAdminOverview(DueTestCase):
 
         self.assertEqual(amounts(shown[SHOW_OPEN]), [40])
         self.assertEqual(amounts(shown[SHOW_IN_PROGRESS]), [111, 222])
-        self.assertEqual(amounts(shown[SHOW_ALL]), [40, 111, 222])
+        # "All" reads the paid rows too
+        self.assertEqual(amounts(shown[SHOW_ALL]), [5, 40, 111, 222])
+        self.assertEqual(shown[SHOW_ALL].open_total, 373)
         # Beta owes only a row in progress - still owed, so never settled
         for overview in shown.values():
             self.assertEqual(overview.settled_count, 1)
@@ -190,6 +192,16 @@ class TestAdminOverview(DueTestCase):
 
         self.assertEqual(overview.problems, [])
         self.assertEqual(overview.total, 5)
+
+    def test_should_count_a_corporation_with_paid_rows_alone_as_settled_under_all(self):
+        make_source()
+        Due.objects.create(corp_id=2003, amount=7, paid=True)
+
+        overview = build_admin_overview(SHOW_ALL)
+
+        # Gamma shows up with its paid row, but owes nothing
+        self.assertIn(7, [r.invoice.amount for s in overview.sources for r in s.rows])
+        self.assertEqual(overview.settled_count, 1)
 
     def test_should_drop_a_source_the_filter_leaves_empty(self):
         make_source(month_field="month", year_field="year")

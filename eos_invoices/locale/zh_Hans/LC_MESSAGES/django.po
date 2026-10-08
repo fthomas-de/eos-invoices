@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eos-invoices\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-08 15:10+0000\n"
-"PO-Revision-Date: 2026-10-08 15:10+0000\n"
+"POT-Creation-Date: 2026-10-08 18:40+0000\n"
+"PO-Revision-Date: 2026-10-08 18:40+0000\n"
 "Last-Translator: eos-invoices\n"
 "Language-Team: zh_Hans\n"
 "Language: zh_Hans\n"
@@ -111,7 +111,7 @@ msgstr "已付值"
 msgid "Only for \"Field equals value\": the value that means paid."
 msgstr "仅用于“字段等于指定值”：表示已付的值。"
 
-#: models.py:103 models.py:209 templates/eos_invoices/admin.html:109
+#: models.py:103 models.py:209 templates/eos_invoices/admin.html:116
 #: templates/eos_invoices/index.html:84 templates/eos_invoices/log.html:52
 msgctxt "EVE jargon"
 msgid "Reason"
@@ -128,7 +128,7 @@ msgstr ""
 "游戏内付款时填写的 Reason。花括号中的字段名会被替换为其值，例如 {corp_id}/{month}/{year}；冒号后可跟格式，如 "
 "{month:02d}。请使用接收方应用匹配付款时所用的确切格式。"
 
-#: models.py:114 models.py:210 templates/eos_invoices/admin.html:107
+#: models.py:114 models.py:210 templates/eos_invoices/admin.html:114
 #: templates/eos_invoices/index.html:82 templates/eos_invoices/log.html:50
 msgid "Description"
 msgstr "描述"
@@ -204,7 +204,7 @@ msgstr "款项来源"
 msgid "Payment sources"
 msgstr "款项来源"
 
-#: models.py:194 templates/eos_invoices/admin.html:106
+#: models.py:194 templates/eos_invoices/admin.html:113
 #: templates/eos_invoices/index.html:81 templates/eos_invoices/log.html:46
 msgid "Date"
 msgstr "日期"
@@ -226,13 +226,13 @@ msgstr "行"
 msgid "Corporation ID"
 msgstr "Corporation ID"
 
-#: models.py:206 templates/eos_invoices/admin.html:105
+#: models.py:206 templates/eos_invoices/admin.html:112
 #: templates/eos_invoices/log.html:31 templates/eos_invoices/log.html:49
 msgctxt "EVE jargon"
 msgid "Corporation"
 msgstr "Corporation"
 
-#: models.py:208 templates/eos_invoices/admin.html:108
+#: models.py:208 templates/eos_invoices/admin.html:115
 #: templates/eos_invoices/index.html:83 templates/eos_invoices/log.html:51
 msgctxt "eos-invoices"
 msgid "Amount"
@@ -258,7 +258,7 @@ msgstr "款项日志"
 msgid "You have no main character."
 msgstr "你没有 Main 角色。"
 
-#: overview.py:62 overview.py:174
+#: overview.py:62 overview.py:176
 msgid "No Alliance has been configured for this app yet."
 msgstr "此应用尚未配置 Alliance。"
 
@@ -267,12 +267,17 @@ msgstr "此应用尚未配置 Alliance。"
 msgid "%(corporation)s is not a member of %(alliance)s."
 msgstr "%(corporation)s 不是 %(alliance)s 的成员。"
 
-#: overview.py:201
+#: overview.py:207
 #, python-format
 msgid "More than %(limit)s paid payments; only the newest are shown."
 msgstr "已付款项超过 %(limit)s 笔；仅显示最新的。"
 
-#: overview.py:203
+#: overview.py:209
+#, python-format
+msgid "More than %(limit)s payments; only the newest are shown."
+msgstr "款项超过 %(limit)s 笔；仅显示最新的。"
+
+#: overview.py:211
 #, python-format
 msgid "More than %(limit)s open payments; only the newest are shown."
 msgstr "未付款项超过 %(limit)s 笔；仅显示最新的。"
@@ -392,17 +397,17 @@ msgctxt "eos-invoices"
 msgid "In progress"
 msgstr "进行中"
 
-#: templates/eos_invoices/admin.html:23 templates/eos_invoices/admin.html:65
+#: templates/eos_invoices/admin.html:23 templates/eos_invoices/admin.html:70
 #: templates/eos_invoices/admin.html:162 templates/eos_invoices/index.html:116
 msgid "Paid"
 msgstr "已付"
 
 #: templates/eos_invoices/admin.html:27
 msgctxt "eos-invoices"
-msgid "Both"
-msgstr "两者"
+msgid "All"
+msgstr "全部"
 
-#: templates/eos_invoices/admin.html:54 templates/eos_invoices/admin.html:102
+#: templates/eos_invoices/admin.html:54 templates/eos_invoices/admin.html:109
 msgid "Select all"
 msgstr "全选"
 
@@ -414,41 +419,42 @@ msgstr "将所选款项标记为已付？"
 msgid "Mark selected as paid"
 msgstr "将所选标记为已付"
 
-#: templates/eos_invoices/admin.html:65
+#: templates/eos_invoices/admin.html:72
 #: templates/eos_invoices/dashboard.overview.html:22
 #: templates/eos_invoices/index.html:15
+msgctxt "eos-invoices"
 msgid "Outstanding"
 msgstr "未付"
 
-#: templates/eos_invoices/admin.html:71
+#: templates/eos_invoices/admin.html:78
 #, python-format
 msgid "%(counter)s Corporation with nothing outstanding"
 msgid_plural "%(counter)s Corporations with nothing outstanding"
 msgstr[0] "%(counter)s 个 Corporation 没有未付款项"
 
-#: templates/eos_invoices/admin.html:143 templates/eos_invoices/index.html:106
+#: templates/eos_invoices/admin.html:150 templates/eos_invoices/index.html:106
 msgid "Not shown while in progress"
 msgstr "进行中，暂不显示"
 
-#: templates/eos_invoices/admin.html:158
+#: templates/eos_invoices/admin.html:167
 msgid "Mark this payment as paid?"
 msgstr "将此款项标记为已付？"
 
-#: templates/eos_invoices/admin.html:159
+#: templates/eos_invoices/admin.html:168
 msgid "Mark as paid"
 msgstr "标记为已付"
 
-#: templates/eos_invoices/admin.html:174
+#: templates/eos_invoices/admin.html:181
 msgctxt "eos-invoices"
 msgid "Nothing in progress."
 msgstr "没有进行中的款项。"
 
-#: templates/eos_invoices/admin.html:176
+#: templates/eos_invoices/admin.html:183
 msgctxt "eos-invoices"
 msgid "Nothing paid yet."
 msgstr "尚无已付款项。"
 
-#: templates/eos_invoices/admin.html:178
+#: templates/eos_invoices/admin.html:185
 #: templates/eos_invoices/dashboard.overview.html:30
 #: templates/eos_invoices/index.html:68
 msgctxt "eos-invoices"

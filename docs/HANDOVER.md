@@ -91,10 +91,13 @@ otherwise:
   a column) rather than by Corporation (one card per Corporation) - the user
   asked for this explicitly; an admin working one app's payments wants them
   together across every Corporation.
-- "All Corporations" has a **filter Open / In progress / Paid / Both**
+- "All Corporations" has a **filter Open / In progress / Paid / All**
   (asked 2026-10-08, like eos-tax's quick filters), **"Open" by default**.
-  "Both" means open and in progress, never paid - the user chose a separate
-  "Paid" button over an "All" that includes paid rows. It runs on the server
+  "All" shows every row, paid ones included - it was "Both" (open and in
+  progress, never paid) in 0.0.20; the user had it renamed and widened the
+  same day. Under "All" the totals are `open_total` (paid rows listed, not
+  owed), paid rows get the badge instead of checkbox/button, and
+  `has_open` counts only unpaid rows. It runs on the server
   (`?show=open|progress|paid|all`, unknown values fall back to `open`)
   rather than hiding rows in the browser, so totals, "Select all" and the
   selected count only see what is shown, and the form's `next` keeps the
@@ -158,7 +161,7 @@ otherwise:
   transfer. The user was not aware of this at first and, once told, was
   happy with it (2026-09-30).
 - "All Corporations" has copy buttons for each row's **amount and Reason**
-  (asked 2026-09-30), but **none on a source's header total**: under "Both"
+  (asked 2026-09-30), but **none on a source's header total**: under "All"
   that total counts rows in progress, so it is not always a number to pay.
   Not asked; under "Open" it would be safe now, if the user wants it.
 - The **log filter runs on the server** (query parameters `source`,

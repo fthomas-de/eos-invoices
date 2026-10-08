@@ -343,7 +343,7 @@ TRANSLATIONS = {
     "Paid": ("Bezahlt", "Оплачено", "已付"),
     "Open": ("Offen", "Не оплачено", "未付"),
     "In progress": ("Läuft noch", "Ещё идёт", "进行中"),
-    "Both": ("Beides", "Оба", "两者"),
+    "All": ("Alle", "Все", "全部"),
     "Show": ("Anzeigen", "Показать", "显示"),
     "Nothing in progress.": ("Nichts läuft noch.", "Ничего не идёт.", "没有进行中的款项。"),
     "Nothing paid yet.": ("Noch nichts bezahlt.", "Ещё ничего не оплачено.", "尚无已付款项。"),
@@ -351,6 +351,11 @@ TRANSLATIONS = {
         "Mehr als %(limit)s bezahlte Zahlungen; nur die neuesten werden angezeigt.",
         "Более %(limit)s оплаченных платежей; показаны только самые новые.",
         "已付款项超过 %(limit)s 笔；仅显示最新的。",
+    ),
+    "More than %(limit)s payments; only the newest are shown.": (
+        "Mehr als %(limit)s Zahlungen; nur die neuesten werden angezeigt.",
+        "Более %(limit)s платежей; показаны только самые новые.",
+        "款项超过 %(limit)s 笔；仅显示最新的。",
     ),
     "No payment sources are configured.": (
         "Es sind keine Zahlungsquellen eingerichtet.",

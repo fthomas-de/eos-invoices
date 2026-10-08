@@ -19,7 +19,7 @@
                             {% endif %}
                         {% endfor %}
                         <tr class="fw-bold border-top">
-                            <td>{% translate "Outstanding" %}</td>
+                            <td>{% translate "Outstanding" context "eos-invoices" %}</td>
                             <td class="text-end text-nowrap">{{ overview.open_total_settled|isk }} ISK</td>
                         </tr>
                     </tbody>

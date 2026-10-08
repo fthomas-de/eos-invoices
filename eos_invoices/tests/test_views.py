@@ -684,12 +684,24 @@ class TestAllCorporationsFilter(DueTestCase):
         self.assertNotContains(response, "50 ISK")
         self.assertContains(response, 'href="?show=progress" class="btn btn-primary"')
 
-    def test_should_show_both(self):
+    def test_should_show_all_rows_including_paid(self):
+        Due.objects.create(corp_id=2001, amount=75, month=5, paid=True)
+
         response = self.admin(show="all")
 
         self.assertContains(response, "100 ISK")
         self.assertContains(response, "50 ISK")
+        self.assertContains(response, "75 ISK")
         self.assertContains(response, 'href="?show=all" class="btn btn-primary"')
+        # the paid row is listed but not owed: left out of the totals, and
+        # offered neither for marking nor for copying
+        self.assertContains(response, "<strong>150 ISK</strong>", html=False)
+        self.assertNotContains(response, "225 ISK")
+        paid_pk = Due.objects.get(amount=75).pk
+        self.assertNotContains(response, f':{paid_pk}"')
+        self.assertNotContains(response, f'name="row" value="{paid_pk}"')
+        self.assertNotContains(response, 'data-clipboard-text="75"')
+        self.assertContains(response, 'class="badge text-bg-success"')
 
     def test_should_show_only_paid_rows_without_anything_to_mark_or_copy(self):
         PaymentSource.objects.update(reason_template="{corp_id}/{month}/{year}")

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The "Both" filter on "All Corporations" is now "All" and shows every row:
+  open, in progress and paid. Paid rows are listed with a "Paid" badge but
+  left out of the Outstanding totals and offer nothing to mark or copy; a
+  Corporation with paid rows alone still counts as having nothing
+  outstanding.
+
+### Fixed
+
+- With eos-tax installed, "Outstanding" showed eos-tax's Russian wording
+  instead of this app's.
+
 ## [0.0.20] - 2026-10-08
 
 ### Added

@@ -24,7 +24,7 @@
             </a>
             <a href="?show=all" class="btn {% if show == "all" %}btn-primary{% else %}btn-outline-primary{% endif %}"
                {% if show == "all" %}aria-current="page"{% endif %}>
-                {% translate "Both" context "eos-invoices" %}
+                {% translate "All" context "eos-invoices" %}
             </a>
         </div>
 
@@ -61,8 +61,14 @@
                         </button>
                     {% endif %}
                     <span class="text-body-secondary">
-                        {% if show == "paid" %}{% translate "Paid" %}{% else %}{% translate "Outstanding" %}{% endif %}:
-                        <strong>{{ overview.total|isk }} ISK</strong>
+                        {% comment %}
+                            under "All" the paid rows are listed but not owed
+                        {% endcomment %}
+                        {% if show == "paid" %}
+                            {% translate "Paid" %}: <strong>{{ overview.total|isk }} ISK</strong>
+                        {% else %}
+                            {% translate "Outstanding" context "eos-invoices" %}: <strong>{{ overview.open_total|isk }} ISK</strong>
+                        {% endif %}
                     </span>
                 </div>
                 {% if overview.settled_count %}
@@ -86,7 +92,7 @@
                                 {{ result.source.name }}
                             {% endif %}
                         </div>
-                        <span class="text-nowrap">{{ result.total|isk }} ISK</span>
+                        <span class="text-nowrap">{% if show == "paid" %}{{ result.total|isk }}{% else %}{{ result.open_total|isk }}{% endif %} ISK</span>
                     </div>
 
                     <div class="card-body">
@@ -113,7 +119,7 @@
                                     {% for row in result.rows %}
                                         <tr>
                                             <td>
-                                                {% if result.can_mark_paid %}
+                                                {% if result.can_mark_paid and not row.invoice.paid %}
                                                     <input class="form-check-input eos-invoices-row" type="checkbox"
                                                            name="selected"
                                                            value="{{ result.source.pk|unlocalize }}:{{ row.corporation.corporation_id|unlocalize }}:{{ row.invoice.pk|unlocalize }}"
@@ -149,15 +155,15 @@
                                                 {% endif %}
                                             </td>
                                             <td class="text-end text-nowrap">
-                                                {% if result.can_mark_paid %}
+                                                {% if row.invoice.paid %}
+                                                    <span class="badge text-bg-success">{% translate "Paid" %}</span>
+                                                {% elif result.can_mark_paid %}
                                                     <button type="submit" class="btn btn-sm btn-outline-success py-0"
                                                             formaction="{% url "eos_invoices:mark_paid" result.source.pk %}"
                                                             name="row" value="{{ row.invoice.pk|unlocalize }}"
                                                             data-question="{% translate "Mark this payment as paid?" %}">
                                                         {% translate "Mark as paid" %}
                                                     </button>
-                                                {% elif row.invoice.paid %}
-                                                    <span class="badge text-bg-success">{% translate "Paid" %}</span>
                                                 {% endif %}
                                             </td>
                                         </tr>

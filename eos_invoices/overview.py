@@ -95,8 +95,8 @@ def build_overview(user, *, include_paid=False):
 ADMIN_MAX_ROWS = 2000
 
 # what "All Corporations" shows: of the open rows the payable ones (Reason
-# shown), the ones still in progress (Reason withheld) or both - or the rows
-# already paid instead
+# shown) or the ones still in progress (Reason withheld), the rows already
+# paid, or every row
 SHOW_OPEN = "open"
 SHOW_IN_PROGRESS = "progress"
 SHOW_PAID = "paid"
@@ -154,8 +154,8 @@ class AdminOverview:
         return sum((s.total for s in self.sources), Decimal(0))
 
 
-def build_admin_overview(show=SHOW_ALL):
-    """Open payments of every Corporation in the Alliance, grouped by source.
+def build_admin_overview(show=SHOW_OPEN):
+    """Payments of every Corporation in the Alliance, grouped by source.
 
     One table per source rather than one per Corporation: an admin working a
     given app's payments (mining tax, say) wants that app's rows together,
@@ -163,11 +163,13 @@ def build_admin_overview(show=SHOW_ALL):
     Corporations that owe it something.
 
     `show` narrows the rows to the payable ones or the ones still in
-    progress, or reads the paid rows instead. The count of Corporations with
-    nothing outstanding ignores the open filters - a row in progress is
-    still owed - and is left out under "Paid", which reads no open rows.
+    progress, reads the paid rows instead, or reads every row. The count of
+    Corporations with nothing outstanding ignores the open filters - a row in
+    progress is still owed - and is left out under "Paid", which reads no
+    open rows.
     """
     paid = show == SHOW_PAID
+    include_paid = show == SHOW_ALL
     # the key is enough; loading the Alliance itself would cost a query for nothing
     alliance_pk = InvoiceConfiguration.get_solo().alliance_id
     if alliance_pk is None:
@@ -186,7 +188,11 @@ def build_admin_overview(show=SHOW_ALL):
     for source in PaymentSource.objects.filter(enabled=True).select_related("pay_to"):
         try:
             by_corporation, truncated = get_invoices_by_corporation(
-                source, corporation_ids, paid_only=paid, limit=ADMIN_MAX_ROWS
+                source,
+                corporation_ids,
+                include_paid=include_paid,
+                paid_only=paid,
+                limit=ADMIN_MAX_ROWS,
             )
         except SourceError as exc:
             overview.problems.append((source, str(exc)))
@@ -199,13 +205,17 @@ def build_admin_overview(show=SHOW_ALL):
         if truncated:
             if paid:
                 message = _("More than %(limit)s paid payments; only the newest are shown.")
+            elif include_paid:
+                message = _("More than %(limit)s payments; only the newest are shown.")
             else:
                 message = _("More than %(limit)s open payments; only the newest are shown.")
             overview.problems.append((source, message % {"limit": ADMIN_MAX_ROWS}))
 
         rows = []
         for corporation_id, invoices in by_corporation.items():
-            has_open.add(corporation_id)
+            # under "All" a Corporation with paid rows alone owes nothing
+            if any(not invoice.paid for invoice in invoices):
+                has_open.add(corporation_id)
             corporation = corporations[corporation_id]
             rows.extend(
                 CorporationInvoice(corporation, invoice)
